@@ -6,6 +6,7 @@ let dataSimulator;
 let router;
 let dashboard;
 let lifeSupport;
+let engineering;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize core systems
@@ -13,6 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeRouter();
     initializeDashboard();
     initializeLifeSupport();
+    initializeNavigationSystem();
+    initializeEngineering();
     
     // Initialize UI components
     updateSystemTime();
@@ -69,11 +72,35 @@ function initializeLifeSupport() {
     }
 }
 
+function initializeNavigationSystem() {
+    if (typeof NostromoNavigation !== 'undefined' && dataSimulator) {
+        const navigation = new NostromoNavigation(dataSimulator);
+        window.navigation = navigation; // Make globally accessible
+        console.log('Navigation system initialized');
+    } else {
+        console.warn('Navigation system or DataSimulator not available');
+    }
+}
+
+function initializeEngineering() {
+    if (typeof NostromoEngineering !== 'undefined' && dataSimulator) {
+        engineering = new NostromoEngineering(dataSimulator);
+        window.engineering = engineering; // Make globally accessible
+        console.log('Engineering system initialized');
+    } else {
+        console.warn('Engineering system or DataSimulator not available');
+    }
+}
+
 function updateSystemTime() {
     const timeElement = document.getElementById('system-time');
     if (timeElement) {
+        // Set futuristic date for the Nostromo mission
         const now = new Date();
-        const timeString = now.toISOString().replace('T', ' ').substring(0, 19);
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const timeString = `2122-06-02 ${hours}:${minutes}:${seconds}`;
         timeElement.textContent = timeString;
     }
 }

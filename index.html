@@ -1,40 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Nostromo Monitoring System - A retro-futuristic ship monitoring interface inspired by the 1979 film Alien">
+    <meta name="description"
+        content="Nostromo Monitoring System - A retro-futuristic ship monitoring interface inspired by the 1979 film Alien">
     <meta name="keywords" content="nostromo, alien, retro, terminal, monitoring, sci-fi">
     <meta name="author" content="Nostromo Monitoring System">
-    
+
     <!-- GitHub Pages optimization -->
     <meta name="robots" content="index, follow">
     <meta property="og:title" content="Nostromo Monitoring System">
-    <meta property="og:description" content="A retro-futuristic ship monitoring interface inspired by the 1979 film Alien">
+    <meta property="og:description"
+        content="A retro-futuristic ship monitoring interface inspired by the 1979 film Alien">
     <meta property="og:type" content="website">
-    
+
     <title>NOSTROMO MONITORING SYSTEM</title>
-    
+
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
-    
+
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/terminal.css">
-    
+
     <!-- Preload critical resources -->
     <link rel="preload" href="css/main.css" as="style">
     <link rel="preload" href="css/terminal.css" as="style">
     <link rel="preload" href="js/app.js" as="script">
 </head>
+
 <body>
     <!-- Main Terminal Container -->
     <div id="terminal-container" class="app-container">
         <!-- Terminal Header -->
         <header class="terminal-header">
-            <div class="system-title">NOSTROMO COMMERCIAL TOWING VEHICLE</div>
+            <div class="system-title">USCSS Nostromo, registration number 1809246(09)</div>
             <div class="system-status">
-                MONITORING AND CONTROL SYSTEM v2.1.7 | <span id="system-time"></span> | STATUS: <span id="main-status" class="status-ok">OPERATIONAL</span>
+                MU/TH/UR 6000 | <span id="system-time"></span> | STATUS: <span id="main-status"
+                    class="status-ok">OPERATIONAL</span>
             </div>
         </header>
 
@@ -188,6 +193,9 @@
     <script src="js/router.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/life-support.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/engineering.js"></script>
     <script src="js/app.js"></script>
 </body>
+
 </html>

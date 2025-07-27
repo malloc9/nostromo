@@ -64,14 +64,34 @@ class NostromoRouter {
             element: 'navigation-screen',
             title: 'NAVIGATION & POSITIONING',
             breadcrumb: 'MAIN > NAVIGATION',
-            hotkey: 'F3'
+            hotkey: 'F3',
+            onEnter: () => {
+                if (window.navigation) {
+                    window.navigation.activate();
+                }
+            },
+            onExit: () => {
+                if (window.navigation) {
+                    window.navigation.deactivate();
+                }
+            }
         });
 
         this.addRoute('engineering', {
             element: 'engineering-screen',
             title: 'ENGINEERING & POWER',
             breadcrumb: 'MAIN > ENGINEERING',
-            hotkey: 'F4'
+            hotkey: 'F4',
+            onEnter: () => {
+                if (window.engineering) {
+                    window.engineering.activate();
+                }
+            },
+            onExit: () => {
+                if (window.engineering) {
+                    window.engineering.deactivate();
+                }
+            }
         });
 
         this.addRoute('crew', {

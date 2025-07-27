@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engineering System Test - Nostromo</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/terminal.css">
+    <style>
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--terminal-green);
+            padding: 10px;
+            z-index: 1000;
+        }
+        
+        .test-button {
+            background: var(--terminal-bg);
+            color: var(--terminal-green);
+            border: 1px solid var(--terminal-green);
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        
+        .test-button:hover {
+            background: var(--terminal-green);
+            color: var(--terminal-bg);
+        }
+        
+        .test-output {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 300px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--terminal-green);
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--terminal-green);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <div>Engineering System Test</div>
+        <button class="test-button" onclick="runTests()">Run Tests</button>
+        <button class="test-button" onclick="testActivation()">Test Activation</button>
+        <button class="test-button" onclick="testDataUpdate()">Test Data Update</button>
+        <button class="test-button" onclick="clearOutput()">Clear Output</button>
+    </div>
+
+    <div class="test-output" id="test-output">
+        Test output will appear here...
+    </div>
+
+    <div class="app-container">
+        <header class="terminal-header">
+            <div class="system-title">ENGINEERING SYSTEM TEST</div>
+            <div class="system-status">
+                TEST MODE | <span id="system-time"></span> | STATUS: <span id="main-status" class="status-ok">TESTING</span>
+            </div>
+        </header>
+
+        <nav class="nav-bar">
+            <div class="nav-section">
+                <span class="nav-item active" data-screen="engineering">
+                    [F4] ENGINEERING
+                </span>
+            </div>
+        </nav>
+
+        <main class="terminal-screen">
+            <div id="screen-container" class="terminal-content">
+                <div id="engineering-screen" class="screen active">
+                    <div class="screen-header">
+                        <h2>ENGINEERING & POWER</h2>
+                        <div class="breadcrumb">TEST > ENGINEERING</div>
+                    </div>
+                    <div class="screen-content">
+                        <div class="loading-message">
+                            <span>INITIALIZING ENGINEERING SYSTEMS...</span>
+                            <span class="cursor">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="terminal-footer">
+            <div class="footer-left">
+                <span>ENGINEERING TEST MODE</span>
+            </div>
+            <div class="footer-right">
+                <span id="connection-status">TESTING</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data-simulator.js"></script>
+    <script src="js/engineering.js"></script>
+    <script src="test/engineering.test.js"></script>
+
+    <script>
+        // Global instances for testing
+        let dataSimulator;
+        let engineering;
+        let testOutput;
+
+        // Initialize test environment
+        document.addEventListener('DOMContentLoaded', function() {
+            testOutput = document.getElementById('test-output');
+            
+            // Initialize data simulator
+            if (typeof DataSimulator !== 'undefined') {
+                dataSimulator = new DataSimulator();
+                log('✓ Data simulator initialized');
+            } else {
+                log('✗ DataSimulator not available');
+            }
+            
+            // Initialize engineering system
+            if (typeof NostromoEngineering !== 'undefined' && dataSimulator) {
+                engineering = new NostromoEngineering(dataSimulator);
+                window.engineering = engineering;
+                log('✓ Engineering system initialized');
+            } else {
+                log('✗ Engineering system initialization failed');
+            }
+            
+            // Update time
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            log('Test environment ready');
+        });
+
+        function log(message) {
+            if (testOutput) {
+                const timestamp = new Date().toTimeString().substring(0, 8);
+                testOutput.innerHTML += `[${timestamp}] ${message}\n`;
+                testOutput.scrollTop = testOutput.scrollHeight;
+            }
+            console.log(message);
+        }
+
+        function clearOutput() {
+            if (testOutput) {
+                testOutput.innerHTML = '';
+            }
+        }
+
+        function updateTime() {
+            const timeElement = document.getElementById('system-time');
+            if (timeElement) {
+                const now = new Date();
+                const timeString = now.toTimeString().substring(0, 8);
+                timeElement.textContent = `2122-06-02 ${timeString}`;
+            }
+        }
+
+        function testActivation() {
+            log('Testing engineering system activation...');
+            
+            if (engineering) {
+                try {
+                    engineering.activate();
+                    log(`✓ Engineering activated - isActive: ${engineering.isActive}`);
+                    
+                    setTimeout(() => {
+                        engineering.deactivate();
+                        log(`✓ Engineering deactivated - isActive: ${engineering.isActive}`);
+                    }, 3000);
+                } catch (error) {
+                    log(`✗ Activation test failed: ${error.message}`);
+                }
+            } else {
+                log('✗ Engineering system not available');
+            }
+        }
+
+        function testDataUpdate() {
+            log('Testing data update...');
+            
+            if (engineering && dataSimulator) {
+                try {
+                    const powerData = dataSimulator.generateSystemStatus().power;
+                    log(`✓ Power data: Gen=${powerData.generation.toFixed(1)}%, Cons=${powerData.consumption.toFixed(1)}%`);
+                    
+                    const errors = engineering.validatePowerCalculations(powerData);
+                    if (errors.length === 0) {
+                        log('✓ Power data validation passed');
+                    } else {
+                        log(`✗ Power data validation failed: ${errors.join(', ')}`);
+                    }
+                    
+                    const alertCount = engineering.calculatePowerAlerts(powerData);
+                    log(`✓ Alert count: ${alertCount}`);
+                    
+                } catch (error) {
+                    log(`✗ Data update test failed: ${error.message}`);
+                }
+            } else {
+                log('✗ Required systems not available');
+            }
+        }
+
+        // Override the test runner to use our log function
+        if (typeof window !== 'undefined') {
+            window.runTests = function() {
+                log('Running Engineering System Tests...');
+                
+                try {
+                    // Test 1: Initialization
+                    log('Test 1: Initialization');
+                    if (engineering && engineering.powerSystems.length === 7) {
+                        log('✓ Power systems initialized correctly');
+                    } else {
+                        log('✗ Power systems initialization failed');
+                    }
+                    
+                    // Test 2: Power calculations
+                    log('Test 2: Power calculations');
+                    if (dataSimulator) {
+                        const powerData = dataSimulator.generateSystemStatus().power;
+                        const errors = engineering.validatePowerCalculations(powerData);
+                        if (errors.length === 0) {
+                            log('✓ Power calculations valid');
+                        } else {
+                            log(`✗ Power calculations invalid: ${errors.join(', ')}`);
+                        }
+                    }
+                    
+                    // Test 3: Status determination
+                    log('Test 3: Status determination');
+                    const okStatus = engineering.getPowerMetricStatus('generation', 90);
+                    const criticalStatus = engineering.getPowerMetricStatus('generation', 40);
+                    if (okStatus === 'status-ok' && criticalStatus === 'status-critical') {
+                        log('✓ Status determination working correctly');
+                    } else {
+                        log('✗ Status determination failed');
+                    }
+                    
+                    // Test 4: System consumption calculation
+                    log('Test 4: System consumption calculation');
+                    const testSystem = engineering.powerSystems[0];
+                    const powerData = dataSimulator.generateSystemStatus().power;
+                    const consumption = engineering.calculateSystemConsumption(testSystem, powerData);
+                    if (consumption > 0 && consumption < 50) {
+                        log(`✓ System consumption calculated: ${consumption.toFixed(1)}%`);
+                    } else {
+                        log(`✗ System consumption calculation failed: ${consumption}`);
+                    }
+                    
+                    log('All tests completed');
+                    
+                } catch (error) {
+                    log(`✗ Test execution failed: ${error.message}`);
+                }
+            };
+        }
+    </script>
+</body>
+</html>
