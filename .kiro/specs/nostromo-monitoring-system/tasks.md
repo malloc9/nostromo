@@ -61,7 +61,12 @@
   - Write tests for dashboard data integration and display updates
   - _Requirements: 1.1, 1.2, 1.3, 7.1_
 
-- [ ] 6. Create life support monitoring screen
+- [x] 6. Create life support monitoring screen
+
+
+
+
+
   - Implement life-support.js with environmental data tables and trend displays
   - Build ASCII bar charts for oxygen, CO2, pressure, and temperature readings
   - Add zone-based environmental status grid with color-coded indicators

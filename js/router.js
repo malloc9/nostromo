@@ -47,7 +47,17 @@ class NostromoRouter {
             element: 'life-support-screen',
             title: 'LIFE SUPPORT MONITORING',
             breadcrumb: 'MAIN > LIFE SUPPORT',
-            hotkey: 'F2'
+            hotkey: 'F2',
+            onEnter: () => {
+                if (window.lifeSupport) {
+                    window.lifeSupport.activate();
+                }
+            },
+            onExit: () => {
+                if (window.lifeSupport) {
+                    window.lifeSupport.deactivate();
+                }
+            }
         });
 
         this.addRoute('navigation', {

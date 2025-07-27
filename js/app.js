@@ -5,12 +5,14 @@
 let dataSimulator;
 let router;
 let dashboard;
+let lifeSupport;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize core systems
     initializeDataSimulator();
     initializeRouter();
     initializeDashboard();
+    initializeLifeSupport();
     
     // Initialize UI components
     updateSystemTime();
@@ -57,6 +59,16 @@ function initializeDashboard() {
     }
 }
 
+function initializeLifeSupport() {
+    if (typeof NostromoLifeSupport !== 'undefined' && dataSimulator) {
+        lifeSupport = new NostromoLifeSupport(dataSimulator);
+        window.lifeSupport = lifeSupport; // Make globally accessible
+        console.log('Life Support system initialized');
+    } else {
+        console.warn('Life Support or DataSimulator not available');
+    }
+}
+
 function updateSystemTime() {
     const timeElement = document.getElementById('system-time');
     if (timeElement) {
@@ -70,9 +82,10 @@ function initializeBootSequence() {
     const bootMessages = document.querySelectorAll('.boot-line');
     const bootPrompt = document.querySelector('.boot-prompt');
     
-    // Hide the prompt initially
+    // Hide the prompt initially and ensure it's not visible
     if (bootPrompt) {
         bootPrompt.style.opacity = '0';
+        bootPrompt.style.display = 'none';
     }
     
     bootMessages.forEach((message, index) => {
@@ -88,15 +101,19 @@ function initializeBootSequence() {
             message.style.opacity = '1';
             message.classList.add('typing-text');
             
-            // Show prompt after last message
+            // Show prompt after last message in the same spot
             if (index === bootMessages.length - 1) {
                 setTimeout(() => {
+                    // Hide the last message
+                    message.style.opacity = '0';
+                    // Show prompt in the same location
                     if (bootPrompt) {
+                        bootPrompt.style.display = 'block';
                         bootPrompt.style.opacity = '1';
                     }
-                }, 1000);
+                }, 1500);
             }
-        }, (index + 1) * 2000); // Slower timing: 2 seconds between messages
+        }, (index + 1) * 2000); // 2 seconds between messages
     });
 }
 

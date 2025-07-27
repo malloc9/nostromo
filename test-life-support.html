@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Support System Tests - Nostromo Monitoring System</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff41;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .test-output {
+            background: #001100;
+            border: 1px solid #00ff41;
+            padding: 15px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .test-controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .test-button {
+            background: #000;
+            color: #00ff41;
+            border: 2px solid #00ff41;
+            padding: 10px 20px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 10px;
+            text-transform: uppercase;
+        }
+        
+        .test-button:hover {
+            background: #00ff41;
+            color: #000;
+        }
+        
+        .success {
+            color: #00ff41;
+        }
+        
+        .error {
+            color: #ff0000;
+        }
+        
+        .warning {
+            color: #ffaa00;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>NOSTROMO LIFE SUPPORT SYSTEM TESTS</h1>
+            <p>Automated testing for environmental monitoring and alert systems</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+            <button class="test-button" onclick="runIndividualTests()">Run Individual Tests</button>
+            <button class="test-button" onclick="clearOutput()">Clear Output</button>
+        </div>
+        
+        <div class="test-output" id="test-output">
+            Click "Run All Tests" to begin testing the Life Support monitoring system...
+        </div>
+        
+        <div class="test-info">
+            <h3>Test Coverage:</h3>
+            <ul>
+                <li>Life Support System Initialization</li>
+                <li>Alert Threshold Processing</li>
+                <li>Alert Generation Logic</li>
+                <li>ASCII Bar Chart Generation</li>
+                <li>Zone Data Generation and Variations</li>
+                <li>Historical Data Management</li>
+                <li>Trend Chart Generation</li>
+                <li>Zone Status Determination</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load the required modules -->
+    <script src="js/data-simulator.js"></script>
+    <script src="js/life-support.js"></script>
+    <script src="test/life-support.test.js"></script>
+    
+    <script>
+        // Redirect console output to our test display
+        const originalConsole = {
+            log: console.log,
+            warn: console.warn,
+            error: console.error
+        };
+        
+        function redirectConsoleToOutput() {
+            const output = document.getElementById('test-output');
+            
+            console.log = function(...args) {
+                const message = args.join(' ');
+                output.textContent += message + '\n';
+                output.scrollTop = output.scrollHeight;
+                originalConsole.log(...args);
+            };
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                output.innerHTML += `<span class="warning">${message}</span>\n`;
+                output.scrollTop = output.scrollHeight;
+                originalConsole.warn(...args);
+            };
+            
+            console.error = function(...args) {
+                const message = args.join(' ');
+                output.innerHTML += `<span class="error">${message}</span>\n`;
+                output.scrollTop = output.scrollHeight;
+                originalConsole.error(...args);
+            };
+        }
+        
+        function restoreConsole() {
+            console.log = originalConsole.log;
+            console.warn = originalConsole.warn;
+            console.error = originalConsole.error;
+        }
+        
+        function runAllTests() {
+            const output = document.getElementById('test-output');
+            output.innerHTML = '';
+            
+            redirectConsoleToOutput();
+            
+            try {
+                const success = window.lifeSupportTests.runAllTests();
+                if (success) {
+                    output.innerHTML += '<span class="success">\n🎉 All tests completed successfully!</span>\n';
+                } else {
+                    output.innerHTML += '<span class="error">\n💥 Some tests failed. Check the output above.</span>\n';
+                }
+            } catch (error) {
+                output.innerHTML += `<span class="error">\n💥 Test execution failed: ${error.message}</span>\n`;
+            } finally {
+                restoreConsole();
+            }
+        }
+        
+        function runIndividualTests() {
+            const output = document.getElementById('test-output');
+            output.innerHTML = '';
+            
+            redirectConsoleToOutput();
+            
+            const tests = [
+                'testLifeSupportInitialization',
+                'testAlertThresholds',
+                'testAlertGeneration',
+                'testASCIIBarGeneration',
+                'testZoneDataGeneration',
+                'testHistoricalDataManagement',
+                'testTrendChartGeneration',
+                'testZoneStatusDetermination'
+            ];
+            
+            let passedTests = 0;
+            let totalTests = tests.length;
+            
+            console.log('Running individual tests...\n');
+            
+            tests.forEach((testName, index) => {
+                try {
+                    console.log(`${index + 1}/${totalTests}: Running ${testName}...`);
+                    window.lifeSupportTests[testName]();
+                    passedTests++;
+                } catch (error) {
+                    console.error(`❌ ${testName} failed: ${error.message}`);
+                }
+            });
+            
+            console.log(`\nTest Summary: ${passedTests}/${totalTests} tests passed`);
+            
+            if (passedTests === totalTests) {
+                output.innerHTML += '<span class="success">\n🎉 All individual tests passed!</span>\n';
+            } else {
+                output.innerHTML += `<span class="warning">\n⚠️ ${totalTests - passedTests} tests failed.</span>\n`;
+            }
+            
+            restoreConsole();
+        }
+        
+        function clearOutput() {
+            document.getElementById('test-output').innerHTML = 'Output cleared. Ready for new tests...';
+        }
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Life Support Test Suite loaded and ready.');
+        });
+    </script>
+</body>
+</html>
