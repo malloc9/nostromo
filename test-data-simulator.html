@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostromo Data Simulator Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #00ff41;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ff41;
+            border-radius: 5px;
+        }
+        .section h2 {
+            margin-top: 0;
+            color: #00ff41;
+            text-transform: uppercase;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .data-item {
+            background: rgba(0, 255, 65, 0.1);
+            padding: 8px;
+            border-radius: 3px;
+        }
+        .crew-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        .crew-member {
+            background: rgba(0, 255, 65, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+        }
+        button {
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 10px 20px;
+            font-family: inherit;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: rgba(0, 255, 65, 0.2);
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 255, 65, 0.1);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>NOSTROMO DATA SIMULATOR TEST</h1>
+        
+        <div id="status">
+            <strong>STATUS:</strong> <span id="statusText">INITIALIZING...</span>
+        </div>
+        
+        <button onclick="generateData()">GENERATE NEW DATA</button>
+        <button onclick="startAutoUpdate()">START AUTO UPDATE</button>
+        <button onclick="stopAutoUpdate()">STOP AUTO UPDATE</button>
+        <button onclick="runTests()">RUN UNIT TESTS</button>
+        
+        <div class="section">
+            <h2>Power Systems</h2>
+            <div class="data-grid" id="powerData">
+                <!-- Power data will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Life Support</h2>
+            <div class="data-grid" id="lifeSupportData">
+                <!-- Life support data will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Navigation</h2>
+            <div class="data-grid" id="navigationData">
+                <!-- Navigation data will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Crew Status</h2>
+            <div class="crew-grid" id="crewData">
+                <!-- Crew data will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/data-simulator.js"></script>
+    <script src="test/data-simulator.test.js"></script>
+    <script>
+        let simulator;
+        let updateInterval;
+        
+        function initializeSimulator() {
+            simulator = new DataSimulator();
+            document.getElementById('statusText').textContent = 'READY';
+            generateData();
+        }
+        
+        function generateData() {
+            if (!simulator) {
+                initializeSimulator();
+                return;
+            }
+            
+            const data = simulator.generateSystemStatus();
+            updateDisplay(data);
+            document.getElementById('statusText').textContent = `LAST UPDATE: ${data.timestamp.toLocaleTimeString()}`;
+        }
+        
+        function updateDisplay(data) {
+            // Update power data
+            const powerContainer = document.getElementById('powerData');
+            powerContainer.innerHTML = `
+                <div class="data-item">GENERATION: ${data.power.generation}%</div>
+                <div class="data-item">CONSUMPTION: ${data.power.consumption}%</div>
+                <div class="data-item">EFFICIENCY: ${data.power.efficiency}%</div>
+                <div class="data-item">FUEL: ${data.power.fuel}%</div>
+                <div class="data-item">NET POWER: ${data.power.netPower}%</div>
+            `;
+            
+            // Update life support data
+            const lifeSupportContainer = document.getElementById('lifeSupportData');
+            lifeSupportContainer.innerHTML = `
+                <div class="data-item">OXYGEN: ${data.lifeSupport.oxygen}%</div>
+                <div class="data-item">CO2: ${data.lifeSupport.co2}%</div>
+                <div class="data-item">PRESSURE: ${data.lifeSupport.pressure} ATM</div>
+                <div class="data-item">TEMPERATURE: ${data.lifeSupport.temperature}°C</div>
+            `;
+            
+            // Update navigation data
+            const navigationContainer = document.getElementById('navigationData');
+            navigationContainer.innerHTML = `
+                <div class="data-item">X: ${data.navigation.coordinates.x}</div>
+                <div class="data-item">Y: ${data.navigation.coordinates.y}</div>
+                <div class="data-item">Z: ${data.navigation.coordinates.z}</div>
+                <div class="data-item">HEADING: ${data.navigation.heading}°</div>
+                <div class="data-item">VELOCITY: ${data.navigation.velocity} C</div>
+                <div class="data-item">DESTINATION: ${data.navigation.destination}</div>
+            `;
+            
+            // Update crew data
+            const crewContainer = document.getElementById('crewData');
+            crewContainer.innerHTML = data.crew.map(member => `
+                <div class="crew-member">
+                    <strong>${member.name}</strong> (${member.id})<br>
+                    LOCATION: ${member.location}<br>
+                    STATUS: ${member.status.toUpperCase()}<br>
+                    HEART RATE: ${member.vitals.heartRate} BPM<br>
+                    TEMPERATURE: ${member.vitals.temperature}°C<br>
+                    OXYGEN SAT: ${member.vitals.oxygenSat}%
+                </div>
+            `).join('');
+        }
+        
+        function startAutoUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            updateInterval = setInterval(generateData, 2000); // Update every 2 seconds
+            document.getElementById('statusText').textContent = 'AUTO UPDATE ACTIVE';
+        }
+        
+        function stopAutoUpdate() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+            }
+            document.getElementById('statusText').textContent = 'AUTO UPDATE STOPPED';
+        }
+        
+        function runTests() {
+            document.getElementById('statusText').textContent = 'RUNNING TESTS...';
+            if (typeof runDataSimulatorTests === 'function') {
+                runDataSimulatorTests().then(success => {
+                    document.getElementById('statusText').textContent = 
+                        success ? 'ALL TESTS PASSED' : 'SOME TESTS FAILED';
+                });
+            } else {
+                console.log('Test runner not available in browser environment');
+                document.getElementById('statusText').textContent = 'TESTS NOT AVAILABLE';
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', initializeSimulator);
+    </script>
+</body>
+</html>

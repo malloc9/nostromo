@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Router Tests - Nostromo Monitoring System</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff41;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: #66ff66;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #003300;
+            padding: 20px;
+            background: #001100;
+        }
+        
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .screen.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        .screen.screen-enter {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        .screen.screen-exit {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        
+        .nav-bar {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #003300;
+            background: #000;
+        }
+        
+        .nav-item {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 5px 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            color: #00cc33;
+        }
+        
+        .nav-item:hover {
+            border-color: #00cc33;
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        .nav-item.active {
+            color: #66ff66;
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+        }
+        
+        #console {
+            background: #000;
+            border: 1px solid #003300;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        button {
+            background: #001100;
+            color: #00ff41;
+            border: 1px solid #003300;
+            padding: 10px 20px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        button:hover {
+            background: #003300;
+            border-color: #00ff41;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>NOSTROMO ROUTER TEST SUITE</h1>
+        
+        <div class="test-controls">
+            <button onclick="runRouterTests()">Run Router Tests</button>
+            <button onclick="clearConsole()">Clear Console</button>
+            <button onclick="testNavigation()">Test Navigation</button>
+        </div>
+        
+        <div id="console"></div>
+        
+        <!-- Mock navigation for testing -->
+        <div class="nav-bar">
+            <span class="nav-item active" data-screen="dashboard">[F1] DASHBOARD</span>
+            <span class="nav-item" data-screen="life-support">[F2] LIFE SUPPORT</span>
+            <span class="nav-item" data-screen="navigation">[F3] NAVIGATION</span>
+            <span class="nav-item" data-screen="engineering">[F4] ENGINEERING</span>
+            <span class="nav-item" data-screen="crew">[F5] CREW</span>
+        </div>
+        
+        <!-- Mock screens for testing -->
+        <div id="dashboard-screen" class="screen">
+            <h3>Dashboard Screen</h3>
+            <p>This is the dashboard screen content.</p>
+        </div>
+        
+        <div id="life-support-screen" class="screen">
+            <h3>Life Support Screen</h3>
+            <p>This is the life support screen content.</p>
+        </div>
+        
+        <div id="navigation-screen" class="screen">
+            <h3>Navigation Screen</h3>
+            <p>This is the navigation screen content.</p>
+        </div>
+        
+        <div id="engineering-screen" class="screen">
+            <h3>Engineering Screen</h3>
+            <p>This is the engineering screen content.</p>
+        </div>
+        
+        <div id="crew-screen" class="screen">
+            <h3>Crew Screen</h3>
+            <p>This is the crew screen content.</p>
+        </div>
+        
+        <div id="boot-screen" class="screen">
+            <h3>Boot Screen</h3>
+            <p>Press any key to continue...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/router.js"></script>
+    <script>
+        let testRouter;
+        
+        // Override console.log to display in our test console
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleElement = document.getElementById('console');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleElement.textContent += args.join(' ') + '\n';
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleElement.textContent += 'ERROR: ' + args.join(' ') + '\n';
+            consoleElement.scrollTop = consoleElement.scrollHeight;
+        };
+        
+        function clearConsole() {
+            consoleElement.textContent = '';
+        }
+        
+        function runRouterTests() {
+            console.log('=== STARTING ROUTER TESTS ===\n');
+            
+            // Test 1: Router Initialization
+            console.log('Test 1: Router Initialization');
+            testRouter = new NostromoRouter();
+            
+            if (testRouter && typeof testRouter.navigateTo === 'function') {
+                console.log('✓ Router initialized successfully');
+            } else {
+                console.error('✗ Router initialization failed');
+                return;
+            }
+
+            // Test 2: Route Registration
+            console.log('\nTest 2: Route Registration');
+            const routes = testRouter.getAllRoutes();
+            const expectedRoutes = ['dashboard', 'life-support', 'navigation', 'engineering', 'crew'];
+            
+            if (routes.length === expectedRoutes.length && 
+                expectedRoutes.every(route => routes.includes(route))) {
+                console.log('✓ All routes registered correctly');
+                console.log('  Registered routes: ' + routes.join(', '));
+            } else {
+                console.error('✗ Route registration failed');
+                console.error('  Expected: ' + expectedRoutes.join(', '));
+                console.error('  Actual: ' + routes.join(', '));
+            }
+
+            // Test 3: Navigation
+            console.log('\nTest 3: Navigation');
+            testRouter.navigateTo('dashboard', false).then(success => {
+                if (success && testRouter.getCurrentRoute() === 'dashboard') {
+                    console.log('✓ Navigation to dashboard successful');
+                    
+                    // Test screen visibility
+                    const dashboardScreen = document.getElementById('dashboard-screen');
+                    if (dashboardScreen && dashboardScreen.classList.contains('active')) {
+                        console.log('✓ Dashboard screen is active');
+                    } else {
+                        console.error('✗ Dashboard screen not active');
+                    }
+                } else {
+                    console.error('✗ Navigation to dashboard failed');
+                }
+            });
+
+            // Test 4: Hash-based routing
+            console.log('\nTest 4: Hash-based routing');
+            testRouter.goTo('life-support');
+            
+            setTimeout(() => {
+                if (window.location.hash === '#life-support') {
+                    console.log('✓ Hash updated correctly: ' + window.location.hash);
+                } else {
+                    console.error('✗ Hash not updated. Expected: #life-support, Got: ' + window.location.hash);
+                }
+            }, 100);
+
+            // Test 5: Hotkey handling
+            console.log('\nTest 5: Hotkey handling');
+            const hotkeyResult = testRouter.handleHotkey('F3');
+            
+            if (hotkeyResult) {
+                console.log('✓ Hotkey F3 handled correctly');
+            } else {
+                console.error('✗ Hotkey handling failed');
+            }
+
+            // Test 6: Invalid route handling
+            console.log('\nTest 6: Invalid route handling');
+            testRouter.navigateTo('invalid-route', false).then(success => {
+                if (!success) {
+                    console.log('✓ Invalid route handled correctly');
+                } else {
+                    console.error('✗ Invalid route not handled properly');
+                }
+            });
+
+            console.log('\n=== ROUTER TESTS COMPLETED ===');
+        }
+        
+        function testNavigation() {
+            if (!testRouter) {
+                console.log('Please run router tests first to initialize router');
+                return;
+            }
+            
+            console.log('\n=== TESTING INTERACTIVE NAVIGATION ===');
+            
+            const routes = ['dashboard', 'life-support', 'navigation', 'engineering', 'crew'];
+            let currentIndex = 0;
+            
+            function navigateNext() {
+                if (currentIndex < routes.length) {
+                    const route = routes[currentIndex];
+                    console.log(`Navigating to: ${route}`);
+                    testRouter.goTo(route);
+                    currentIndex++;
+                    setTimeout(navigateNext, 1000);
+                } else {
+                    console.log('Navigation test completed');
+                }
+            }
+            
+            navigateNext();
+        }
+        
+        // Initialize navigation click handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-item[data-screen]');
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    if (testRouter) {
+                        const screen = this.dataset.screen;
+                        console.log(`Clicked navigation: ${screen}`);
+                        testRouter.goTo(screen);
+                    }
+                });
+            });
+            
+            // Add keyboard support
+            document.addEventListener('keydown', function(event) {
+                if (testRouter && testRouter.handleHotkey(event.key)) {
+                    event.preventDefault();
+                    console.log(`Hotkey pressed: ${event.key}`);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

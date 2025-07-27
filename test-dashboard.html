@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test - Nostromo Monitoring System</title>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/terminal.css">
+    
+    <style>
+        /* Test-specific styles */
+        .test-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid var(--terminal-border);
+            padding: 15px;
+        }
+        
+        .test-title {
+            color: var(--terminal-green-bright);
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .test-controls {
+            margin-bottom: 20px;
+        }
+        
+        .test-button {
+            background: var(--terminal-bg);
+            border: 1px solid var(--terminal-green-dim);
+            color: var(--terminal-green);
+            padding: 8px 16px;
+            margin-right: 10px;
+            font-family: inherit;
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .test-button:hover {
+            background: var(--terminal-glow);
+            border-color: var(--terminal-green);
+            color: var(--terminal-green-bright);
+        }
+        
+        .test-results {
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--terminal-green-dim);
+        }
+        
+        .dashboard-test-container {
+            height: 600px;
+            border: 2px solid var(--terminal-border);
+            background: var(--terminal-bg);
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-section">
+            <div class="test-title">Dashboard Component Test</div>
+            <div class="test-controls">
+                <button class="test-button" onclick="initializeDashboard()">Initialize Dashboard</button>
+                <button class="test-button" onclick="activateDashboard()">Activate Dashboard</button>
+                <button class="test-button" onclick="deactivateDashboard()">Deactivate Dashboard</button>
+                <button class="test-button" onclick="updateDashboardData()">Update Data</button>
+                <button class="test-button" onclick="runTests()">Run Tests</button>
+            </div>
+            <div class="test-results" id="test-results">
+                Ready to test dashboard functionality...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">Dashboard Display</div>
+            <div class="dashboard-test-container">
+                <div id="dashboard-screen" class="screen active">
+                    <div class="screen-header">
+                        <h2>SHIP STATUS OVERVIEW</h2>
+                        <div class="breadcrumb">MAIN > DASHBOARD</div>
+                    </div>
+                    <div class="screen-content">
+                        <div class="loading-message">
+                            <span>DASHBOARD NOT INITIALIZED</span>
+                            <span class="cursor">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data-simulator.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="test/dashboard.test.js"></script>
+
+    <script>
+        // Test variables
+        let testDataSimulator;
+        let testDashboard;
+        let testResults = [];
+
+        function log(message) {
+            testResults.push(`[${new Date().toTimeString().substring(0, 8)}] ${message}`);
+            updateTestResults();
+        }
+
+        function updateTestResults() {
+            const resultsElement = document.getElementById('test-results');
+            if (resultsElement) {
+                resultsElement.innerHTML = testResults.slice(-10).join('<br>');
+            }
+        }
+
+        function initializeDashboard() {
+            try {
+                // Initialize data simulator
+                if (typeof DataSimulator !== 'undefined') {
+                    testDataSimulator = new DataSimulator();
+                    log('✓ Data simulator initialized');
+                } else {
+                    log('✗ DataSimulator not available');
+                    return;
+                }
+
+                // Initialize dashboard
+                if (typeof NostromoDashboard !== 'undefined') {
+                    testDashboard = new NostromoDashboard(testDataSimulator);
+                    log('✓ Dashboard initialized');
+                } else {
+                    log('✗ NostromoDashboard not available');
+                    return;
+                }
+
+                log('✓ Dashboard initialization complete');
+            } catch (error) {
+                log(`✗ Initialization error: ${error.message}`);
+            }
+        }
+
+        function activateDashboard() {
+            if (!testDashboard) {
+                log('✗ Dashboard not initialized');
+                return;
+            }
+
+            try {
+                testDashboard.activate();
+                log('✓ Dashboard activated');
+                log(`✓ Real-time updates started (${testDashboard.refreshRate}ms interval)`);
+            } catch (error) {
+                log(`✗ Activation error: ${error.message}`);
+            }
+        }
+
+        function deactivateDashboard() {
+            if (!testDashboard) {
+                log('✗ Dashboard not initialized');
+                return;
+            }
+
+            try {
+                testDashboard.deactivate();
+                log('✓ Dashboard deactivated');
+                log('✓ Real-time updates stopped');
+            } catch (error) {
+                log(`✗ Deactivation error: ${error.message}`);
+            }
+        }
+
+        function updateDashboardData() {
+            if (!testDashboard) {
+                log('✗ Dashboard not initialized');
+                return;
+            }
+
+            try {
+                testDashboard.updateData();
+                log('✓ Dashboard data updated manually');
+            } catch (error) {
+                log(`✗ Update error: ${error.message}`);
+            }
+        }
+
+        function runTests() {
+            log('Running dashboard tests...');
+            
+            try {
+                // Test 1: Initialization
+                if (testDashboard && testDataSimulator) {
+                    log('✓ Test 1: Dashboard and data simulator initialized');
+                } else {
+                    log('✗ Test 1: Missing components');
+                    return;
+                }
+
+                // Test 2: Rendering
+                testDashboard.render();
+                const dashboardContainer = document.querySelector('.dashboard-container');
+                if (dashboardContainer) {
+                    log('✓ Test 2: Dashboard rendered successfully');
+                } else {
+                    log('✗ Test 2: Dashboard rendering failed');
+                }
+
+                // Test 3: Data update
+                testDashboard.updateData();
+                const powerContent = document.getElementById('power-content');
+                if (powerContent && powerContent.innerHTML.includes('GENERATION:')) {
+                    log('✓ Test 3: Data update successful');
+                } else {
+                    log('✗ Test 3: Data update failed');
+                }
+
+                // Test 4: Status indicators
+                const statusIndicators = document.querySelectorAll('.status-indicator');
+                if (statusIndicators.length >= 4) {
+                    log(`✓ Test 4: Status indicators present (${statusIndicators.length})`);
+                } else {
+                    log(`✗ Test 4: Missing status indicators (${statusIndicators.length})`);
+                }
+
+                // Test 5: Schematic click handlers
+                const clickableIndicators = document.querySelectorAll('.system-indicator.clickable');
+                if (clickableIndicators.length >= 4) {
+                    log(`✓ Test 5: Clickable indicators present (${clickableIndicators.length})`);
+                } else {
+                    log(`✗ Test 5: Missing clickable indicators (${clickableIndicators.length})`);
+                }
+
+                log('✓ All tests completed');
+
+            } catch (error) {
+                log(`✗ Test error: ${error.message}`);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Dashboard test page loaded');
+            log('Click "Initialize Dashboard" to begin testing');
+        });
+    </script>
+</body>
+</html>
