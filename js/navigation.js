@@ -10,7 +10,7 @@ class NostromoNavigation {
         this.refreshRate = 2000; // 2 seconds
         this.isActive = false;
         this.starMap = null;
-        this.selectedCoordinate = null;
+
         this.starMapSeed = Date.now(); // Seed for random star generation
         
         this.init();
@@ -27,6 +27,7 @@ class NostromoNavigation {
         this.isActive = true;
         this.render();
         this.startRealTimeUpdates();
+        this.setupResizeHandler();
         console.log('Navigation system activated');
     }
 
@@ -36,6 +37,7 @@ class NostromoNavigation {
     deactivate() {
         this.isActive = false;
         this.stopRealTimeUpdates();
+        this.removeResizeHandler();
         console.log('Navigation system deactivated');
     }
 
@@ -65,6 +67,36 @@ class NostromoNavigation {
     }
 
     /**
+     * Setup window resize handler to regenerate star map
+     */
+    setupResizeHandler() {
+        this.resizeHandler = () => {
+            if (this.isActive) {
+                // Debounce resize events
+                clearTimeout(this.resizeTimeout);
+                this.resizeTimeout = setTimeout(() => {
+                    this.regenerateStarMap();
+                }, 300);
+            }
+        };
+        window.addEventListener('resize', this.resizeHandler);
+    }
+
+    /**
+     * Remove window resize handler
+     */
+    removeResizeHandler() {
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = null;
+        }
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout);
+            this.resizeTimeout = null;
+        }
+    }
+
+    /**
      * Render the complete navigation screen layout
      */
     render() {
@@ -83,6 +115,11 @@ class NostromoNavigation {
         screenContent.innerHTML = this.generateNavigationHTML();
         this.setupStarMapClickHandlers();
         this.updateNavigationData();
+        
+        // Force regeneration after DOM is updated to get correct dimensions
+        setTimeout(() => {
+            this.regenerateStarMap();
+        }, 100);
     }
 
     /**
@@ -158,16 +195,6 @@ class NostromoNavigation {
                     </div>
                 </div>
 
-                <!-- Coordinate Details Section -->
-                <div class="coordinate-details-section">
-                    <div class="section-header">COORDINATE DETAILS</div>
-                    <div class="details-content" id="coordinate-details">
-                        <div class="details-placeholder">
-                            SELECT COORDINATES ON STAR MAP FOR DETAILS
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Navigation Status Bar -->
                 <div class="nav-status-bar">
                     <div class="status-item">
@@ -188,11 +215,48 @@ class NostromoNavigation {
     }
 
     /**
+     * Calculate optimal map width based on container size
+     */
+    calculateMapWidth() {
+        // Try to get the actual container width
+        const starMapElement = document.querySelector('.star-map');
+        if (starMapElement) {
+            const containerWidth = starMapElement.clientWidth;
+            // Account for padding and scrollbar, use monospace character width (~6px at 10px font)
+            const charWidth = 6;
+            const availableWidth = Math.floor((containerWidth - 20) / charWidth);
+            // Ensure minimum and maximum bounds, make it fill most of the space
+            return Math.max(100, Math.min(250, availableWidth));
+        }
+        // Fallback to a larger default that should fill most screens
+        return 180;
+    }
+
+    /**
+     * Calculate optimal map height based on container size
+     */
+    calculateMapHeight() {
+        // Try to get the actual container height
+        const starMapElement = document.querySelector('.star-map');
+        if (starMapElement) {
+            const containerHeight = starMapElement.clientHeight;
+            // Account for padding, use line height (~12px at 10px font with 1.2 line-height)
+            const lineHeight = 12;
+            const availableHeight = Math.floor((containerHeight - 20) / lineHeight);
+            // Ensure minimum and maximum bounds
+            return Math.max(25, Math.min(80, availableHeight));
+        }
+        // Fallback to a good default height
+        return 45;
+    }
+
+    /**
      * Generate ASCII star map with coordinate grid and ship position
      */
     generateStarMap() {
-        const mapWidth = 140;  // Even larger width to fill container
-        const mapHeight = 50;  // Even larger height to fill container
+        // Calculate dynamic width based on container size
+        const mapWidth = this.calculateMapWidth();
+        const mapHeight = this.calculateMapHeight();
         let mapHTML = '<pre class="star-field">';
         
         // Generate coordinate grid header
@@ -239,9 +303,9 @@ class NostromoNavigation {
                 const shipX = Math.floor(mapWidth / 2);
                 const shipY = Math.floor(mapHeight / 2);
                 if (x === shipX && y === shipY) {
-                    char = '<span class="ship-position clickable" data-x="' + shipX + '" data-y="' + shipY + '" id="ship-marker">◆</span>';
+                    char = '<span class="ship-position" id="ship-marker">◆</span>';
                 } else if (char !== ' ' && char !== '│' && char !== '┼' && char !== '─') {
-                    char = `<span class="star-point clickable" data-x="${x}" data-y="${y}">${char}</span>`;
+                    char = `<span class="star-point">${char}</span>`;
                 }
                 
                 mapHTML += char;
@@ -382,15 +446,17 @@ class NostromoNavigation {
         const shipMarker = document.getElementById('ship-marker');
         if (!shipMarker) return;
         
-        // Calculate map position based on coordinates (adjusted for even larger map)
-        const mapCenterX = 70; // Center of 140-wide map
-        const mapCenterY = 25; // Center of 50-high map
+        // Calculate map position based on coordinates (dynamic map size)
+        const mapWidth = this.calculateMapWidth();
+        const mapHeight = this.calculateMapHeight();
+        const mapCenterX = Math.floor(mapWidth / 2);
+        const mapCenterY = Math.floor(mapHeight / 2);
         const mapX = Math.round(mapCenterX + (navData.coordinates.x / 400));
         const mapY = Math.round(mapCenterY + (navData.coordinates.y / 400));
         
         // Keep ship within map bounds
-        const clampedX = Math.max(0, Math.min(139, mapX));
-        const clampedY = Math.max(0, Math.min(49, mapY));
+        const clampedX = Math.max(0, Math.min(mapWidth - 1, mapX));
+        const clampedY = Math.max(0, Math.min(mapHeight - 1, mapY));
         
         // Update ship marker position attributes
         shipMarker.dataset.x = clampedX.toString();
@@ -430,139 +496,11 @@ class NostromoNavigation {
      * Set up click handlers for star map interactions
      */
     setupStarMapClickHandlers() {
-        const starMap = document.getElementById('star-map');
-        if (!starMap) return;
-        
-        // Handle clicks on clickable elements in the star map
-        starMap.addEventListener('click', (event) => {
-            const clickable = event.target.closest('.clickable');
-            if (!clickable) return;
-            
-            const x = parseInt(clickable.dataset.x);
-            const y = parseInt(clickable.dataset.y);
-            
-            if (!isNaN(x) && !isNaN(y)) {
-                this.showCoordinateDetails(x, y, clickable);
-            }
-        });
+        // Click handlers removed - no coordinate details functionality
     }
 
-    /**
-     * Show details for selected coordinates
-     */
-    showCoordinateDetails(x, y, element) {
-        this.selectedCoordinate = { x, y };
-        
-        const detailsContent = document.getElementById('coordinate-details');
-        if (!detailsContent) return;
-        
-        // Calculate actual coordinates from map position (adjusted for even larger map)
-        const actualX = (x - 70) * 400; // Adjusted for 140-wide map centered at 70
-        const actualY = (y - 25) * 400; // Adjusted for 50-high map centered at 25
-        
-        // Determine what was clicked
-        const isShip = element.id === 'ship-marker';
-        const isStar = element.classList.contains('star-point');
-        
-        let detailsHTML = `
-            <div class="coordinate-info">
-                <div class="info-header">COORDINATE ANALYSIS</div>
-                <div class="info-grid">
-                    <div class="info-row">
-                        <span class="info-label">MAP POSITION:</span>
-                        <span class="info-value">${x}, ${y}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">ACTUAL COORDS:</span>
-                        <span class="info-value">${actualX.toFixed(1)}, ${actualY.toFixed(1)}</span>
-                    </div>
-        `;
-        
-        if (isShip) {
-            detailsHTML += `
-                    <div class="info-row">
-                        <span class="info-label">OBJECT TYPE:</span>
-                        <span class="info-value status-ok">NOSTROMO VESSEL</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">STATUS:</span>
-                        <span class="info-value status-ok">OPERATIONAL</span>
-                    </div>
-            `;
-        } else if (isStar) {
-            const starType = this.generateStarInfo(x, y);
-            detailsHTML += `
-                    <div class="info-row">
-                        <span class="info-label">OBJECT TYPE:</span>
-                        <span class="info-value">${starType.type}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">MAGNITUDE:</span>
-                        <span class="info-value">${starType.magnitude}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">DISTANCE:</span>
-                        <span class="info-value">${starType.distance} LY</span>
-                    </div>
-            `;
-        } else {
-            detailsHTML += `
-                    <div class="info-row">
-                        <span class="info-label">OBJECT TYPE:</span>
-                        <span class="info-value">EMPTY SPACE</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">SCAN RESULT:</span>
-                        <span class="info-value">NO OBJECTS DETECTED</span>
-                    </div>
-            `;
-        }
-        
-        detailsHTML += `
-                </div>
-                <div class="info-actions">
-                    <button class="nav-button" onclick="window.navigation.calculateRoute(${actualX}, ${actualY})">
-                        SET AS WAYPOINT
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        detailsContent.innerHTML = detailsHTML;
-        
-        // Highlight selected coordinate
-        this.highlightCoordinate(element);
-    }
 
-    /**
-     * Generate star information based on position
-     */
-    generateStarInfo(x, y) {
-        const seed = (x * 7 + y * 13) % 100;
-        const starTypes = [
-            { type: 'G-CLASS STAR', magnitude: '4.2', distance: '12.7' },
-            { type: 'K-CLASS STAR', magnitude: '5.8', distance: '8.3' },
-            { type: 'M-CLASS DWARF', magnitude: '7.1', distance: '4.9' },
-            { type: 'BINARY SYSTEM', magnitude: '3.9', distance: '15.2' },
-            { type: 'RED GIANT', magnitude: '2.1', distance: '23.8' }
-        ];
-        
-        return starTypes[seed % starTypes.length];
-    }
 
-    /**
-     * Highlight selected coordinate on map
-     */
-    highlightCoordinate(element) {
-        // Remove previous highlights
-        const previousHighlight = document.querySelector('.coordinate-highlight');
-        if (previousHighlight) {
-            previousHighlight.classList.remove('coordinate-highlight');
-        }
-        
-        // Add highlight to selected element
-        element.classList.add('coordinate-highlight');
-    }
 
     /**
      * Calculate route to specified coordinates
@@ -582,37 +520,7 @@ class NostromoNavigation {
         // Estimate travel time (simplified)
         const travelTime = distance / (systemData.navigation.velocity * 100); // hours
         
-        // Show route calculation results
-        const detailsContent = document.getElementById('coordinate-details');
-        if (detailsContent) {
-            detailsContent.innerHTML = `
-                <div class="route-calculation">
-                    <div class="info-header">ROUTE CALCULATION</div>
-                    <div class="info-grid">
-                        <div class="info-row">
-                            <span class="info-label">TARGET COORDS:</span>
-                            <span class="info-value">${targetX.toFixed(1)}, ${targetY.toFixed(1)}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">DISTANCE:</span>
-                            <span class="info-value">${distance.toFixed(1)} UNITS</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">BEARING:</span>
-                            <span class="info-value">${bearing.toFixed(1)}°</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">EST. TIME:</span>
-                            <span class="info-value">${travelTime.toFixed(1)} HOURS</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">STATUS:</span>
-                            <span class="info-value status-warning">WAYPOINT SET</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+        // Route calculation completed (no UI display)
         
         console.log(`Route calculated to ${targetX}, ${targetY}: ${distance.toFixed(1)} units, ${bearing.toFixed(1)}°`);
     }

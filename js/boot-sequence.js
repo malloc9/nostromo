@@ -7,13 +7,10 @@ class NostromoBootSequence {
             'INITIALIZING MU/TH/UR 6000 MAINFRAME...',
             'LOADING SHIP SYSTEM PROTOCOLS...',
             'ESTABLISHING SENSOR NETWORK...',
-            'CALIBRATING ENVIRONMENTAL CONTROLS...',
             'CONNECTING TO NAVIGATION ARRAY...',
             'ACTIVATING CREW MONITORING...',
-            'POWER GRID SYNCHRONIZATION...',
             'RUNNING SYSTEM DIAGNOSTICS...',
             'ALL SYSTEMS NOMINAL',
-            'NOSTROMO MONITORING SYSTEM READY'
         ];
         
         this.diagnosticMessages = [
@@ -49,12 +46,7 @@ class NostromoBootSequence {
         try {
             // Show boot screen
             this.showBootScreen();
-            
-            // Play boot sound if available
-            if (window.audioManager) {
-                window.audioManager.playSystemBoot();
-            }
-            
+                        
             // Run boot messages sequence
             await this.runBootMessages();
             
@@ -207,10 +199,7 @@ class NostromoBootSequence {
         for (let i = 0; i < message.length; i++) {
             element.textContent += message[i];
             
-            // Play typing sound occasionally
-            if (window.audioManager && Math.random() < 0.3) {
-                window.audioManager.playKeypress();
-            }
+            // Typing sound removed - silent typing
             
             await this.wait(this.typingSpeed);
         }
@@ -231,9 +220,7 @@ class NostromoBootSequence {
             </div>
         `;
         
-        if (window.audioManager) {
-            window.audioManager.playError();
-        }
+        // Error sound removed - silent error handling
     }
     
     // Complete the boot sequence and transition to main system
@@ -244,10 +231,7 @@ class NostromoBootSequence {
         
         const bootScreen = document.getElementById('boot-screen');
         if (bootScreen && bootScreen.classList.contains('active')) {
-            // Play confirmation sound
-            if (window.audioManager) {
-                window.audioManager.playConfirm();
-            }
+            // Confirmation sound removed - silent completion
             
             // Hide boot screen with fade effect
             bootScreen.style.opacity = '0';
@@ -278,10 +262,7 @@ class NostromoBootSequence {
                 loadingText.textContent = message;
                 loadingOverlay.classList.add('active');
                 
-                // Play loading sound
-                if (window.audioManager) {
-                    window.audioManager.playSystemLoad();
-                }
+                // Loading sound removed - silent loading
                 
                 setTimeout(() => {
                     loadingOverlay.classList.remove('active');

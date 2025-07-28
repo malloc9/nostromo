@@ -158,25 +158,35 @@ dist/
 
 ### Common Issues
 
-1. **Build Fails:**
+1. **"buildHttpError: Not Found" - Pages Not Enabled:**
+   - **Solution:** Go to Settings → Pages, select "GitHub Actions" as source
+   - **Alternative:** Use the gh-pages branch method (see GITHUB_PAGES_SETUP.md)
+   - **Verify:** Repository is public or you have GitHub Pro+ for private repos
+
+2. **Build Fails:**
    - Check Node.js version (requires 16+)
    - Verify all dependencies are installed: `npm ci`
    - Check build logs in GitHub Actions tab
 
-2. **Assets Not Loading:**
+3. **Assets Not Loading:**
    - Ensure all asset paths are relative (no leading `/`)
    - Check that assets are copied to `dist/` directory
    - Verify `.nojekyll` file exists in deployment
 
-3. **Routing Issues:**
+4. **Routing Issues:**
    - Confirm `404.html` redirects to index.html
    - Check that hash-based routing is used (not browser history API)
    - Verify GitHub Pages is serving from correct branch
 
-4. **GitHub Actions Permission Errors:**
+5. **GitHub Actions Permission Errors:**
    - Check repository settings → Actions → General
    - Ensure "Read and write permissions" are enabled
    - Verify Pages deployment permissions are set
+
+6. **Pages Configuration Issues:**
+   - See GITHUB_PAGES_SETUP.md for detailed setup instructions
+   - Consider using the alternative gh-pages branch method
+   - Verify repository settings and permissions
 
 ### Debug Steps
 

@@ -405,29 +405,39 @@ class NostromoCrew {
      * Update crew roster display
      */
     updateCrewRoster(crewData) {
-        crewData.forEach(member => {
-            // Update location
-            const locationElement = document.getElementById(`crew-${member.id}-location`);
-            if (locationElement) {
-                locationElement.textContent = member.location;
-            }
-
-            // Update vital signs summary
-            const hrElement = document.getElementById(`crew-${member.id}-hr`);
-            const tempElement = document.getElementById(`crew-${member.id}-temp`);
-            const o2Element = document.getElementById(`crew-${member.id}-o2`);
-
-            if (hrElement) hrElement.textContent = member.vitals.heartRate;
-            if (tempElement) tempElement.textContent = `${member.vitals.temperature.toFixed(1)}°C`;
-            if (o2Element) o2Element.textContent = `${member.vitals.oxygenSat}%`;
-
-            // Update crew status indicator
-            const indicatorElement = document.getElementById(`crew-${member.id}-indicator`);
-            if (indicatorElement) {
-                const status = this.getCrewHealthStatus(member.vitals);
-                indicatorElement.className = `crew-indicator ${status}`;
-            }
-        });
+        // Regenerate the entire roster to ensure all data is visible
+        const rosterContainer = document.getElementById('crew-roster');
+        if (rosterContainer && crewData) {
+            rosterContainer.innerHTML = crewData.map(member => `
+                <div class="crew-member" id="crew-${member.id}" data-crew-id="${member.id}">
+                    <div class="crew-header">
+                        <span class="crew-name">${member.name}</span>
+                        <span class="crew-status status-${member.status}">${member.status.toUpperCase()}</span>
+                    </div>
+                    <div class="crew-details">
+                        <div class="crew-location">
+                            <span class="detail-label">LOCATION:</span>
+                            <span class="detail-value">${member.location}</span>
+                        </div>
+                        <div class="crew-vitals-summary">
+                            <span class="vital-item">
+                                HR: <span>${member.vitals.heartRate}</span>
+                            </span>
+                            <span class="vital-item">
+                                TEMP: <span>${member.vitals.temperature.toFixed(1)}°C</span>
+                            </span>
+                            <span class="vital-item">
+                                O2: <span>${member.vitals.oxygenSat}%</span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="crew-indicator ${this.getCrewHealthStatus(member.vitals)}">●</div>
+                </div>
+            `).join('');
+            
+            // Re-initialize event listeners after regenerating HTML
+            this.initializeEventListeners();
+        }
     }
 
     /**
