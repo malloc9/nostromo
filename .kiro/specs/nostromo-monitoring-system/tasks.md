@@ -100,7 +100,12 @@
   - Write tests for power calculations and distribution logic
   - _Requirements: 5.1, 5.2, 5.3, 5.4_
 
-- [ ] 9. Create crew monitoring and quarters screen
+- [x] 9. Create crew monitoring and quarters screen
+
+
+
+
+
   - Implement crew.js with personnel roster and individual status panels
   - Build crew location tracking with ship schematic showing crew positions
   - Add simulated vital signs monitoring (heart rate, temperature, oxygen saturation)
@@ -108,7 +113,12 @@
   - Write tests for crew data management and status updates
   - _Requirements: 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 10. Add audio system and sound effects
+- [x] 10. Add audio system and sound effects
+
+
+
+
+
   - Create audio-manager.js for managing ambient sounds and interface effects
   - Implement retro computer sound effects for keyboard clicks, beeps, and alerts
   - Add low-level ambient ship humming and computer processing sounds
@@ -116,7 +126,12 @@
   - Write tests for audio loading, playback, and control functionality
   - _Requirements: 7.4_
 
-- [ ] 11. Implement boot sequence and loading screens
+- [x] 11. Implement boot sequence and loading screens
+
+
+
+
+
   - Create authentic-looking system initialization sequence with typing animation
   - Add boot screen with Nostromo system diagnostics and startup messages
   - Implement loading transitions between screens with appropriate delays
@@ -139,7 +154,12 @@
   - Test state persistence and data synchronization between screens
   - _Requirements: 1.3, 2.2, 2.3_
 
-- [ ] 14. Set up GitHub Pages deployment
+- [x] 14. Set up GitHub Pages deployment
+
+
+
+
+
   - Configure GitHub Actions workflow for automated deployment to GitHub Pages
   - Create deployment script that builds and optimizes static assets
   - Test complete application functionality in GitHub Pages environment

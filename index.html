@@ -85,16 +85,14 @@
  ██║ ╚████║╚██████╔╝███████║   ██║   ██║  ██║╚██████╔╝██║ ╚═╝ ██║╚██████╔╝
  ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝ 
                             </pre>
+                            <div class="system-info">
+                                <div>WEYLAND-YUTANI CORPORATION</div>
+                                <div>MU/TH/UR 6000 MAINFRAME</div>
+                                <div>COMMERCIAL TOWING VEHICLE NOSTROMO</div>
+                            </div>
                         </div>
                         <div class="boot-messages" id="boot-messages">
-                            <div class="boot-line">SYSTEM INITIALIZATION...</div>
-                            <div class="boot-line">LOADING MONITORING PROTOCOLS...</div>
-                            <div class="boot-line">ESTABLISHING SHIP SYSTEM CONNECTIONS...</div>
-                            <div class="boot-line">READY FOR OPERATION</div>
-                        </div>
-                        <div class="boot-prompt">
-                            <span class="prompt-text">PRESS ANY KEY TO CONTINUE</span>
-                            <span class="cursor">_</span>
+                            <!-- Boot messages will be populated by JavaScript -->
                         </div>
                     </div>
                 </div>
@@ -190,11 +188,14 @@
 
     <!-- Scripts -->
     <script src="js/data-simulator.js"></script>
+    <script src="js/audio-manager.js"></script>
+    <script src="js/boot-sequence.js"></script>
     <script src="js/router.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/life-support.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/engineering.js"></script>
+    <script src="js/crew.js"></script>
     <script src="js/app.js"></script>
 </body>
 

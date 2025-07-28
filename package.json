@@ -1,0 +1,37 @@
+{
+  "name": "nostromo-monitoring-system",
+  "version": "1.0.0",
+  "description": "A retro-futuristic ship monitoring interface inspired by the 1979 film Alien",
+  "main": "index.html",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "dev": "node scripts/dev-server.js",
+    "test": "echo \"No tests specified\" && exit 0",
+    "clean": "rm -rf dist",
+    "deploy": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/nostromo-monitoring-system.git"
+  },
+  "keywords": [
+    "nostromo",
+    "alien",
+    "retro",
+    "terminal",
+    "monitoring",
+    "sci-fi",
+    "github-pages"
+  ],
+  "author": "Nostromo Monitoring System",
+  "license": "MIT",
+  "devDependencies": {
+    "html-minifier": "^4.0.0",
+    "clean-css": "^5.3.2",
+    "terser": "^5.19.4",
+    "fs-extra": "^11.1.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

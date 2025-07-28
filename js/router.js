@@ -98,7 +98,17 @@ class NostromoRouter {
             element: 'crew-screen',
             title: 'CREW MONITORING',
             breadcrumb: 'MAIN > CREW',
-            hotkey: 'F5'
+            hotkey: 'F5',
+            onEnter: () => {
+                if (window.crew) {
+                    window.crew.activate();
+                }
+            },
+            onExit: () => {
+                if (window.crew) {
+                    window.crew.deactivate();
+                }
+            }
         });
     }
 
@@ -150,6 +160,10 @@ class NostromoRouter {
         // Check if route exists
         if (!this.routes.has(path)) {
             console.warn(`Route '${path}' not found, redirecting to default`);
+            // Play error sound for invalid routes
+            if (window.audioManager) {
+                window.audioManager.playError();
+            }
             this.setHash(this.defaultRoute);
             return false;
         }
@@ -193,6 +207,11 @@ class NostromoRouter {
 
             // Dispatch route change event
             this.dispatchRouteChangeEvent(path, previousRoute);
+
+            // Play confirmation sound for successful navigation
+            if (window.audioManager && previousRoute !== null) {
+                window.audioManager.playConfirm();
+            }
 
             console.log(`Navigated to: ${path}`);
             return true;
@@ -303,11 +322,42 @@ class NostromoRouter {
 
     // Boot sequence completion handler
     completeBootSequence() {
+        if (window.bootSequence) {
+            return window.bootSequence.completeBootSequence();
+        }
+        
+        // Fallback if boot sequence not available
         const bootScreen = document.getElementById('boot-screen');
         if (bootScreen && bootScreen.classList.contains('active')) {
             bootScreen.classList.remove('active');
             this.navigateTo(this.defaultRoute, true);
+            return true;
         }
+        
+        return false;
+    }
+    
+    // Enhanced navigation with loading transitions
+    async navigateWithTransition(path, showTransition = true) {
+        if (this.isTransitioning) {
+            return false;
+        }
+        
+        const route = this.routes.get(path);
+        if (!route) {
+            console.warn(`Route '${path}' not found`);
+            return false;
+        }
+        
+        // Show transition message if enabled
+        if (showTransition && window.bootSequence && this.currentRoute) {
+            const currentRouteName = this.currentRoute.replace('-', ' ');
+            const newRouteName = path.replace('-', ' ');
+            await window.bootSequence.showTransitionMessage(currentRouteName, newRouteName);
+        }
+        
+        // Perform normal navigation
+        return await this.navigateTo(path, true);
     }
 
     // Hotkey navigation support

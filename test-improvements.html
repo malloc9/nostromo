@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Improvements Test - Nostromo Monitoring System</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/terminal.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+        }
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 10px;
+            border: 1px solid #00ff41;
+            max-width: 200px;
+        }
+        .test-controls button {
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+            font-size: 10px;
+        }
+        .test-controls button:hover {
+            background: #00ff41;
+            color: #000;
+        }
+        .test-controls h3 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+        }
+        #test-status {
+            font-size: 9px;
+            margin-top: 10px;
+            color: #00cc33;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h3>Improvements Test</h3>
+        <button onclick="testBootSequence()">Test Boot</button>
+        <button onclick="testLifeSupport()">Test Life Support</button>
+        <button onclick="testTypingSound()">Test Typing Sound</button>
+        <button onclick="skipToDashboard()">Skip to Dashboard</button>
+        <button onclick="clearSession()">Clear Session</button>
+        <div id="test-status">System ready</div>
+    </div>
+
+    <!-- Main Terminal Container -->
+    <div id="terminal-container" class="app-container">
+        <!-- Terminal Header -->
+        <header class="terminal-header">
+            <div class="system-title">USCSS Nostromo, registration number 1809246(09)</div>
+            <div class="system-status">
+                MU/TH/UR 6000 | <span id="system-time"></span> | STATUS: <span id="main-status" class="status-ok">OPERATIONAL</span>
+            </div>
+        </header>
+
+        <!-- Navigation Bar -->
+        <nav class="nav-bar" id="terminal-nav">
+            <div class="nav-section">
+                <span class="nav-item active" data-screen="dashboard" data-key="F1">
+                    [F1] DASHBOARD
+                </span>
+                <span class="nav-item" data-screen="life-support" data-key="F2">
+                    [F2] LIFE SUPPORT
+                </span>
+                <span class="nav-item" data-screen="navigation" data-key="F3">
+                    [F3] NAVIGATION
+                </span>
+                <span class="nav-item" data-screen="engineering" data-key="F4">
+                    [F4] ENGINEERING
+                </span>
+                <span class="nav-item" data-screen="crew" data-key="F5">
+                    [F5] CREW
+                </span>
+            </div>
+            <div class="nav-controls">
+                <span class="nav-item" id="audio-toggle" data-key="F8">
+                    [F8] AUDIO
+                </span>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="terminal-screen" id="terminal-main">
+            <!-- Screen Container -->
+            <div id="screen-container" class="terminal-content">
+                <!-- Boot Screen -->
+                <div id="boot-screen" class="screen active">
+                    <div class="boot-content">
+                        <div class="boot-header">
+                            <pre class="ascii-art">
+ ███╗   ██╗ ██████╗ ███████╗████████╗██████╗  ██████╗ ███╗   ███╗ ██████╗ 
+ ████╗  ██║██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗████╗ ████║██╔═══██╗
+ ██╔██╗ ██║██║   ██║███████╗   ██║   ██████╔╝██║   ██║██╔████╔██║██║   ██║
+ ██║╚██╗██║██║   ██║╚════██║   ██║   ██╔══██╗██║   ██║██║╚██╔╝██║██║   ██║
+ ██║ ╚████║╚██████╔╝███████║   ██║   ██║  ██║╚██████╔╝██║ ╚═╝ ██║╚██████╔╝
+ ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝ 
+                            </pre>
+                            <div class="system-info">
+                                <div>WEYLAND-YUTANI CORPORATION</div>
+                                <div>MU/TH/UR 6000 MAINFRAME</div>
+                                <div>COMMERCIAL TOWING VEHICLE NOSTROMO</div>
+                            </div>
+                        </div>
+                        <div class="boot-messages" id="boot-messages">
+                            <!-- Boot messages will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Screen -->
+                <div id="dashboard-screen" class="screen">
+                    <div class="screen-header">
+                        <h2>SHIP STATUS OVERVIEW</h2>
+                        <div class="breadcrumb">MAIN > DASHBOARD</div>
+                    </div>
+                    <div class="screen-content">
+                        <div class="loading-message">
+                            <span>DASHBOARD LOADED SUCCESSFULLY</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Life Support Screen -->
+                <div id="life-support-screen" class="screen">
+                    <div class="screen-header">
+                        <h2>LIFE SUPPORT MONITORING</h2>
+                        <div class="breadcrumb">MAIN > LIFE SUPPORT</div>
+                    </div>
+                    <div class="screen-content">
+                        <div class="loading-message">
+                            <span>LOADING LIFE SUPPORT SYSTEMS...</span>
+                            <span class="cursor">_</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Terminal Footer -->
+        <footer class="terminal-footer">
+            <div class="footer-left">
+                <span>WEYLAND-YUTANI CORP.</span>
+                <span class="separator">|</span>
+                <span>COMMERCIAL TOWING VEHICLE</span>
+            </div>
+            <div class="footer-right">
+                <span id="connection-status">CONNECTED</span>
+                <span class="separator">|</span>
+                <span id="data-rate">1.2KB/s</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">INITIALIZING SYSTEMS...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data-simulator.js"></script>
+    <script src="js/audio-manager.js"></script>
+    <script src="js/boot-sequence.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/life-support.js"></script>
+    <script>
+        let bootSequence;
+        let router;
+        let lifeSupport;
+        let dataSimulator;
+        let audioManager;
+        let testStatus = document.getElementById('test-status');
+
+        // Initialize system time
+        function updateSystemTime() {
+            const timeElement = document.getElementById('system-time');
+            if (timeElement) {
+                const now = new Date();
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                const timeString = `2122-06-02 ${hours}:${minutes}:${seconds}`;
+                timeElement.textContent = timeString;
+            }
+        }
+
+        // Initialize systems
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize data simulator
+            if (typeof DataSimulator !== 'undefined') {
+                dataSimulator = new DataSimulator();
+                console.log('Data simulator initialized');
+            }
+
+            // Initialize audio manager
+            if (typeof NostromoAudioManager !== 'undefined') {
+                audioManager = new NostromoAudioManager();
+                window.audioManager = audioManager;
+                console.log('Audio manager initialized');
+            }
+
+            // Initialize boot sequence
+            if (typeof NostromoBootSequence !== 'undefined') {
+                bootSequence = new NostromoBootSequence();
+                window.bootSequence = bootSequence;
+                console.log('Boot sequence initialized');
+            }
+
+            // Initialize router
+            if (typeof NostromoRouter !== 'undefined') {
+                router = new NostromoRouter();
+                window.router = router;
+                console.log('Router initialized');
+            }
+
+            // Initialize life support
+            if (typeof NostromoLifeSupport !== 'undefined' && dataSimulator) {
+                lifeSupport = new NostromoLifeSupport(dataSimulator);
+                window.lifeSupport = lifeSupport;
+                console.log('Life support initialized');
+            }
+
+            // Start system time updates
+            updateSystemTime();
+            setInterval(updateSystemTime, 1000);
+
+            // Set up navigation
+            setupNavigation();
+
+            // Set up keyboard controls
+            setupKeyboard();
+
+            // Start boot sequence
+            startBootSequence();
+
+            testStatus.textContent = 'All systems initialized';
+        });
+
+        async function startBootSequence() {
+            if (bootSequence && bootSequence.shouldShowBootSequence()) {
+                testStatus.textContent = 'Starting boot sequence...';
+                await bootSequence.startBootSequence();
+                bootSequence.markBootSequenceComplete();
+                testStatus.textContent = 'Boot sequence completed';
+            } else {
+                testStatus.textContent = 'Boot sequence skipped';
+                if (router) {
+                    router.navigateTo('dashboard', false);
+                }
+            }
+        }
+
+        function setupNavigation() {
+            const navItems = document.querySelectorAll('.nav-item[data-screen]');
+            navItems.forEach(item => {
+                item.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const screen = this.dataset.screen;
+                    if (screen && router) {
+                        router.goTo(screen);
+                        
+                        // Activate specific systems
+                        if (screen === 'life-support' && lifeSupport) {
+                            lifeSupport.activate();
+                        }
+                        
+                        testStatus.textContent = `Navigated to ${screen}`;
+                    }
+                });
+            });
+        }
+
+        function setupKeyboard() {
+            document.addEventListener('keydown', function(event) {
+                const bootScreen = document.getElementById('boot-screen');
+                if (bootScreen && bootScreen.classList.contains('active')) {
+                    event.preventDefault();
+                    if (bootSequence) {
+                        bootSequence.completeBootSequence();
+                        testStatus.textContent = 'Boot completed via keyboard';
+                    }
+                    return;
+                }
+            });
+        }
+
+        // Test functions
+        function testBootSequence() {
+            sessionStorage.removeItem('nostromo-boot-seen');
+            if (bootSequence) {
+                bootSequence.reset();
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                document.getElementById('boot-screen').classList.add('active');
+                startBootSequence();
+                testStatus.textContent = 'Boot sequence restarted';
+            }
+        }
+
+        function testLifeSupport() {
+            if (router) {
+                router.navigateTo('life-support', true);
+                if (lifeSupport) {
+                    lifeSupport.activate();
+                }
+                testStatus.textContent = 'Life support screen activated';
+            }
+        }
+
+        function testTypingSound() {
+            if (audioManager) {
+                audioManager.playKeypress();
+                testStatus.textContent = 'Typing sound played';
+            }
+        }
+
+        function skipToDashboard() {
+            if (router) {
+                router.navigateTo('dashboard', true);
+                testStatus.textContent = 'Skipped to dashboard';
+            }
+        }
+
+        function clearSession() {
+            sessionStorage.clear();
+            testStatus.textContent = 'Session storage cleared';
+        }
+    </script>
+</body>
+</html>

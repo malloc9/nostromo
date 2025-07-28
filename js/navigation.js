@@ -11,6 +11,7 @@ class NostromoNavigation {
         this.isActive = false;
         this.starMap = null;
         this.selectedCoordinate = null;
+        this.starMapSeed = Date.now(); // Seed for random star generation
         
         this.init();
     }
@@ -190,8 +191,8 @@ class NostromoNavigation {
      * Generate ASCII star map with coordinate grid and ship position
      */
     generateStarMap() {
-        const mapWidth = 60;
-        const mapHeight = 20;
+        const mapWidth = 140;  // Even larger width to fill container
+        const mapHeight = 50;  // Even larger height to fill container
         let mapHTML = '<pre class="star-field">';
         
         // Generate coordinate grid header
@@ -207,6 +208,9 @@ class NostromoNavigation {
         }
         mapHTML += '\n';
 
+        // Generate more random star positions using better randomization
+        const starPositions = this.generateRandomStarPositions(mapWidth, mapHeight, this.starMapSeed);
+
         // Generate star field with grid
         for (let y = 0; y < mapHeight; y++) {
             // Y-axis labels
@@ -215,27 +219,28 @@ class NostromoNavigation {
             for (let x = 0; x < mapWidth; x++) {
                 let char = ' ';
                 
-                // Grid lines
+                // Grid lines (lighter grid)
                 if (x % 10 === 0) {
-                    char = '|';
+                    char = '│';
                 } else if (y % 5 === 0 && x % 5 === 0) {
-                    char = '+';
+                    char = '┼';
+                } else if (y % 5 === 0) {
+                    char = '─';
                 }
                 
-                // Add stars (pseudo-random based on position)
-                const starSeed = (x * 7 + y * 13) % 100;
-                if (starSeed < 3 && char === ' ') {
-                    char = '·';
-                } else if (starSeed < 5 && char === ' ') {
-                    char = '*';
-                } else if (starSeed === 7 && char === ' ') {
-                    char = '✦';
+                // Check if there's a star at this position
+                const starKey = `${x},${y}`;
+                if (starPositions.has(starKey) && char === ' ') {
+                    const starType = starPositions.get(starKey);
+                    char = starType;
                 }
                 
-                // Ship position (will be updated dynamically)
-                if (x === 30 && y === 10) {
-                    char = '<span class="ship-position clickable" data-x="30" data-y="10" id="ship-marker">◊</span>';
-                } else if (char !== ' ' && char !== '|' && char !== '+') {
+                // Ship position (more prominent and centered)
+                const shipX = Math.floor(mapWidth / 2);
+                const shipY = Math.floor(mapHeight / 2);
+                if (x === shipX && y === shipY) {
+                    char = '<span class="ship-position clickable" data-x="' + shipX + '" data-y="' + shipY + '" id="ship-marker">◆</span>';
+                } else if (char !== ' ' && char !== '│' && char !== '┼' && char !== '─') {
                     char = `<span class="star-point clickable" data-x="${x}" data-y="${y}">${char}</span>`;
                 }
                 
@@ -246,6 +251,78 @@ class NostromoNavigation {
         
         mapHTML += '</pre>';
         return mapHTML;
+    }
+
+    /**
+     * Generate random star positions with better distribution
+     */
+    generateRandomStarPositions(width, height, baseSeed = 12345) {
+        const starPositions = new Map();
+        const starTypes = ['·', '∘', '*', '✦', '✧', '⋆', '✱', '✯', '⊙', '☆', '✶', '✴', '◦', '●', '○', '◉'];
+        const starDensity = 0.15; // 15% chance of star per position - even more stars
+        const nebulaTypes = ['░', '▒', '▓']; // Nebula characters for background
+        
+        // Use a more sophisticated random number generator for better distribution
+        const seedRandom = (seed) => {
+            let x = Math.sin(seed + baseSeed) * 10000;
+            return x - Math.floor(x);
+        };
+        
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                // Create multiple seeds for better randomness
+                const seed1 = x * 73 + y * 137 + 42;
+                const seed2 = x * 97 + y * 163 + 17;
+                const seed3 = x * 113 + y * 179 + 89;
+                
+                const random1 = seedRandom(seed1);
+                const random2 = seedRandom(seed2);
+                const random3 = seedRandom(seed3);
+                
+                // Combine multiple random values for better distribution
+                const combinedRandom = (random1 + random2 + random3) / 3;
+                
+                if (combinedRandom < starDensity) {
+                    // Choose star type based on another random value
+                    const typeIndex = Math.floor(random2 * starTypes.length);
+                    const starType = starTypes[typeIndex];
+                    
+                    // Add some clustering by checking nearby positions
+                    const clusterBonus = this.getClusterBonus(x, y, starPositions);
+                    if (combinedRandom < starDensity + clusterBonus) {
+                        starPositions.set(`${x},${y}`, starType);
+                    }
+                } else if (combinedRandom < starDensity + 0.03) {
+                    // Add some nebula effects (3% chance)
+                    const nebulaIndex = Math.floor(random3 * nebulaTypes.length);
+                    const nebulaType = nebulaTypes[nebulaIndex];
+                    starPositions.set(`${x},${y}`, `<span class="nebula-point">${nebulaType}</span>`);
+                }
+            }
+        }
+        
+        return starPositions;
+    }
+
+    /**
+     * Calculate clustering bonus for more realistic star distribution
+     */
+    getClusterBonus(x, y, existingStars) {
+        let nearbyStars = 0;
+        const checkRadius = 3;
+        
+        for (let dy = -checkRadius; dy <= checkRadius; dy++) {
+            for (let dx = -checkRadius; dx <= checkRadius; dx++) {
+                if (dx === 0 && dy === 0) continue;
+                const key = `${x + dx},${y + dy}`;
+                if (existingStars.has(key)) {
+                    nearbyStars++;
+                }
+            }
+        }
+        
+        // Small bonus for clustering, but not too much
+        return nearbyStars * 0.01;
     }
 
     /**
@@ -305,17 +382,22 @@ class NostromoNavigation {
         const shipMarker = document.getElementById('ship-marker');
         if (!shipMarker) return;
         
-        // Calculate map position based on coordinates
-        // This is a simplified mapping - in reality you'd use proper coordinate transformation
-        const mapX = Math.round(30 + (navData.coordinates.x / 100));
-        const mapY = Math.round(10 + (navData.coordinates.y / 100));
+        // Calculate map position based on coordinates (adjusted for even larger map)
+        const mapCenterX = 70; // Center of 140-wide map
+        const mapCenterY = 25; // Center of 50-high map
+        const mapX = Math.round(mapCenterX + (navData.coordinates.x / 400));
+        const mapY = Math.round(mapCenterY + (navData.coordinates.y / 400));
+        
+        // Keep ship within map bounds
+        const clampedX = Math.max(0, Math.min(139, mapX));
+        const clampedY = Math.max(0, Math.min(49, mapY));
         
         // Update ship marker position attributes
-        shipMarker.dataset.x = mapX.toString();
-        shipMarker.dataset.y = mapY.toString();
+        shipMarker.dataset.x = clampedX.toString();
+        shipMarker.dataset.y = clampedY.toString();
         
-        // Update tooltip or status
-        shipMarker.title = `Ship Position: ${navData.coordinates.x.toFixed(1)}, ${navData.coordinates.y.toFixed(1)}, ${navData.coordinates.z.toFixed(1)}`;
+        // Update tooltip with more detailed information
+        shipMarker.title = `NOSTROMO POSITION\nCoords: ${navData.coordinates.x.toFixed(1)}, ${navData.coordinates.y.toFixed(1)}, ${navData.coordinates.z.toFixed(1)}\nHeading: ${navData.heading.toFixed(1)}°\nVelocity: ${navData.velocity.toFixed(3)}c`;
     }
 
     /**
@@ -374,9 +456,9 @@ class NostromoNavigation {
         const detailsContent = document.getElementById('coordinate-details');
         if (!detailsContent) return;
         
-        // Calculate actual coordinates from map position
-        const actualX = (x - 30) * 100;
-        const actualY = (y - 10) * 100;
+        // Calculate actual coordinates from map position (adjusted for even larger map)
+        const actualX = (x - 70) * 400; // Adjusted for 140-wide map centered at 70
+        const actualY = (y - 25) * 400; // Adjusted for 50-high map centered at 25
         
         // Determine what was clicked
         const isShip = element.id === 'ship-marker';
@@ -541,6 +623,23 @@ class NostromoNavigation {
     getCurrentNavigationData() {
         if (!this.dataSimulator) return null;
         return this.dataSimulator.generateSystemStatus().navigation;
+    }
+
+    /**
+     * Regenerate star map with new random seed
+     */
+    regenerateStarMap(seed = null) {
+        if (seed !== null) {
+            this.starMapSeed = seed;
+        } else {
+            this.starMapSeed = Date.now();
+        }
+        
+        const starMapElement = document.getElementById('star-map');
+        if (starMapElement) {
+            starMapElement.innerHTML = this.generateStarMap();
+            this.setupStarMapClickHandlers();
+        }
     }
 
     /**

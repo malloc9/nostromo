@@ -457,36 +457,60 @@ class NostromoLifeSupport {
     }
 
     /**
-     * Generate ASCII trend chart
+     * Generate ASCII trend chart with multiple environmental parameters
      */
     generateTrendChart() {
         if (this.historicalData.length < 3) {
             return '<div class="chart-loading">COLLECTING TREND DATA...</div>';
         }
 
-        const chartHeight = 8;
-        const chartWidth = 40;
-        
-        // Get oxygen trend data (most critical metric)
-        const oxygenData = this.historicalData.map(d => d.oxygen);
-        const minValue = Math.min(...oxygenData);
-        const maxValue = Math.max(...oxygenData);
-        const range = maxValue - minValue || 1;
+        const chartHeight = 6;
+        const chartWidth = 35;
         
         let chart = '<div class="trend-chart-ascii">\n';
-        chart += '<div class="chart-title">OXYGEN LEVEL TREND (LAST 20 READINGS)</div>\n';
+        chart += '<div class="chart-title">ENVIRONMENTAL TRENDS (LAST 20 READINGS)</div>\n';
+        
+        // Generate charts for multiple parameters
+        const parameters = [
+            { key: 'oxygen', label: 'OXYGEN LEVEL', unit: '%', color: 'green' },
+            { key: 'co2', label: 'CO2 LEVEL', unit: 'ppm', color: 'yellow' },
+            { key: 'pressure', label: 'PRESSURE', unit: 'atm', color: 'blue' },
+            { key: 'temperature', label: 'TEMPERATURE', unit: '°C', color: 'red' }
+        ];
+        
+        for (const param of parameters) {
+            chart += this.generateParameterChart(param, chartHeight, chartWidth);
+        }
+        
+        chart += '</div>';
+        return chart;
+    }
+    
+    /**
+     * Generate chart for a specific parameter
+     */
+    generateParameterChart(param, chartHeight, chartWidth) {
+        const data = this.historicalData.map(d => d[param.key]);
+        const minValue = Math.min(...data);
+        const maxValue = Math.max(...data);
+        const range = maxValue - minValue || 1;
+        const currentValue = data[data.length - 1];
+        
+        let chart = `<div class="parameter-chart">\n`;
+        chart += `<div class="chart-subtitle">${param.label} (${param.unit})</div>\n`;
         chart += '<pre class="chart-display">\n';
         
-        // Generate chart lines
-        for (let y = chartHeight - 1; y >= 0; y--) {
+        // Generate mini chart (reduced height for multiple charts)
+        const miniHeight = 4;
+        for (let y = miniHeight - 1; y >= 0; y--) {
             let line = '';
-            const threshold = minValue + (range * y / (chartHeight - 1));
+            const threshold = minValue + (range * y / (miniHeight - 1));
             
-            for (let x = 0; x < Math.min(chartWidth, oxygenData.length); x++) {
-                const dataIndex = Math.max(0, oxygenData.length - chartWidth + x);
-                const value = oxygenData[dataIndex];
+            for (let x = 0; x < Math.min(chartWidth, data.length); x++) {
+                const dataIndex = Math.max(0, data.length - chartWidth + x);
+                const value = data[dataIndex];
                 
-                if (Math.abs(value - threshold) < range / (chartHeight * 2)) {
+                if (Math.abs(value - threshold) < range / (miniHeight * 2)) {
                     line += '█';
                 } else if (value > threshold) {
                     line += ' ';
@@ -495,18 +519,31 @@ class NostromoLifeSupport {
                 }
             }
             
-            const label = threshold.toFixed(1).padStart(5);
+            const label = threshold.toFixed(param.key === 'temperature' ? 1 : 0).padStart(4);
             chart += `${label}│${line}\n`;
         }
         
-        // Add bottom axis
-        chart += '     └' + '─'.repeat(Math.min(chartWidth, oxygenData.length)) + '\n';
-        chart += '      ' + 'TIME →'.padStart(Math.min(chartWidth, oxygenData.length) / 2) + '\n';
+        // Add current value and trend indicator
+        const trend = this.calculateTrend(data);
+        const trendSymbol = trend > 0.1 ? '↗' : trend < -0.1 ? '↘' : '→';
+        chart += `     └${'─'.repeat(Math.min(chartWidth, data.length))}\n`;
+        chart += `      CURRENT: ${currentValue.toFixed(param.key === 'temperature' ? 1 : 0)}${param.unit} ${trendSymbol}\n`;
         
         chart += '</pre>\n';
-        chart += '</div>';
+        chart += '</div>\n';
         
         return chart;
+    }
+    
+    /**
+     * Calculate trend direction for a data series
+     */
+    calculateTrend(data) {
+        if (data.length < 3) return 0;
+        
+        const recent = data.slice(-3);
+        const slope = (recent[2] - recent[0]) / 2;
+        return slope;
     }
 
     /**

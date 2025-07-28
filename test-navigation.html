@@ -3,520 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navigation System Test - Nostromo Monitoring System</title>
-    
-    <!-- Stylesheets -->
+    <title>Navigation Test - Nostromo Monitoring System</title>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/terminal.css">
-    
     <style>
-        /* Test-specific styles */
-        .test-container {
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
         }
-        
-        .test-section {
-            margin-bottom: 30px;
-            border: 1px solid var(--terminal-border);
-            padding: 15px;
-            background: var(--terminal-bg-alt);
-        }
-        
-        .test-title {
-            color: var(--terminal-green-bright);
-            font-size: 18px;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .test-description {
-            color: var(--terminal-green-dim);
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-        
         .test-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .test-button {
-            background: var(--terminal-bg);
-            border: 1px solid var(--terminal-green-dim);
-            color: var(--terminal-green);
-            padding: 8px 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        
-        .test-button:hover {
-            background: var(--terminal-glow);
-            border-color: var(--terminal-green-bright);
-            color: var(--terminal-green-bright);
-        }
-        
-        .test-output {
-            background: var(--terminal-bg);
-            border: 1px solid var(--terminal-green-dim);
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.9);
             padding: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: var(--terminal-green);
-            min-height: 100px;
-            overflow-y: auto;
-            white-space: pre-wrap;
+            border: 1px solid #00ff41;
+            max-width: 200px;
         }
-        
-        .navigation-test-screen {
-            height: 600px;
-            border: 2px solid var(--terminal-border);
-            background: var(--terminal-bg);
-            margin: 10px 0;
+        .test-controls button {
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+        .test-controls button:hover {
+            background: #00ff41;
+            color: #000;
+        }
+        .test-controls h3 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+        }
+        #test-status {
+            font-size: 10px;
+            margin-top: 10px;
+            color: #00cc33;
         }
     </style>
 </head>
 <body>
-    <div class="test-container">
+    <div class="test-controls">
+        <h3>Navigation Test</h3>
+        <button onclick="refreshMap()">Refresh Map</button>
+        <button onclick="moveShip()">Move Ship</button>
+        <button onclick="toggleGrid()">Toggle Grid</button>
+        <button onclick="zoomIn()">Zoom In</button>
+        <button onclick="zoomOut()">Zoom Out</button>
+        <div id="test-status">Navigation system ready</div>
+    </div>
+
+    <!-- Main Terminal Container -->
+    <div id="terminal-container" class="app-container">
+        <!-- Terminal Header -->
         <header class="terminal-header">
-            <div class="system-title">Navigation System Test Suite</div>
+            <div class="system-title">USCSS Nostromo - Navigation Test</div>
             <div class="system-status">
-                Testing Navigation & Positioning Module | <span id="test-time"></span>
+                STELLAR CARTOGRAPHY | <span id="system-time"></span> | STATUS: <span class="status-ok">OPERATIONAL</span>
             </div>
         </header>
 
-        <!-- Navigation Screen Test -->
-        <div class="test-section">
-            <div class="test-title">Navigation Screen Rendering Test</div>
-            <div class="test-description">
-                Test the navigation screen rendering, star map generation, and coordinate display.
+        <!-- Navigation Screen -->
+        <div id="navigation-screen" class="screen active">
+            <div class="screen-header">
+                <h2>NAVIGATION & POSITIONING</h2>
+                <div class="breadcrumb">MAIN > NAVIGATION</div>
             </div>
-            <div class="test-controls">
-                <button class="test-button" onclick="testNavigationRendering()">Render Navigation Screen</button>
-                <button class="test-button" onclick="testDataUpdates()">Update Navigation Data</button>
-                <button class="test-button" onclick="testStarMapInteraction()">Test Star Map Clicks</button>
-                <button class="test-button" onclick="clearNavigationTest()">Clear Screen</button>
-            </div>
-            <div class="navigation-test-screen" id="navigation-test-container">
-                <div id="navigation-screen" class="screen active">
-                    <div class="screen-header">
-                        <h2>NAVIGATION & POSITIONING</h2>
-                        <div class="breadcrumb">MAIN > NAVIGATION</div>
-                    </div>
-                    <div class="screen-content">
-                        <div class="loading-message">
-                            <span>CLICK 'RENDER NAVIGATION SCREEN' TO START TEST</span>
-                        </div>
-                    </div>
+            <div class="screen-content">
+                <!-- Navigation content will be populated by JavaScript -->
+                <div class="loading-message">
+                    <span>LOADING NAVIGATION SYSTEMS...</span>
+                    <span class="cursor">_</span>
                 </div>
             </div>
-            <div class="test-output" id="navigation-output">Navigation test output will appear here...</div>
-        </div>
-
-        <!-- Coordinate Calculation Test -->
-        <div class="test-section">
-            <div class="test-title">Navigation Calculations Test</div>
-            <div class="test-description">
-                Test coordinate calculations, route planning, and navigation data validation.
-            </div>
-            <div class="test-controls">
-                <button class="test-button" onclick="testCoordinateCalculations()">Test Coordinate Math</button>
-                <button class="test-button" onclick="testRouteCalculation()">Test Route Planning</button>
-                <button class="test-button" onclick="testDataValidation()">Test Data Validation</button>
-                <button class="test-button" onclick="testStarGeneration()">Test Star Generation</button>
-            </div>
-            <div class="test-output" id="calculation-output">Calculation test output will appear here...</div>
-        </div>
-
-        <!-- Real-time Updates Test -->
-        <div class="test-section">
-            <div class="test-title">Real-time Updates Test</div>
-            <div class="test-description">
-                Test the real-time data updates and system activation/deactivation.
-            </div>
-            <div class="test-controls">
-                <button class="test-button" onclick="testActivation()">Test Activation</button>
-                <button class="test-button" onclick="testDeactivation()">Test Deactivation</button>
-                <button class="test-button" onclick="testUpdateCycle()">Monitor Update Cycle</button>
-                <button class="test-button" onclick="stopMonitoring()">Stop Monitoring</button>
-            </div>
-            <div class="test-output" id="updates-output">Real-time updates test output will appear here...</div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="js/data-simulator.js"></script>
     <script src="js/navigation.js"></script>
-    
     <script>
-        // Test variables
-        let testDataSimulator;
-        let testNavigation;
-        let monitoringInterval;
+        let navigation;
+        let dataSimulator;
+        let testStatus = document.getElementById('test-status');
+        let shipPosition = { x: 0, y: 0, z: 0 };
 
-        // Initialize test environment
-        document.addEventListener('DOMContentLoaded', function() {
-            updateTestTime();
-            setInterval(updateTestTime, 1000);
-            
-            // Initialize test data simulator
-            if (typeof DataSimulator !== 'undefined') {
-                testDataSimulator = new DataSimulator();
-                log('navigation-output', 'Data simulator initialized for testing');
-            } else {
-                log('navigation-output', 'ERROR: DataSimulator not available');
-            }
-            
-            // Initialize test navigation system
-            if (typeof NostromoNavigation !== 'undefined' && testDataSimulator) {
-                testNavigation = new NostromoNavigation(testDataSimulator);
-                window.navigation = testNavigation; // Make globally accessible for button clicks
-                log('navigation-output', 'Navigation system initialized for testing');
-            } else {
-                log('navigation-output', 'ERROR: NostromoNavigation not available');
-            }
-        });
-
-        function updateTestTime() {
-            const timeElement = document.getElementById('test-time');
+        // Initialize system time
+        function updateSystemTime() {
+            const timeElement = document.getElementById('system-time');
             if (timeElement) {
                 const now = new Date();
-                timeElement.textContent = now.toTimeString().substring(0, 8);
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                const timeString = `2122-06-02 ${hours}:${minutes}:${seconds}`;
+                timeElement.textContent = timeString;
             }
         }
 
-        function log(outputId, message) {
-            const output = document.getElementById(outputId);
-            if (output) {
-                const timestamp = new Date().toTimeString().substring(0, 8);
-                output.textContent += `[${timestamp}] ${message}\n`;
-                output.scrollTop = output.scrollHeight;
+        // Initialize navigation system
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize data simulator
+            if (typeof DataSimulator !== 'undefined') {
+                dataSimulator = new DataSimulator();
+                console.log('Data simulator initialized');
+            }
+
+            // Initialize navigation system
+            if (typeof NostromoNavigation !== 'undefined' && dataSimulator) {
+                navigation = new NostromoNavigation(dataSimulator);
+                navigation.activate();
+                console.log('Navigation system initialized');
+                testStatus.textContent = 'Navigation system active';
+            } else {
+                console.error('Navigation system or DataSimulator not available');
+                testStatus.textContent = 'ERROR: System not available';
+            }
+
+            // Start system time updates
+            updateSystemTime();
+            setInterval(updateSystemTime, 1000);
+        });
+
+        // Test functions
+        function refreshMap() {
+            if (navigation) {
+                navigation.render();
+                testStatus.textContent = 'Star map refreshed';
             }
         }
 
-        function clearLog(outputId) {
-            const output = document.getElementById(outputId);
-            if (output) {
-                output.textContent = '';
+        function moveShip() {
+            if (dataSimulator) {
+                // Simulate ship movement
+                shipPosition.x += (Math.random() - 0.5) * 1000;
+                shipPosition.y += (Math.random() - 0.5) * 1000;
+                shipPosition.z += (Math.random() - 0.5) * 100;
+                
+                // Update navigation data
+                navigation.updateNavigationData();
+                testStatus.textContent = `Ship moved to ${shipPosition.x.toFixed(1)}, ${shipPosition.y.toFixed(1)}`;
             }
         }
 
-        // Navigation Rendering Tests
-        function testNavigationRendering() {
-            log('navigation-output', 'Testing navigation screen rendering...');
-            
-            if (!testNavigation) {
-                log('navigation-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            try {
-                testNavigation.render();
-                log('navigation-output', 'SUCCESS: Navigation screen rendered');
-                
-                // Check for key elements
-                const starMap = document.getElementById('star-map');
-                const shipMarker = document.getElementById('ship-marker');
-                const positionElements = document.querySelectorAll('[id^="pos-"]');
-                
-                if (starMap) log('navigation-output', '✓ Star map container created');
-                if (shipMarker) log('navigation-output', '✓ Ship position marker created');
-                if (positionElements.length >= 3) log('navigation-output', '✓ Position display elements created');
-                
-                const clickableElements = document.querySelectorAll('.clickable');
-                log('navigation-output', `✓ ${clickableElements.length} clickable elements created`);
-                
-            } catch (error) {
-                log('navigation-output', `ERROR: ${error.message}`);
+        function toggleGrid() {
+            const starField = document.querySelector('.star-field');
+            if (starField) {
+                starField.classList.toggle('no-grid');
+                testStatus.textContent = 'Grid toggled';
             }
         }
 
-        function testDataUpdates() {
-            log('navigation-output', 'Testing navigation data updates...');
-            
-            if (!testNavigation) {
-                log('navigation-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            try {
-                testNavigation.updateNavigationData();
-                log('navigation-output', 'SUCCESS: Navigation data updated');
-                
-                // Check updated values
-                const posX = document.getElementById('pos-x');
-                const posY = document.getElementById('pos-y');
-                const heading = document.getElementById('nav-heading');
-                const velocity = document.getElementById('nav-velocity');
-                
-                if (posX && posX.textContent !== '--.--') {
-                    log('navigation-output', `✓ Position X: ${posX.textContent}`);
-                }
-                if (posY && posY.textContent !== '--.--') {
-                    log('navigation-output', `✓ Position Y: ${posY.textContent}`);
-                }
-                if (heading && heading.textContent !== '---°') {
-                    log('navigation-output', `✓ Heading: ${heading.textContent}`);
-                }
-                if (velocity && velocity.textContent !== '-.--- C') {
-                    log('navigation-output', `✓ Velocity: ${velocity.textContent}`);
-                }
-                
-            } catch (error) {
-                log('navigation-output', `ERROR: ${error.message}`);
+        function zoomIn() {
+            const starField = document.querySelector('.star-field');
+            if (starField) {
+                const currentSize = parseFloat(getComputedStyle(starField).fontSize);
+                starField.style.fontSize = (currentSize + 1) + 'px';
+                testStatus.textContent = `Zoomed in: ${currentSize + 1}px`;
             }
         }
 
-        function testStarMapInteraction() {
-            log('navigation-output', 'Testing star map interaction...');
-            
-            const starPoints = document.querySelectorAll('.star-point.clickable');
-            const shipMarker = document.getElementById('ship-marker');
-            
-            if (starPoints.length > 0) {
-                log('navigation-output', `Found ${starPoints.length} clickable star points`);
-                
-                // Simulate clicking on first star point
-                const firstStar = starPoints[0];
-                const x = parseInt(firstStar.dataset.x);
-                const y = parseInt(firstStar.dataset.y);
-                
-                if (testNavigation && !isNaN(x) && !isNaN(y)) {
-                    testNavigation.showCoordinateDetails(x, y, firstStar);
-                    log('navigation-output', `✓ Clicked star at map position (${x}, ${y})`);
-                    
-                    const detailsContent = document.getElementById('coordinate-details');
-                    if (detailsContent && detailsContent.innerHTML.includes('COORDINATE ANALYSIS')) {
-                        log('navigation-output', '✓ Coordinate details displayed');
-                    }
-                }
-            }
-            
-            if (shipMarker) {
-                log('navigation-output', '✓ Ship marker found and clickable');
-                const x = parseInt(shipMarker.dataset.x);
-                const y = parseInt(shipMarker.dataset.y);
-                
-                if (testNavigation && !isNaN(x) && !isNaN(y)) {
-                    testNavigation.showCoordinateDetails(x, y, shipMarker);
-                    log('navigation-output', `✓ Clicked ship marker at (${x}, ${y})`);
+        function zoomOut() {
+            const starField = document.querySelector('.star-field');
+            if (starField) {
+                const currentSize = parseFloat(getComputedStyle(starField).fontSize);
+                if (currentSize > 6) {
+                    starField.style.fontSize = (currentSize - 1) + 'px';
+                    testStatus.textContent = `Zoomed out: ${currentSize - 1}px`;
                 }
             }
         }
 
-        function clearNavigationTest() {
-            const screenContent = document.querySelector('#navigation-screen .screen-content');
-            if (screenContent) {
-                screenContent.innerHTML = '<div class="loading-message"><span>SCREEN CLEARED</span></div>';
+        // Add some CSS for grid toggle
+        const style = document.createElement('style');
+        style.textContent = `
+            .star-field.no-grid {
+                color: var(--terminal-green-bright);
             }
-            clearLog('navigation-output');
-            log('navigation-output', 'Navigation test screen cleared');
-        }
-
-        // Calculation Tests
-        function testCoordinateCalculations() {
-            log('calculation-output', 'Testing coordinate calculations...');
-            
-            if (!testNavigation || !testDataSimulator) {
-                log('calculation-output', 'ERROR: Required systems not initialized');
-                return;
+            .star-field.no-grid .star-point {
+                color: var(--terminal-green-bright);
             }
-            
-            try {
-                const navData = testDataSimulator.generateSystemStatus().navigation;
-                log('calculation-output', `Current position: (${navData.coordinates.x}, ${navData.coordinates.y}, ${navData.coordinates.z})`);
-                log('calculation-output', `Heading: ${navData.heading}°`);
-                log('calculation-output', `Velocity: ${navData.velocity} C`);
-                
-                // Test coordinate validation
-                const errors = testNavigation.validateNavigationCalculations(navData);
-                if (errors.length === 0) {
-                    log('calculation-output', '✓ Navigation data validation passed');
-                } else {
-                    log('calculation-output', `✗ Validation errors: ${errors.join(', ')}`);
-                }
-                
-            } catch (error) {
-                log('calculation-output', `ERROR: ${error.message}`);
-            }
-        }
-
-        function testRouteCalculation() {
-            log('calculation-output', 'Testing route calculation...');
-            
-            if (!testNavigation || !testDataSimulator) {
-                log('calculation-output', 'ERROR: Required systems not initialized');
-                return;
-            }
-            
-            try {
-                const navData = testDataSimulator.generateSystemStatus().navigation;
-                const targetX = -2000;
-                const targetY = 1500;
-                
-                log('calculation-output', `Calculating route from (${navData.coordinates.x}, ${navData.coordinates.y}) to (${targetX}, ${targetY})`);
-                
-                // Calculate expected values
-                const deltaX = targetX - navData.coordinates.x;
-                const deltaY = targetY - navData.coordinates.y;
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const bearing = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-                const travelTime = distance / (navData.velocity * 100);
-                
-                log('calculation-output', `Expected distance: ${distance.toFixed(1)} units`);
-                log('calculation-output', `Expected bearing: ${bearing.toFixed(1)}°`);
-                log('calculation-output', `Expected travel time: ${travelTime.toFixed(1)} hours`);
-                
-                // Test the actual calculation
-                testNavigation.calculateRoute(targetX, targetY);
-                log('calculation-output', '✓ Route calculation completed');
-                
-            } catch (error) {
-                log('calculation-output', `ERROR: ${error.message}`);
-            }
-        }
-
-        function testDataValidation() {
-            log('calculation-output', 'Testing data validation...');
-            
-            if (!testNavigation) {
-                log('calculation-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            // Test valid data
-            const validData = {
-                coordinates: { x: -2847.3, y: 1592.7, z: -834.2 },
-                heading: 127.4,
-                velocity: 0.15
-            };
-            
-            let errors = testNavigation.validateNavigationCalculations(validData);
-            log('calculation-output', `Valid data test: ${errors.length === 0 ? 'PASSED' : 'FAILED'}`);
-            
-            // Test invalid coordinates
-            const invalidCoords = {
-                coordinates: { x: 'invalid', y: 1592.7, z: -834.2 },
-                heading: 127.4,
-                velocity: 0.15
-            };
-            
-            errors = testNavigation.validateNavigationCalculations(invalidCoords);
-            log('calculation-output', `Invalid coordinates test: ${errors.length > 0 ? 'PASSED' : 'FAILED'}`);
-            
-            // Test invalid heading
-            const invalidHeading = {
-                coordinates: { x: -2847.3, y: 1592.7, z: -834.2 },
-                heading: 400,
-                velocity: 0.15
-            };
-            
-            errors = testNavigation.validateNavigationCalculations(invalidHeading);
-            log('calculation-output', `Invalid heading test: ${errors.length > 0 ? 'PASSED' : 'FAILED'}`);
-            
-            // Test negative velocity
-            const negativeVelocity = {
-                coordinates: { x: -2847.3, y: 1592.7, z: -834.2 },
-                heading: 127.4,
-                velocity: -0.15
-            };
-            
-            errors = testNavigation.validateNavigationCalculations(negativeVelocity);
-            log('calculation-output', `Negative velocity test: ${errors.length > 0 ? 'PASSED' : 'FAILED'}`);
-        }
-
-        function testStarGeneration() {
-            log('calculation-output', 'Testing star information generation...');
-            
-            if (!testNavigation) {
-                log('calculation-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            // Test consistency
-            const star1a = testNavigation.generateStarInfo(10, 15);
-            const star1b = testNavigation.generateStarInfo(10, 15);
-            const consistent = star1a.type === star1b.type && star1a.magnitude === star1b.magnitude;
-            log('calculation-output', `Consistency test: ${consistent ? 'PASSED' : 'FAILED'}`);
-            
-            // Test variety
-            const star2 = testNavigation.generateStarInfo(20, 25);
-            const different = star1a.type !== star2.type || star1a.magnitude !== star2.magnitude;
-            log('calculation-output', `Variety test: ${different ? 'PASSED' : 'FAILED'}`);
-            
-            // Show some examples
-            log('calculation-output', `Example star 1: ${star1a.type}, Magnitude ${star1a.magnitude}, ${star1a.distance} LY`);
-            log('calculation-output', `Example star 2: ${star2.type}, Magnitude ${star2.magnitude}, ${star2.distance} LY`);
-        }
-
-        // Real-time Update Tests
-        function testActivation() {
-            log('updates-output', 'Testing navigation system activation...');
-            
-            if (!testNavigation) {
-                log('updates-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            testNavigation.activate();
-            log('updates-output', `Active status: ${testNavigation.isActive}`);
-            log('updates-output', `Refresh interval set: ${testNavigation.refreshInterval !== null}`);
-            log('updates-output', `Refresh rate: ${testNavigation.refreshRate}ms`);
-        }
-
-        function testDeactivation() {
-            log('updates-output', 'Testing navigation system deactivation...');
-            
-            if (!testNavigation) {
-                log('updates-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            testNavigation.deactivate();
-            log('updates-output', `Active status: ${testNavigation.isActive}`);
-            log('updates-output', `Refresh interval cleared: ${testNavigation.refreshInterval === null}`);
-        }
-
-        function testUpdateCycle() {
-            log('updates-output', 'Monitoring update cycle...');
-            
-            if (!testNavigation) {
-                log('updates-output', 'ERROR: Navigation system not initialized');
-                return;
-            }
-            
-            testNavigation.activate();
-            let updateCount = 0;
-            
-            monitoringInterval = setInterval(() => {
-                updateCount++;
-                log('updates-output', `Update cycle ${updateCount} - System active: ${testNavigation.isActive}`);
-                
-                if (updateCount >= 5) {
-                    clearInterval(monitoringInterval);
-                    log('updates-output', 'Monitoring completed after 5 cycles');
-                }
-            }, testNavigation.refreshRate);
-        }
-
-        function stopMonitoring() {
-            if (monitoringInterval) {
-                clearInterval(monitoringInterval);
-                log('updates-output', 'Monitoring stopped');
-            }
-            
-            if (testNavigation) {
-                testNavigation.deactivate();
-                log('updates-output', 'Navigation system deactivated');
-            }
-        }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

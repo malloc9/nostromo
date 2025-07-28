@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://username.github.io/nostromo-monitoring-system/sitemap.xml
+
+# Disallow build artifacts and development files
+Disallow: /dist/
+Disallow: /node_modules/
+Disallow: /scripts/
+Disallow: /.github/
+Disallow: /.git/

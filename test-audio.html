@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Manager Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff41;
+            padding: 20px;
+        }
+        button {
+            background: #001100;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #003300;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #00ff41;
+        }
+    </style>
+</head>
+<body>
+    <h1>Nostromo Audio Manager Test</h1>
+    
+    <div class="status" id="status">
+        Audio Manager Status: Loading...
+    </div>
+    
+    <h2>Sound Effects</h2>
+    <button onclick="testSound('keypress')">Keypress</button>
+    <button onclick="testSound('beep')">Beep</button>
+    <button onclick="testSound('alert')">Alert</button>
+    <button onclick="testSound('error')">Error</button>
+    <button onclick="testSound('confirm')">Confirm</button>
+    <button onclick="testSound('navigation')">Navigation</button>
+    <button onclick="testSound('warning')">Warning</button>
+    <button onclick="testSound('critical')">Critical</button>
+    
+    <h2>Convenience Methods</h2>
+    <button onclick="audioManager.playKeypress()">Play Keypress</button>
+    <button onclick="audioManager.playBeep()">Play Beep</button>
+    <button onclick="audioManager.playNavigation()">Play Navigation</button>
+    <button onclick="audioManager.playAlert()">Play Alert</button>
+    <button onclick="audioManager.playError()">Play Error</button>
+    <button onclick="audioManager.playConfirm()">Play Confirm</button>
+    <button onclick="audioManager.playWarning()">Play Warning</button>
+    <button onclick="audioManager.playCritical()">Play Critical</button>
+    
+    <h2>Ambient Audio</h2>
+    <button onclick="audioManager.startAmbientTrack('ship-hum')">Start Ship Hum</button>
+    <button onclick="audioManager.stopAmbientTrack('ship-hum')">Stop Ship Hum</button>
+    <button onclick="audioManager.startAmbientTrack('computer-processing')">Start Computer Processing</button>
+    <button onclick="audioManager.stopAmbientTrack('computer-processing')">Stop Computer Processing</button>
+    <button onclick="audioManager.startAmbientTrack('ventilation')">Start Ventilation</button>
+    <button onclick="audioManager.stopAmbientTrack('ventilation')">Stop Ventilation</button>
+    
+    <h2>Volume Controls</h2>
+    <button onclick="toggleMute()">Toggle Mute</button>
+    <button onclick="setVolume(0.2)">Low Volume</button>
+    <button onclick="setVolume(0.5)">Medium Volume</button>
+    <button onclick="setVolume(0.8)">High Volume</button>
+    
+    <div class="status" id="controls-status">
+        Audio Controls: Ready
+    </div>
+
+    <script src="js/audio-manager.js"></script>
+    <script>
+        let audioManager;
+        
+        // Initialize audio manager
+        document.addEventListener('DOMContentLoaded', function() {
+            audioManager = new NostromoAudioManager();
+            
+            // Update status
+            setTimeout(() => {
+                const status = document.getElementById('status');
+                if (audioManager.isInitialized) {
+                    status.textContent = 'Audio Manager Status: Initialized and Ready';
+                    status.style.color = '#00ff41';
+                } else if (audioManager.isEnabled) {
+                    status.textContent = 'Audio Manager Status: Enabled but not fully initialized';
+                    status.style.color = '#ffaa00';
+                } else {
+                    status.textContent = 'Audio Manager Status: Disabled (Audio not supported)';
+                    status.style.color = '#ff6666';
+                }
+            }, 1000);
+        });
+        
+        function testSound(soundName) {
+            if (audioManager) {
+                audioManager.playSound(soundName);
+                console.log(`Played sound: ${soundName}`);
+            }
+        }
+        
+        function toggleMute() {
+            if (audioManager) {
+                const isMuted = audioManager.toggleMute();
+                const controlsStatus = document.getElementById('controls-status');
+                controlsStatus.textContent = `Audio Controls: ${isMuted ? 'MUTED' : 'UNMUTED'}`;
+            }
+        }
+        
+        function setVolume(volume) {
+            if (audioManager) {
+                audioManager.setMasterVolume(volume);
+                console.log(`Set volume to: ${volume}`);
+            }
+        }
+        
+        // Add keyboard support
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'F8') {
+                event.preventDefault();
+                toggleMute();
+            }
+        });
+    </script>
+</body>
+</html>

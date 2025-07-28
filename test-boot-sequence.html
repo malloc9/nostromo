@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boot Sequence Test - Nostromo Monitoring System</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/terminal.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+        }
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10001;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            border: 1px solid #00ff41;
+        }
+        .test-controls button {
+            background: #000;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            padding: 5px 10px;
+            margin: 2px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        .test-controls button:hover {
+            background: #00ff41;
+            color: #000;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h3>Boot Sequence Test</h3>
+        <button onclick="startBootTest()">Start Boot Sequence</button>
+        <button onclick="resetBootTest()">Reset</button>
+        <button onclick="completeBootTest()">Complete Boot</button>
+        <button onclick="showLoadingTest()">Test Loading</button>
+        <button onclick="showTransitionTest()">Test Transition</button>
+        <button onclick="testErrorHandling()">Test Error</button>
+        <div id="test-status">Ready</div>
+    </div>
+
+    <!-- Main Terminal Container -->
+    <div id="terminal-container" class="app-container">
+        <!-- Boot Screen -->
+        <div id="boot-screen" class="screen active">
+            <div class="boot-content">
+                <div class="boot-header">
+                    <pre class="ascii-art">
+ ███╗   ██╗ ██████╗ ███████╗████████╗██████╗  ██████╗ ███╗   ███╗ ██████╗ 
+ ████╗  ██║██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗████╗ ████║██╔═══██╗
+ ██╔██╗ ██║██║   ██║███████╗   ██║   ██████╔╝██║   ██║██╔████╔██║██║   ██║
+ ██║╚██╗██║██║   ██║╚════██║   ██║   ██╔══██╗██║   ██║██║╚██╔╝██║██║   ██║
+ ██║ ╚████║╚██████╔╝███████║   ██║   ██║  ██║╚██████╔╝██║ ╚═╝ ██║╚██████╔╝
+ ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝ 
+                    </pre>
+                    <div class="system-info">
+                        <div>WEYLAND-YUTANI CORPORATION</div>
+                        <div>MU/TH/UR 6000 MAINFRAME</div>
+                        <div>COMMERCIAL TOWING VEHICLE NOSTROMO</div>
+                    </div>
+                </div>
+                <div class="boot-messages" id="boot-messages">
+                    <!-- Boot messages will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboard-screen" class="screen">
+            <div class="screen-header">
+                <h2>SHIP STATUS OVERVIEW</h2>
+                <div class="breadcrumb">MAIN > DASHBOARD</div>
+            </div>
+            <div class="screen-content">
+                <div class="loading-message">
+                    <span>DASHBOARD LOADED SUCCESSFULLY</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">INITIALIZING SYSTEMS...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/boot-sequence.js"></script>
+    <script>
+        let bootSequence;
+        let testStatus = document.getElementById('test-status');
+
+        // Mock audio manager for testing
+        window.audioManager = {
+            playSystemBoot: () => console.log('🔊 System boot sound'),
+            playSystemLoad: () => console.log('🔊 System load sound'),
+            playKeypress: () => console.log('🔊 Keypress sound'),
+            playConfirm: () => console.log('🔊 Confirm sound'),
+            playError: () => console.log('🔊 Error sound')
+        };
+
+        // Mock router for testing
+        window.router = {
+            navigateTo: (route, animate) => {
+                console.log(`🔄 Navigate to: ${route} (animated: ${animate})`);
+                // Simulate navigation
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                const targetScreen = document.getElementById(`${route}-screen`);
+                if (targetScreen) {
+                    targetScreen.classList.add('active');
+                }
+                testStatus.textContent = `Navigated to ${route}`;
+            }
+        };
+
+        // Initialize boot sequence
+        document.addEventListener('DOMContentLoaded', function() {
+            bootSequence = new NostromoBootSequence();
+            testStatus.textContent = 'Boot sequence initialized';
+            console.log('Boot sequence test ready');
+        });
+
+        // Test functions
+        async function startBootTest() {
+            testStatus.textContent = 'Starting boot sequence...';
+            try {
+                await bootSequence.startBootSequence();
+                testStatus.textContent = 'Boot sequence completed';
+            } catch (error) {
+                testStatus.textContent = `Boot error: ${error.message}`;
+                console.error('Boot sequence error:', error);
+            }
+        }
+
+        function resetBootTest() {
+            bootSequence.reset();
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById('boot-screen').classList.add('active');
+            testStatus.textContent = 'Boot sequence reset';
+        }
+
+        function completeBootTest() {
+            const result = bootSequence.completeBootSequence();
+            testStatus.textContent = result ? 'Boot completed successfully' : 'Boot completion failed';
+        }
+
+        async function showLoadingTest() {
+            testStatus.textContent = 'Testing loading screen...';
+            await bootSequence.showLoadingScreen('TEST LOADING MESSAGE', 2000);
+            testStatus.textContent = 'Loading test completed';
+        }
+
+        async function showTransitionTest() {
+            testStatus.textContent = 'Testing transition messages...';
+            await bootSequence.showTransitionMessage('dashboard', 'navigation');
+            testStatus.textContent = 'Transition test completed';
+        }
+
+        function testErrorHandling() {
+            bootSequence.handleBootError();
+            testStatus.textContent = 'Error handling test completed';
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(event) {
+            const bootScreen = document.getElementById('boot-screen');
+            if (bootScreen && bootScreen.classList.contains('active')) {
+                event.preventDefault();
+                completeBootTest();
+            }
+        });
+    </script>
+</body>
+</html>
