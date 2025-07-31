@@ -24,8 +24,8 @@ class NostromoBootSequence {
         
         this.isBooting = false;
         this.bootComplete = false;
-        this.typingSpeed = 50; // milliseconds per character
-        this.messageDelay = 1500; // delay between messages
+        this.typingSpeed = 20; // milliseconds per character (faster)
+        this.messageDelay = 800; // delay between messages (faster)
         this.currentMessageIndex = 0;
         
         this.init();
@@ -103,7 +103,7 @@ class NostromoBootSequence {
             messagesContainer.appendChild(messageElement);
             
             // Fade in the message line
-            await this.wait(200);
+            await this.wait(100);
             messageElement.style.opacity = '1';
             
             // Type the message
@@ -115,7 +115,7 @@ class NostromoBootSequence {
             // Clear previous messages to keep screen clean
             if (i < this.bootMessages.length - 1) {
                 messageElement.style.opacity = '0';
-                await this.wait(300);
+                await this.wait(150);
                 messageElement.remove();
             }
         }
@@ -136,11 +136,11 @@ class NostromoBootSequence {
         messagesContainer.appendChild(headerElement);
         
         // Fade in and type the diagnostics header
-        await this.wait(200);
+        await this.wait(100);
         headerElement.style.opacity = '1';
         await this.typeMessage(headerElement, 'RUNNING SYSTEM DIAGNOSTICS...');
         
-        await this.wait(1000);
+        await this.wait(500);
         
         // Run diagnostic checks
         for (let i = 0; i < this.diagnosticMessages.length; i++) {
@@ -151,14 +151,14 @@ class NostromoBootSequence {
             diagElement.style.opacity = '0';
             messagesContainer.appendChild(diagElement);
             
-            await this.wait(300);
+            await this.wait(150);
             diagElement.style.opacity = '1';
             
             await this.typeMessage(diagElement, diagnostic);
-            await this.wait(500);
+            await this.wait(250);
         }
         
-        await this.wait(1000);
+        await this.wait(500);
         
         // Clear diagnostics
         messagesContainer.innerHTML = '';
@@ -175,7 +175,7 @@ class NostromoBootSequence {
         messagesContainer.appendChild(promptElement);
         
         // Fade in and type the ready message
-        await this.wait(500);
+        await this.wait(250);
         promptElement.style.opacity = '1';
         await this.typeMessage(promptElement, 'SYSTEM READY - PRESS ANY KEY TO CONTINUE');
         
@@ -244,7 +244,7 @@ class NostromoBootSequence {
                 if (window.router) {
                     window.router.navigateTo('dashboard', true);
                 }
-            }, 500);
+            }, 250);
             
             return true;
         }

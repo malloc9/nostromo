@@ -457,26 +457,25 @@ class NostromoLifeSupport {
     }
 
     /**
-     * Generate ASCII trend chart with multiple environmental parameters
+     * Generate ASCII trend chart with multiple environmental parameters in grid layout
      */
     generateTrendChart() {
         if (this.historicalData.length < 3) {
             return '<div class="chart-loading">COLLECTING TREND DATA...</div>';
         }
 
-        const chartHeight = 6;
-        const chartWidth = 35;
+        const chartHeight = 4;
+        const chartWidth = 25;
         
-        let chart = '<div class="trend-chart-ascii">\n';
-        chart += '<div class="chart-title">ENVIRONMENTAL TRENDS (LAST 20 READINGS)</div>\n';
-        
-        // Generate charts for multiple parameters
+        // Generate charts for multiple parameters in a grid
         const parameters = [
-            { key: 'oxygen', label: 'OXYGEN LEVEL', unit: '%', color: 'green' },
-            { key: 'co2', label: 'CO2 LEVEL', unit: 'ppm', color: 'yellow' },
+            { key: 'oxygen', label: 'OXYGEN', unit: '%', color: 'green' },
+            { key: 'co2', label: 'CO2', unit: 'ppm', color: 'yellow' },
             { key: 'pressure', label: 'PRESSURE', unit: 'atm', color: 'blue' },
-            { key: 'temperature', label: 'TEMPERATURE', unit: '°C', color: 'red' }
+            { key: 'temperature', label: 'TEMP', unit: '°C', color: 'red' }
         ];
+        
+        let chart = '<div class="trend-charts-grid">\n';
         
         for (const param of parameters) {
             chart += this.generateParameterChart(param, chartHeight, chartWidth);
@@ -487,7 +486,7 @@ class NostromoLifeSupport {
     }
     
     /**
-     * Generate chart for a specific parameter
+     * Generate compact chart for a specific parameter suitable for grid layout
      */
     generateParameterChart(param, chartHeight, chartWidth) {
         const data = this.historicalData.map(d => d[param.key]);
@@ -497,20 +496,19 @@ class NostromoLifeSupport {
         const currentValue = data[data.length - 1];
         
         let chart = `<div class="parameter-chart">\n`;
-        chart += `<div class="chart-subtitle">${param.label} (${param.unit})</div>\n`;
-        chart += '<pre class="chart-display">\n';
+        chart += `<div class="chart-subtitle">${param.label}</div>\n`;
+        chart += '<div class="chart-display">\n';
         
-        // Generate mini chart (reduced height for multiple charts)
-        const miniHeight = 4;
-        for (let y = miniHeight - 1; y >= 0; y--) {
+        // Generate compact chart
+        for (let y = chartHeight - 1; y >= 0; y--) {
             let line = '';
-            const threshold = minValue + (range * y / (miniHeight - 1));
+            const threshold = minValue + (range * y / (chartHeight - 1));
             
             for (let x = 0; x < Math.min(chartWidth, data.length); x++) {
                 const dataIndex = Math.max(0, data.length - chartWidth + x);
                 const value = data[dataIndex];
                 
-                if (Math.abs(value - threshold) < range / (miniHeight * 2)) {
+                if (Math.abs(value - threshold) < range / (chartHeight * 2)) {
                     line += '█';
                 } else if (value > threshold) {
                     line += ' ';
@@ -519,17 +517,15 @@ class NostromoLifeSupport {
                 }
             }
             
-            const label = threshold.toFixed(param.key === 'temperature' ? 1 : 0).padStart(4);
-            chart += `${label}│${line}\n`;
+            chart += `<div class="chart-line">${line}</div>\n`;
         }
         
         // Add current value and trend indicator
         const trend = this.calculateTrend(data);
         const trendSymbol = trend > 0.1 ? '↗' : trend < -0.1 ? '↘' : '→';
-        chart += `     └${'─'.repeat(Math.min(chartWidth, data.length))}\n`;
-        chart += `      CURRENT: ${currentValue.toFixed(param.key === 'temperature' ? 1 : 0)}${param.unit} ${trendSymbol}\n`;
+        chart += `<div class="chart-current">${currentValue.toFixed(param.key === 'temperature' ? 1 : 0)}${param.unit} ${trendSymbol}</div>\n`;
         
-        chart += '</pre>\n';
+        chart += '</div>\n';
         chart += '</div>\n';
         
         return chart;
