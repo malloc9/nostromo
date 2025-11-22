@@ -9,7 +9,7 @@ class NostromoDashboard {
         this.refreshInterval = null;
         this.refreshRate = 2500; // 2.5 seconds
         this.isActive = false;
-        
+
         this.init();
     }
 
@@ -43,7 +43,7 @@ class NostromoDashboard {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
-        
+
         this.refreshInterval = setInterval(() => {
             if (this.isActive) {
                 this.updateData();
@@ -80,6 +80,11 @@ class NostromoDashboard {
         screenContent.innerHTML = this.generateDashboardHTML();
         this.setupSchematicClickHandlers();
         this.updateData();
+
+        // Re-attach console if it exists
+        if (window.consoleSystem) {
+            window.consoleSystem.init();
+        }
     }
 
     /**
@@ -88,20 +93,35 @@ class NostromoDashboard {
     generateDashboardHTML() {
         return `
             <div class="dashboard-container">
-                <!-- Ship Schematic Section -->
+                <!-- Top Left: Ship Schematic & Summary -->
                 <div class="ship-schematic-section">
                     <div class="section-header">NOSTROMO VESSEL STATUS</div>
                     <div class="ship-schematic">
                         ${this.generateShipSchematic()}
                     </div>
+                    <!-- System Summary Integrated here -->
+                    <div class="system-summary">
+                        <div class="summary-item">
+                            <span class="summary-label">STATUS:</span>
+                            <span class="summary-value" id="overall-status">OPERATIONAL</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">TIME:</span>
+                            <span class="summary-value" id="last-update">--:--:--</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">ALERTS:</span>
+                            <span class="summary-value" id="alert-count">0</span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- 4-Quadrant Status Grid -->
+                <!-- Top Right: 4-Quadrant Status Grid -->
                 <div class="status-grid">
                     <!-- Power Systems Quadrant -->
                     <div class="status-quadrant" id="power-quadrant">
                         <div class="quadrant-header">
-                            <span class="quadrant-title">POWER SYSTEMS</span>
+                            <span class="quadrant-title">POWER</span>
                             <span class="status-indicator" id="power-status">●</span>
                         </div>
                         <div class="quadrant-content" id="power-content">
@@ -123,7 +143,7 @@ class NostromoDashboard {
                     <!-- Navigation Quadrant -->
                     <div class="status-quadrant" id="navigation-quadrant">
                         <div class="quadrant-header">
-                            <span class="quadrant-title">NAVIGATION</span>
+                            <span class="quadrant-title">NAV</span>
                             <span class="status-indicator" id="navigation-status">●</span>
                         </div>
                         <div class="quadrant-content" id="navigation-content">
@@ -134,7 +154,7 @@ class NostromoDashboard {
                     <!-- Crew Status Quadrant -->
                     <div class="status-quadrant" id="crew-quadrant">
                         <div class="quadrant-header">
-                            <span class="quadrant-title">CREW STATUS</span>
+                            <span class="quadrant-title">CREW</span>
                             <span class="status-indicator" id="crew-status">●</span>
                         </div>
                         <div class="quadrant-content" id="crew-content">
@@ -143,19 +163,13 @@ class NostromoDashboard {
                     </div>
                 </div>
 
-                <!-- System Summary Bar -->
-                <div class="system-summary">
-                    <div class="summary-item">
-                        <span class="summary-label">OVERALL STATUS:</span>
-                        <span class="summary-value" id="overall-status">OPERATIONAL</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">LAST UPDATE:</span>
-                        <span class="summary-value" id="last-update">--:--:--</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">ALERTS:</span>
-                        <span class="summary-value" id="alert-count">0</span>
+                <!-- Bottom: Console Interface -->
+                <div id="console-interface" class="console-interface">
+                    <div class="console-header">MU/TH/UR 6000 INTERFACE</div>
+                    <div id="console-output" class="console-output"></div>
+                    <div id="console-input-line" class="console-input-line">
+                        <span class="prompt">></span>
+                        <input type="text" id="console-input" class="console-input" autocomplete="off" spellcheck="false">
                     </div>
                 </div>
             </div>
@@ -207,14 +221,14 @@ class NostromoDashboard {
         }
 
         const systemData = this.dataSimulator.generateSystemStatus();
-        
+
         this.updatePowerQuadrant(systemData.power);
         this.updateLifeSupportQuadrant(systemData.lifeSupport);
         this.updateNavigationQuadrant(systemData.navigation);
         this.updateCrewQuadrant(systemData.crew);
         this.updateSystemSummary(systemData);
         this.updateSchematicIndicators(systemData);
-        
+
         // Update last update timestamp
         const lastUpdateElement = document.getElementById('last-update');
         if (lastUpdateElement) {
@@ -229,7 +243,7 @@ class NostromoDashboard {
     updatePowerQuadrant(powerData) {
         const content = document.getElementById('power-content');
         const status = document.getElementById('power-status');
-        
+
         if (!content || !status) return;
 
         // Determine power status
@@ -237,7 +251,7 @@ class NostromoDashboard {
         let statusClass = 'status-ok';
         if (powerLevel < 10) statusClass = 'status-warning';
         if (powerLevel < 0) statusClass = 'status-critical';
-        
+
         status.className = `status-indicator ${statusClass}`;
 
         content.innerHTML = `
@@ -270,19 +284,19 @@ class NostromoDashboard {
     updateLifeSupportQuadrant(lifeSupportData) {
         const content = document.getElementById('life-support-content');
         const status = document.getElementById('life-support-status');
-        
+
         if (!content || !status) return;
 
         // Determine life support status
         let statusClass = 'status-ok';
-        if (lifeSupportData.oxygen < 90 || lifeSupportData.co2 > 20 || 
+        if (lifeSupportData.oxygen < 90 || lifeSupportData.co2 > 20 ||
             lifeSupportData.pressure < 0.95 || lifeSupportData.pressure > 1.05) {
             statusClass = 'status-warning';
         }
         if (lifeSupportData.oxygen < 80 || lifeSupportData.co2 > 30) {
             statusClass = 'status-critical';
         }
-        
+
         status.className = `status-indicator ${statusClass}`;
 
         content.innerHTML = `
@@ -311,7 +325,7 @@ class NostromoDashboard {
     updateNavigationQuadrant(navigationData) {
         const content = document.getElementById('navigation-content');
         const status = document.getElementById('navigation-status');
-        
+
         if (!content || !status) return;
 
         // Navigation is typically always operational
@@ -343,7 +357,7 @@ class NostromoDashboard {
     updateCrewQuadrant(crewData) {
         const content = document.getElementById('crew-content');
         const status = document.getElementById('crew-status');
-        
+
         if (!content || !status) return;
 
         // Count crew by status
@@ -355,7 +369,7 @@ class NostromoDashboard {
         let statusClass = 'status-ok';
         if (activeCrew < totalCrew * 0.6) statusClass = 'status-warning';
         if (activeCrew < totalCrew * 0.4) statusClass = 'status-critical';
-        
+
         status.className = `status-indicator ${statusClass}`;
 
         content.innerHTML = `
@@ -384,13 +398,13 @@ class NostromoDashboard {
     updateSystemSummary(systemData) {
         const overallStatus = document.getElementById('overall-status');
         const alertCount = document.getElementById('alert-count');
-        
+
         if (!overallStatus || !alertCount) return;
 
         // Calculate overall system health
         let alerts = 0;
         let overallHealth = 'OPERATIONAL';
-        
+
         // Check power status
         const powerLevel = systemData.power.generation - systemData.power.consumption;
         if (powerLevel < 0) {
@@ -400,7 +414,7 @@ class NostromoDashboard {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
         }
-        
+
         // Check life support
         if (systemData.lifeSupport.oxygen < 80 || systemData.lifeSupport.co2 > 30) {
             alerts++;
@@ -409,14 +423,13 @@ class NostromoDashboard {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
         }
-        
+
         // Update display
         overallStatus.textContent = overallHealth;
-        overallStatus.className = `summary-value ${
-            overallHealth === 'CRITICAL' ? 'status-critical' : 
+        overallStatus.className = `summary-value ${overallHealth === 'CRITICAL' ? 'status-critical' :
             overallHealth === 'WARNING' ? 'status-warning' : 'status-ok'
-        }`;
-        
+            }`;
+
         alertCount.textContent = alerts.toString();
         alertCount.className = `summary-value ${alerts > 0 ? 'status-warning' : 'status-ok'}`;
     }

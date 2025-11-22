@@ -13,7 +13,7 @@ class NostromoLifeSupport {
         this.maxHistoryLength = 20; // Keep last 20 readings for trends
         this.alertThresholds = this.initializeAlertThresholds();
         this.zones = this.initializeZones();
-        
+
         this.init();
     }
 
@@ -89,7 +89,7 @@ class NostromoLifeSupport {
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
         }
-        
+
         this.refreshInterval = setInterval(() => {
             if (this.isActive) {
                 this.updateData();
@@ -133,82 +133,87 @@ class NostromoLifeSupport {
     generateLifeSupportHTML() {
         return `
             <div class="life-support-container">
-                <!-- Environmental Status Overview -->
-                <div class="environmental-overview">
-                    <div class="section-header">ENVIRONMENTAL STATUS OVERVIEW</div>
-                    <div class="env-metrics-grid">
-                        <div class="metric-panel" id="oxygen-panel">
-                            <div class="metric-header">
-                                <span class="metric-title">OXYGEN LEVEL</span>
-                                <span class="metric-status" id="oxygen-status">●</span>
-                            </div>
-                            <div class="metric-display">
-                                <div class="metric-value" id="oxygen-value">--.--%</div>
-                                <div class="metric-bar" id="oxygen-bar"></div>
+                <div class="life-support-main-grid">
+                    <div class="life-support-col-left">
+                        <!-- Environmental Status Overview -->
+                        <div class="environmental-overview">
+                            <div class="section-header">ENVIRONMENTAL STATUS OVERVIEW</div>
+                            <div class="env-metrics-grid">
+                                <div class="metric-panel" id="oxygen-panel">
+                                    <div class="metric-header">
+                                        <span class="metric-title">OXYGEN LEVEL</span>
+                                        <span class="metric-status" id="oxygen-status">●</span>
+                                    </div>
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="oxygen-value">--.--%</div>
+                                        <div class="metric-bar" id="oxygen-bar"></div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-panel" id="co2-panel">
+                                    <div class="metric-header">
+                                        <span class="metric-title">CO2 LEVEL</span>
+                                        <span class="metric-status" id="co2-status">●</span>
+                                    </div>
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="co2-value">-- PPM</div>
+                                        <div class="metric-bar" id="co2-bar"></div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-panel" id="pressure-panel">
+                                    <div class="metric-header">
+                                        <span class="metric-title">PRESSURE</span>
+                                        <span class="metric-status" id="pressure-status">●</span>
+                                    </div>
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="pressure-value">-.-- ATM</div>
+                                        <div class="metric-bar" id="pressure-bar"></div>
+                                    </div>
+                                </div>
+
+                                <div class="metric-panel" id="temperature-panel">
+                                    <div class="metric-header">
+                                        <span class="metric-title">TEMPERATURE</span>
+                                        <span class="metric-status" id="temperature-status">●</span>
+                                    </div>
+                                    <div class="metric-display">
+                                        <div class="metric-value" id="temperature-value">--.-°C</div>
+                                        <div class="metric-bar" id="temperature-bar"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="metric-panel" id="co2-panel">
-                            <div class="metric-header">
-                                <span class="metric-title">CO2 LEVEL</span>
-                                <span class="metric-status" id="co2-status">●</span>
+                        <!-- Alert Panel -->
+                        <div class="alert-section">
+                            <div class="section-header">
+                                SYSTEM ALERTS
+                                <span class="alert-count" id="alert-count">0</span>
                             </div>
-                            <div class="metric-display">
-                                <div class="metric-value" id="co2-value">-- PPM</div>
-                                <div class="metric-bar" id="co2-bar"></div>
+                            <div class="alert-panel" id="alert-panel">
+                                <div class="no-alerts">NO ACTIVE ALERTS</div>
                             </div>
-                        </div>
-
-                        <div class="metric-panel" id="pressure-panel">
-                            <div class="metric-header">
-                                <span class="metric-title">PRESSURE</span>
-                                <span class="metric-status" id="pressure-status">●</span>
-                            </div>
-                            <div class="metric-display">
-                                <div class="metric-value" id="pressure-value">-.-- ATM</div>
-                                <div class="metric-bar" id="pressure-bar"></div>
-                            </div>
-                        </div>
-
-                        <div class="metric-panel" id="temperature-panel">
-                            <div class="metric-header">
-                                <span class="metric-title">TEMPERATURE</span>
-                                <span class="metric-status" id="temperature-status">●</span>
-                            </div>
-                            <div class="metric-display">
-                                <div class="metric-value" id="temperature-value">--.-°C</div>
-                                <div class="metric-bar" id="temperature-bar"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Zone Status Grid -->
-                <div class="zone-status-section">
-                    <div class="section-header">ZONE ENVIRONMENTAL STATUS</div>
-                    <div class="zone-grid" id="zone-grid">
-                        ${this.generateZoneGridHTML()}
-                    </div>
-                </div>
-
-                <!-- Trend Analysis -->
-                <div class="trend-section">
-                    <div class="section-header">ENVIRONMENTAL TRENDS</div>
-                    <div class="trend-display" id="trend-display">
-                        <div class="trend-chart" id="trend-chart">
-                            <div class="chart-loading">COLLECTING TREND DATA...</div>
                         </div>
                     </div>
-                </div>
+                    <div class="life-support-col-right">
+                        <!-- Zone Status Grid -->
+                        <div class="zone-status-section">
+                            <div class="section-header">ZONE ENVIRONMENTAL STATUS</div>
+                            <div class="zone-grid" id="zone-grid">
+                                ${this.generateZoneGridHTML()}
+                            </div>
+                        </div>
 
-                <!-- Alert Panel -->
-                <div class="alert-section">
-                    <div class="section-header">
-                        SYSTEM ALERTS
-                        <span class="alert-count" id="alert-count">0</span>
-                    </div>
-                    <div class="alert-panel" id="alert-panel">
-                        <div class="no-alerts">NO ACTIVE ALERTS</div>
+                        <!-- Trend Analysis -->
+                        <div class="trend-section">
+                            <div class="section-header">ENVIRONMENTAL TRENDS</div>
+                            <div class="trend-display" id="trend-display">
+                                <div class="trend-chart" id="trend-chart">
+                                    <div class="chart-loading">COLLECTING TREND DATA...</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -255,19 +260,19 @@ class NostromoLifeSupport {
 
         const systemData = this.dataSimulator.generateSystemStatus();
         const lifeSupportData = systemData.lifeSupport;
-        
+
         // Store historical data for trends
         this.storeHistoricalData(lifeSupportData);
-        
+
         // Update main environmental metrics
         this.updateEnvironmentalMetrics(lifeSupportData);
-        
+
         // Update zone status
         this.updateZoneStatus(lifeSupportData);
-        
+
         // Update trend display
         this.updateTrendDisplay();
-        
+
         // Check and update alerts
         this.updateAlerts(lifeSupportData);
     }
@@ -281,7 +286,7 @@ class NostromoLifeSupport {
             timestamp,
             ...data
         });
-        
+
         // Keep only recent data
         if (this.historicalData.length > this.maxHistoryLength) {
             this.historicalData.shift();
@@ -294,13 +299,13 @@ class NostromoLifeSupport {
     updateEnvironmentalMetrics(data) {
         // Update oxygen
         this.updateMetricPanel('oxygen', data.oxygen, '%', 0, 100);
-        
+
         // Update CO2
         this.updateMetricPanel('co2', data.co2, 'PPM', 0, 50);
-        
+
         // Update pressure
         this.updateMetricPanel('pressure', data.pressure, 'ATM', 0.8, 1.2);
-        
+
         // Update temperature
         this.updateMetricPanel('temperature', data.temperature, '°C', 18, 24);
     }
@@ -312,17 +317,17 @@ class NostromoLifeSupport {
         const valueElement = document.getElementById(`${metric}-value`);
         const statusElement = document.getElementById(`${metric}-status`);
         const barElement = document.getElementById(`${metric}-bar`);
-        
+
         if (!valueElement || !statusElement || !barElement) return;
 
         // Update value display
         const formattedValue = metric === 'pressure' ? value.toFixed(2) : value.toFixed(1);
         valueElement.textContent = `${formattedValue}${unit}`;
-        
+
         // Determine status
         const status = this.getMetricStatus(metric, value);
         statusElement.className = `metric-status ${status}`;
-        
+
         // Update ASCII bar chart
         const percentage = ((value - min) / (max - min)) * 100;
         barElement.innerHTML = this.generateASCIIBar(percentage, status);
@@ -333,28 +338,28 @@ class NostromoLifeSupport {
      */
     getMetricStatus(metric, value) {
         const thresholds = this.alertThresholds[metric];
-        
+
         switch (metric) {
             case 'oxygen':
                 if (value < thresholds.critical) return 'status-critical';
                 if (value < thresholds.warning) return 'status-warning';
                 return 'status-ok';
-                
+
             case 'co2':
                 if (value > thresholds.critical) return 'status-critical';
                 if (value > thresholds.warning) return 'status-warning';
                 return 'status-ok';
-                
+
             case 'pressure':
                 if (value < thresholds.criticalLow || value > thresholds.criticalHigh) return 'status-critical';
                 if (value < thresholds.warningLow || value > thresholds.warningHigh) return 'status-warning';
                 return 'status-ok';
-                
+
             case 'temperature':
                 if (value < thresholds.criticalLow || value > thresholds.criticalHigh) return 'status-critical';
                 if (value < thresholds.warningLow || value > thresholds.warningHigh) return 'status-warning';
                 return 'status-ok';
-                
+
             default:
                 return 'status-ok';
         }
@@ -367,10 +372,10 @@ class NostromoLifeSupport {
         const barWidth = 20;
         const filledBars = Math.round((percentage / 100) * barWidth);
         const emptyBars = barWidth - filledBars;
-        
+
         const filled = '█'.repeat(filledBars);
         const empty = '░'.repeat(emptyBars);
-        
+
         return `
             <div class="ascii-bar ${status}">
                 <span class="bar-filled">${filled}</span><span class="bar-empty">${empty}</span>
@@ -386,17 +391,17 @@ class NostromoLifeSupport {
         this.zones.forEach(zone => {
             // Generate slight variations for each zone
             const zoneData = this.generateZoneVariation(baseData, zone);
-            
+
             // Update zone display
             const oxygenElement = document.getElementById(`zone-${zone.id.toLowerCase()}-oxygen`);
             const co2Element = document.getElementById(`zone-${zone.id.toLowerCase()}-co2`);
             const tempElement = document.getElementById(`zone-${zone.id.toLowerCase()}-temp`);
             const indicatorElement = document.getElementById(`zone-${zone.id.toLowerCase()}-indicator`);
-            
+
             if (oxygenElement) oxygenElement.textContent = `${zoneData.oxygen.toFixed(1)}%`;
             if (co2Element) co2Element.textContent = `${zoneData.co2.toFixed(1)}`;
             if (tempElement) tempElement.textContent = `${zoneData.temperature.toFixed(1)}°C`;
-            
+
             // Update zone indicator
             if (indicatorElement) {
                 const worstStatus = this.getWorstZoneStatus(zoneData);
@@ -418,9 +423,9 @@ class NostromoLifeSupport {
             'MAINTENANCE': { oxygen: -1, co2: 2, temperature: 1.0 },
             'SCIENCE': { oxygen: 0, co2: -0.5, temperature: 0 }
         };
-        
+
         const variation = variations[zone.id] || { oxygen: 0, co2: 0, temperature: 0 };
-        
+
         return {
             oxygen: Math.max(0, Math.min(100, baseData.oxygen + variation.oxygen)),
             co2: Math.max(0, Math.min(50, baseData.co2 + variation.co2)),
@@ -438,7 +443,7 @@ class NostromoLifeSupport {
             this.getMetricStatus('co2', zoneData.co2),
             this.getMetricStatus('temperature', zoneData.temperature)
         ];
-        
+
         if (statuses.includes('status-critical')) return 'status-critical';
         if (statuses.includes('status-warning')) return 'status-warning';
         return 'status-ok';
@@ -457,7 +462,7 @@ class NostromoLifeSupport {
     }
 
     /**
-     * Generate ASCII trend chart with multiple environmental parameters in grid layout
+     * Generate ASCII trend chart with multiple environmental parameters
      */
     generateTrendChart() {
         if (this.historicalData.length < 3) {
@@ -465,28 +470,27 @@ class NostromoLifeSupport {
         }
 
         const chartHeight = 4;
-        const chartWidth = 25;
-        
-        // Generate charts for multiple parameters in a grid
+        const chartWidth = 40; // Adjusted width for better fit
+
         const parameters = [
-            { key: 'oxygen', label: 'OXYGEN', unit: '%', color: 'green' },
-            { key: 'co2', label: 'CO2', unit: 'ppm', color: 'yellow' },
-            { key: 'pressure', label: 'PRESSURE', unit: 'atm', color: 'blue' },
-            { key: 'temperature', label: 'TEMP', unit: '°C', color: 'red' }
+            { key: 'oxygen', label: 'OXYGEN', unit: '%' },
+            { key: 'co2', label: 'CO2', unit: 'ppm' },
+            { key: 'pressure', label: 'PRESSURE', unit: 'atm' },
+            { key: 'temperature', label: 'TEMP', unit: '°C' }
         ];
-        
-        let chart = '<div class="trend-charts-grid">\n';
-        
+
+        let chart = '<div class="trend-charts-list">';
+
         for (const param of parameters) {
             chart += this.generateParameterChart(param, chartHeight, chartWidth);
         }
-        
+
         chart += '</div>';
         return chart;
     }
-    
+
     /**
-     * Generate compact chart for a specific parameter suitable for grid layout
+     * Generate compact chart for a specific parameter suitable for list layout
      */
     generateParameterChart(param, chartHeight, chartWidth) {
         const data = this.historicalData.map(d => d[param.key]);
@@ -494,20 +498,20 @@ class NostromoLifeSupport {
         const maxValue = Math.max(...data);
         const range = maxValue - minValue || 1;
         const currentValue = data[data.length - 1];
-        
-        let chart = `<div class="parameter-chart">\n`;
-        chart += `<div class="chart-subtitle">${param.label}</div>\n`;
-        chart += '<div class="chart-display">\n';
-        
-        // Generate compact chart
+
+        let chart = `<div class="parameter-chart">`;
+        chart += `<div class="chart-subtitle">${param.label}</div>`;
+        chart += '<div class="chart-display">';
+
+        let chartLines = '';
         for (let y = chartHeight - 1; y >= 0; y--) {
             let line = '';
             const threshold = minValue + (range * y / (chartHeight - 1));
-            
+
             for (let x = 0; x < Math.min(chartWidth, data.length); x++) {
                 const dataIndex = Math.max(0, data.length - chartWidth + x);
                 const value = data[dataIndex];
-                
+
                 if (Math.abs(value - threshold) < range / (chartHeight * 2)) {
                     line += '█';
                 } else if (value > threshold) {
@@ -516,27 +520,26 @@ class NostromoLifeSupport {
                     line += '░';
                 }
             }
-            
-            chart += `<div class="chart-line">${line}</div>\n`;
+            chartLines += `<div class="chart-line">${line}</div>\n`;
         }
-        
-        // Add current value and trend indicator
+        chart += chartLines;
+
         const trend = this.calculateTrend(data);
         const trendSymbol = trend > 0.1 ? '↗' : trend < -0.1 ? '↘' : '→';
-        chart += `<div class="chart-current">${currentValue.toFixed(param.key === 'temperature' ? 1 : 0)}${param.unit} ${trendSymbol}</div>\n`;
-        
-        chart += '</div>\n';
-        chart += '</div>\n';
-        
+        chart += `<div class="chart-current">${currentValue.toFixed(param.key === 'temperature' ? 1 : 2)}${param.unit} ${trendSymbol}</div>\n`;
+
+        chart += '</div>';
+        chart += '</div>';
+
         return chart;
     }
-    
+
     /**
      * Calculate trend direction for a data series
      */
     calculateTrend(data) {
         if (data.length < 3) return 0;
-        
+
         const recent = data.slice(-3);
         const slope = (recent[2] - recent[0]) / 2;
         return slope;
@@ -549,12 +552,12 @@ class NostromoLifeSupport {
         const alerts = this.generateAlerts(data);
         const alertPanel = document.getElementById('alert-panel');
         const alertCount = document.getElementById('alert-count');
-        
+
         if (!alertPanel || !alertCount) return;
 
         alertCount.textContent = alerts.length.toString();
         alertCount.className = `alert-count ${alerts.length > 0 ? 'has-alerts' : ''}`;
-        
+
         if (alerts.length === 0) {
             alertPanel.innerHTML = '<div class="no-alerts">NO ACTIVE ALERTS</div>';
         } else {
@@ -574,7 +577,7 @@ class NostromoLifeSupport {
     generateAlerts(data) {
         const alerts = [];
         const currentTime = new Date().toTimeString().substring(0, 8);
-        
+
         // Check oxygen levels
         if (data.oxygen < this.alertThresholds.oxygen.critical) {
             alerts.push({
@@ -589,7 +592,7 @@ class NostromoLifeSupport {
                 time: currentTime
             });
         }
-        
+
         // Check CO2 levels
         if (data.co2 > this.alertThresholds.co2.critical) {
             alerts.push({
@@ -604,41 +607,41 @@ class NostromoLifeSupport {
                 time: currentTime
             });
         }
-        
+
         // Check pressure
-        if (data.pressure < this.alertThresholds.pressure.criticalLow || 
+        if (data.pressure < this.alertThresholds.pressure.criticalLow ||
             data.pressure > this.alertThresholds.pressure.criticalHigh) {
             alerts.push({
                 severity: 'alert-critical',
                 message: `CRITICAL: PRESSURE AT ${data.pressure.toFixed(2)} ATM - HULL BREACH POSSIBLE`,
                 time: currentTime
             });
-        } else if (data.pressure < this.alertThresholds.pressure.warningLow || 
-                   data.pressure > this.alertThresholds.pressure.warningHigh) {
+        } else if (data.pressure < this.alertThresholds.pressure.warningLow ||
+            data.pressure > this.alertThresholds.pressure.warningHigh) {
             alerts.push({
                 severity: 'alert-warning',
                 message: `WARNING: PRESSURE AT ${data.pressure.toFixed(2)} ATM - CHECK SEALS`,
                 time: currentTime
             });
         }
-        
+
         // Check temperature
-        if (data.temperature < this.alertThresholds.temperature.criticalLow || 
+        if (data.temperature < this.alertThresholds.temperature.criticalLow ||
             data.temperature > this.alertThresholds.temperature.criticalHigh) {
             alerts.push({
                 severity: 'alert-critical',
                 message: `CRITICAL: TEMPERATURE AT ${data.temperature.toFixed(1)}°C - LIFE SUPPORT FAILURE`,
                 time: currentTime
             });
-        } else if (data.temperature < this.alertThresholds.temperature.warningLow || 
-                   data.temperature > this.alertThresholds.temperature.warningHigh) {
+        } else if (data.temperature < this.alertThresholds.temperature.warningLow ||
+            data.temperature > this.alertThresholds.temperature.warningHigh) {
             alerts.push({
                 severity: 'alert-warning',
                 message: `WARNING: TEMPERATURE AT ${data.temperature.toFixed(1)}°C - CHECK CLIMATE CONTROL`,
                 time: currentTime
             });
         }
-        
+
         return alerts;
     }
 }
@@ -649,3 +652,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else {
     window.NostromoLifeSupport = NostromoLifeSupport;
 }
+

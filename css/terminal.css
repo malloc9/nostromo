@@ -1,285 +1,217 @@
-/* Nostromo Monitoring System - Terminal CRT Effects */
+/* Nostromo Monitoring System - Advanced CRT Effects */
 
-/* CRT Screen Base Effect */
-.terminal-screen::before {
-    content: '';
+/* Root Variables for CRT Effects */
+:root {
+    --crt-curvature: 3px;
+    --crt-scanline-opacity: 0.15;
+    --crt-flicker-opacity: 0.02;
+    --crt-glow-strength: 0.6;
+    --terminal-phosphor: #00ff41;
+}
+
+/* Main CRT Container - Simulates the physical monitor */
+body {
+    background-color: #050505;
+    overflow: hidden;
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    perspective: 1000px;
+}
+
+/* The Screen Surface - Curved and Distorted */
+.app-container {
+    position: relative;
+    width: 98vw;
+    height: 96vh;
+    margin: 2vh 1vw;
+    background-color: #001100;
+    border-radius: 20px;
+    box-shadow: 
+        0 0 0 10px #1a1a1a, /* Bezel */
+        0 0 0 12px #000,    /* Outer Bezel */
+        inset 0 0 40px rgba(0,0,0,0.8); /* Inner shadow */
+    overflow: hidden;
+    transform-style: preserve-3d;
+    /* Subtle curvature transform */
+    transform: scale(0.98); 
+}
+
+/* CRT Screen Overlay Effects */
+.app-container::before {
+    content: " ";
+    display: block;
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
     bottom: 0;
-    pointer-events: none;
-    z-index: 1000;
-    
-    /* Scan lines effect */
-    background: linear-gradient(
-        transparent 50%, 
-        rgba(0, 255, 65, 0.03) 50%
-    );
-    background-size: 100% 4px;
-    
-    /* Subtle screen flicker */
-    animation: flicker 0.15s infinite linear alternate;
-}
-
-/* Screen flicker animation */
-@keyframes flicker {
-    0% { opacity: 1; }
-    98% { opacity: 1; }
-    99% { opacity: 0.98; }
-    100% { opacity: 1; }
-}
-
-/* Phosphor glow effect for text */
-.terminal-content,
-.terminal-header,
-.nav-bar {
-    text-shadow: 
-        0 0 5px currentColor,
-        0 0 10px currentColor,
-        0 0 15px currentColor,
-        0 0 20px currentColor;
-}
-
-/* Enhanced glow for bright elements */
-.terminal-green-bright,
-.data-value,
-.system-title {
-    text-shadow: 
-        0 0 3px currentColor,
-        0 0 6px currentColor,
-        0 0 9px currentColor,
-        0 0 12px currentColor,
-        0 0 15px currentColor;
-}
-
-/* CRT Curvature Effect */
-.terminal-screen {
-    border-radius: 15px;
-    
-    /* Subtle screen curvature */
+    right: 0;
     background: 
-        radial-gradient(
-            ellipse at center,
-            transparent 0%,
-            rgba(0, 0, 0, 0.1) 100%
+        /* Scanlines */
+        linear-gradient(
+            rgba(18, 16, 16, 0) 50%, 
+            rgba(0, 0, 0, 0.25) 50%
         ),
-        var(--terminal-bg);
-    
-    /* Screen reflection effect */
-    position: relative;
-}
-
-.terminal-screen::after {
-    content: '';
-    position: absolute;
-    top: 10%;
-    left: 15%;
-    width: 30%;
-    height: 40%;
-    background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.02) 0%,
-        transparent 50%
-    );
-    border-radius: 50%;
+        /* RGB Split / Chromatic Aberration (Subtle) */
+        linear-gradient(90deg, 
+            rgba(255, 0, 0, 0.06), 
+            rgba(0, 255, 0, 0.02), 
+            rgba(0, 0, 255, 0.06)
+        );
+    z-index: 1000;
+    background-size: 100% 2px, 3px 100%;
     pointer-events: none;
-    z-index: 999;
 }
 
-/* Phosphor persistence effect */
-.terminal-content {
-    position: relative;
-}
-
-.terminal-content::before {
-    content: '';
+/* Screen Flicker and Vignette */
+.app-container::after {
+    content: " ";
+    display: block;
     position: absolute;
     top: 0;
     left: 0;
-    right: 0;
     bottom: 0;
-    background: 
-        radial-gradient(
-            ellipse at center,
-            rgba(0, 255, 65, 0.01) 0%,
-            transparent 70%
-        );
+    right: 0;
+    background: radial-gradient(
+        circle, 
+        rgba(0, 255, 65, 0.02) 0%, 
+        rgba(0, 0, 0, 0.4) 100%
+    );
+    z-index: 1000;
     pointer-events: none;
-    z-index: -1;
+    animation: flicker 0.15s infinite;
 }
 
-/* Cursor blinking animation */
+@keyframes flicker {
+    0% { opacity: 0.95; }
+    50% { opacity: 0.92; }
+    100% { opacity: 0.96; }
+}
+
+/* Text Glow and Phosphor Persistence */
+.terminal-content, .terminal-header, .nav-bar {
+    text-shadow: 
+        0 0 2px var(--terminal-green-dim),
+        0 0 8px var(--terminal-green-dim);
+    filter: contrast(1.2) brightness(1.1);
+}
+
+/* High Intensity Elements (Headers, Alerts) */
+h1, h2, .system-title, .status-critical, .alert-item {
+    text-shadow: 
+        0 0 2px var(--terminal-green-bright),
+        0 0 10px var(--terminal-green),
+        0 0 20px var(--terminal-green);
+}
+
+/* Scanline Rolling Bar Effect */
+.scanline-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(0, 255, 65, 0.05);
+    position: absolute;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    animation: scanline 8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes scanline {
+    0% { top: -10%; }
+    100% { top: 110%; }
+}
+
+/* Cursor Animation */
 .cursor {
     display: inline-block;
+    width: 10px;
+    height: 1em;
     background-color: var(--terminal-green);
-    width: 8px;
-    height: 16px;
-    animation: blink 1s infinite;
-    margin-left: 2px;
-    box-shadow: 0 0 5px var(--terminal-shadow);
+    animation: blink 1s step-end infinite;
+    vertical-align: text-bottom;
 }
 
 @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
 
-/* Typing animation for text appearance */
-.typing-text {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: typing 2s steps(40, end);
-}
-
-@keyframes typing {
-    from { width: 0; }
-    to { width: 100%; }
-}
-
-/* Enhanced typing effect with cursor */
-.typing-line {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid var(--terminal-green);
-    animation: 
-        typing 3s steps(40, end),
-        blink-cursor 0.75s step-end infinite;
-}
-
-@keyframes blink-cursor {
-    from, to { border-color: transparent; }
-    50% { border-color: var(--terminal-green); }
-}
-
-/* Screen noise effect (very subtle) */
-.terminal-screen {
-    background-image: 
-        radial-gradient(circle, transparent 1px, var(--terminal-bg) 1px);
-    background-size: 4px 4px;
-    animation: noise 0.2s infinite;
-}
-
-@keyframes noise {
-    0% { background-position: 0 0; }
-    10% { background-position: -1px -1px; }
-    20% { background-position: 1px 0px; }
-    30% { background-position: 0px 1px; }
-    40% { background-position: -1px 0px; }
-    50% { background-position: 1px 1px; }
-    60% { background-position: 0px -1px; }
-    70% { background-position: -1px 1px; }
-    80% { background-position: 1px -1px; }
-    90% { background-position: 0px 0px; }
-    100% { background-position: -1px -1px; }
-}
-
-/* Interlacing effect for authentic CRT look */
-.terminal-screen {
-    background-image: 
-        linear-gradient(
-            transparent 50%, 
-            rgba(0, 0, 0, 0.1) 50%
-        );
-    background-size: 100% 2px;
-}
-
-/* Power-on boot effect */
-.boot-sequence {
-    animation: power-on 2s ease-out;
-}
-
-@keyframes power-on {
-    0% {
-        transform: scaleY(0.01) scaleX(1);
-        opacity: 0;
-    }
-    50% {
-        transform: scaleY(0.01) scaleX(1);
-        opacity: 1;
-    }
-    80% {
-        transform: scaleY(1) scaleX(1);
-        opacity: 1;
-    }
-    100% {
-        transform: scaleY(1) scaleX(1);
-        opacity: 1;
-    }
-}
-
-/* Screen burn-in effect for frequently displayed elements */
-.burn-in {
-    text-shadow: 
-        0 0 2px currentColor,
-        0 0 4px currentColor,
-        0 0 6px currentColor;
-    opacity: 0.9;
-}
-
-/* Retro button styling */
+/* Retro Button Styling */
 .retro-button {
-    background: var(--terminal-bg);
-    border: 1px solid var(--terminal-green-dim);
+    background: transparent;
+    border: 1px solid var(--terminal-green);
     color: var(--terminal-green);
-    padding: 8px 16px;
+    padding: 5px 10px;
     font-family: inherit;
-    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 1px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    
-    /* Button glow effect */
-    box-shadow: 
-        inset 0 0 10px rgba(0, 255, 65, 0.1),
-        0 0 5px rgba(0, 255, 65, 0.2);
+    box-shadow: 0 0 5px var(--terminal-green-dim);
+    transition: all 0.1s;
 }
 
 .retro-button:hover {
-    background: rgba(0, 255, 65, 0.1);
-    border-color: var(--terminal-green);
-    color: var(--terminal-green-bright);
-    text-shadow: 0 0 8px var(--terminal-shadow);
-    box-shadow: 
-        inset 0 0 15px rgba(0, 255, 65, 0.2),
-        0 0 10px rgba(0, 255, 65, 0.4);
+    background: var(--terminal-green);
+    color: #000;
+    box-shadow: 0 0 15px var(--terminal-green);
 }
 
 .retro-button:active {
-    background: rgba(0, 255, 65, 0.2);
-    transform: translateY(1px);
+    transform: scale(0.98);
 }
 
-/* Disable effects on low-performance devices */
-@media (prefers-reduced-motion: reduce) {
-    .terminal-screen::before,
-    .cursor,
-    .typing-text,
-    .typing-line {
-        animation: none;
+/* CRT Turn On Animation */
+@keyframes turn-on {
+    0% {
+        transform: scale(1, 0.002);
+        filter: brightness(30);
+        opacity: 0;
     }
-    
-    .terminal-screen {
-        background-image: none;
+    30% {
+        transform: scale(1, 0.002);
+        filter: brightness(30);
+        opacity: 1;
     }
-    
-    .terminal-content,
-    .terminal-header,
-    .nav-bar {
-        text-shadow: 0 0 3px currentColor;
+    60% {
+        transform: scale(1, 0.002);
+        filter: brightness(30);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1, 1);
+        filter: brightness(1);
+        opacity: 1;
     }
 }
 
-/* High contrast mode adjustments */
-@media (prefers-contrast: high) {
-    :root {
-        --terminal-green: #00ff00;
-        --terminal-green-dim: #00cc00;
-        --terminal-green-bright: #88ff88;
-    }
-    
-    .terminal-screen::before {
-        opacity: 0.5;
-    }
+.boot-sequence {
+    animation: turn-on 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Chromatic Aberration on Text (Subtle) */
+.glitch-text {
+    position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+}
+
+.glitch-text::before {
+    color: #ff0000;
+    z-index: -1;
+    transform: translate(-1px, 0);
+}
+
+.glitch-text::after {
+    color: #0000ff;
+    z-index: -2;
+    transform: translate(1px, 0);
 }

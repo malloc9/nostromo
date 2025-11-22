@@ -11,7 +11,7 @@ let engineering;
 let crew;
 let bootSequence;
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize core systems
     initializeDataSimulator();
     initializeAudioManager();
@@ -22,20 +22,21 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeNavigationSystem();
     initializeEngineering();
     initializeCrew();
-    
+    initializeConsole();
+
     // Initialize UI components
     updateSystemTime();
     setInterval(updateSystemTime, 1000);
-    
+
     // Initialize navigation
     initializeNavigation();
-    
+
     // Add keyboard support for navigation
     initializeKeyboardControls();
-    
+
     // Listen for route changes
     window.addEventListener('routechange', handleRouteChange);
-    
+
     // Start boot sequence if needed
     startApplicationBootSequence();
 });
@@ -128,6 +129,17 @@ function initializeCrew() {
     }
 }
 
+function initializeConsole() {
+    if (typeof NostromoConsole !== 'undefined' && audioManager) {
+        const consoleSystem = new NostromoConsole(audioManager);
+        window.consoleSystem = consoleSystem; // Make globally accessible
+        consoleSystem.init();
+        console.log('Console interface initialized');
+    } else {
+        console.warn('NostromoConsole or AudioManager not available');
+    }
+}
+
 function updateSystemTime() {
     const timeElement = document.getElementById('system-time');
     if (timeElement) {
@@ -157,7 +169,7 @@ async function startApplicationBootSequence() {
 function initializeNavigation() {
     const navItems = document.querySelectorAll('.nav-item[data-screen]');
     navItems.forEach(item => {
-        item.addEventListener('click', function(event) {
+        item.addEventListener('click', function (event) {
             event.preventDefault();
             const screen = this.dataset.screen;
             if (screen && router) {
@@ -172,12 +184,12 @@ function initializeNavigation() {
 }
 
 function initializeKeyboardControls() {
-    document.addEventListener('keydown', function(event) {
+    document.addEventListener('keydown', function (event) {
         // Play keypress sound for most keys
         if (audioManager && event.key.length === 1) {
             audioManager.playKeypress();
         }
-        
+
         // Handle boot screen - any key to continue
         const bootScreen = document.getElementById('boot-screen');
         if (bootScreen && bootScreen.classList.contains('active')) {
@@ -189,7 +201,7 @@ function initializeKeyboardControls() {
             }
             return;
         }
-        
+
         // Handle F-key navigation through router
         if (router && router.handleHotkey(event.key)) {
             event.preventDefault();
@@ -198,7 +210,7 @@ function initializeKeyboardControls() {
             }
             return;
         }
-        
+
         // Handle F8 for audio toggle
         if (event.key === 'F8') {
             event.preventDefault();
@@ -219,7 +231,7 @@ function toggleAudio() {
 function handleRouteChange(event) {
     const { newRoute, previousRoute } = event.detail;
     console.log(`Route changed from ${previousRoute} to ${newRoute}`);
-    
+
     // Update system status or perform route-specific actions
     updateSystemStatus(newRoute);
 }

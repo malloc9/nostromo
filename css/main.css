@@ -23,7 +23,8 @@
 html,
 body {
     height: 100%;
-    font-family: 'Courier New', 'Monaco', 'Consolas', 'Lucida Console', monospace;
+    /* Authentic 70s Terminal Font Stack */
+    font-family: 'VT323', 'Courier New', 'Monaco', monospace;
     background-color: var(--terminal-bg);
     color: var(--terminal-green);
     overflow: hidden;
@@ -31,16 +32,16 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    margin: 0;
+    padding: 0;
 }
 
-/* Main Application Container */
+/* Main Application Container - Now handled primarily by terminal.css for CRT effects */
 .app-container {
-    width: 100vw;
-    height: 100vh;
     display: flex;
     flex-direction: column;
-    background: var(--terminal-bg);
     position: relative;
+    /* Dimensions and background are handled in terminal.css for the CRT effect */
 }
 
 /* Terminal Screen Container */
@@ -691,15 +692,17 @@ body {
 }
 
 /* Dashboard Specific Styles */
+/* Dashboard Specific Styles */
 .dashboard-container {
     display: grid;
-    grid-template-columns: 1.4fr 1.6fr;
-    grid-template-rows: 1fr auto;
+    grid-template-columns: 40% 60%;
+    grid-template-rows: 1fr 250px;
     height: 100%;
-    gap: 4px;
+    gap: 10px;
+    padding: 10px;
     grid-template-areas:
         "schematic status-grid"
-        "summary summary";
+        "console console";
 }
 
 .ship-schematic-section {
@@ -815,11 +818,128 @@ body {
     font-weight: bold;
 }
 
-.quadrant-content {
-    flex: 1;
+
+
+/* System Summary Styles */
+.system-summary {
+    margin-top: auto;
+    border-top: 1px solid var(--terminal-green-dim);
+    padding-top: 10px;
+    display: flex;
+    justify-content: space-around;
     font-size: 14px;
-    line-height: 1.2;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.summary-label {
+    color: var(--terminal-green-dim);
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.summary-value {
+    color: var(--terminal-green-bright);
+    font-weight: bold;
+    font-size: 16px;
+}
+
+/* Console Interface Styles */
+.console-interface {
+    grid-area: console;
+    border: 1px solid var(--terminal-border);
+    background: var(--terminal-bg-alt);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    font-family: 'VT323', monospace;
     overflow: hidden;
+    min-height: 200px;
+}
+
+.console-header {
+    color: var(--terminal-green-dim);
+    border-bottom: 1px solid var(--terminal-green-dim);
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    font-size: 14px;
+}
+
+.console-output {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.console-line {
+    color: var(--terminal-green);
+    font-size: 16px;
+    line-height: 1.2;
+}
+
+.console-line.mother-response {
+    color: var(--terminal-green-bright);
+    text-shadow: 0 0 5px var(--terminal-shadow);
+}
+
+.console-line.warning {
+    color: #ffaa00;
+}
+
+.console-line.error {
+    color: #ff0000;
+}
+
+.console-line.critical {
+    color: #ff0000;
+    font-weight: bold;
+    animation: pulse-critical 0.5s infinite;
+}
+
+.console-line.special-order {
+    color: var(--terminal-green-bright);
+    white-space: pre;
+    border: 1px solid var(--terminal-green);
+    padding: 10px;
+    margin: 10px 0;
+    background: rgba(0, 255, 65, 0.05);
+}
+
+.console-input-line {
+    display: flex;
+    align-items: center;
+    border-top: 1px solid var(--terminal-border);
+    padding-top: 5px;
+}
+
+.prompt {
+    color: var(--terminal-green-bright);
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.console-input {
+    background: transparent;
+    border: none;
+    color: var(--terminal-green-bright);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    flex: 1;
+    outline: none;
+    text-transform: uppercase;
+    caret-color: var(--terminal-green);
+}
+
+font-size: 14px;
+line-height: 1.2;
+overflow: hidden;
 }
 
 .data-loading {
@@ -975,19 +1095,25 @@ body {
 
 /* Life Support Screen Styles */
 .life-support-container {
+    height: 100%;
+    padding: 4px;
+}
+
+.life-support-main-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto auto;
     height: 100%;
     gap: 4px;
-    grid-template-areas:
-        "overview zones"
-        "trends alerts"
-        "trends alerts";
+}
+
+.life-support-col-left,
+.life-support-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .environmental-overview {
-    grid-area: overview;
     border: 1px solid var(--terminal-border);
     padding: 6px;
     background: var(--terminal-bg-alt);
@@ -1091,7 +1217,6 @@ body {
 
 /* Zone Status Section */
 .zone-status-section {
-    grid-area: zones;
     border: 1px solid var(--terminal-border);
     padding: 6px;
     background: var(--terminal-bg-alt);
@@ -1186,7 +1311,6 @@ body {
 
 /* Trend Section */
 .trend-section {
-    grid-area: trends;
     border: 1px solid var(--terminal-border);
     padding: 6px;
     background: var(--terminal-bg-alt);
@@ -1255,7 +1379,6 @@ body {
 
 /* Alert Section */
 .alert-section {
-    grid-area: alerts;
     border: 1px solid var(--terminal-border);
     padding: 6px;
     background: var(--terminal-bg-alt);
