@@ -1,6 +1,6 @@
 /**
  * Nostromo Dashboard Screen
- * Main status overview with 4-quadrant layout and ship schematic
+ * Modular dashboard system with reusable components for each quadrant and the ship schematic
  */
 
 class NostromoDashboard {
@@ -10,11 +10,35 @@ class NostromoDashboard {
         this.refreshRate = 2500; // 2.5 seconds
         this.isActive = false;
 
+        // Components
+        this.shipSchematic = null;
+        this.powerQuadrant = null;
+        this.lifeSupportQuadrant = null;
+        this.navigationQuadrant = null;
+        this.crewQuadrant = null;
+
         this.init();
     }
 
+    /**
+     * Initialize the dashboard and all its components
+     */
     init() {
         console.log('Dashboard initialized');
+
+        // Initialize components
+        this.shipSchematic = new ShipSchematicComponent('ship-schematic');
+        this.powerQuadrant = new PowerQuadrant();
+        this.lifeSupportQuadrant = new LifeSupportQuadrant();
+        this.navigationQuadrant = new NavigationQuadrant();
+        this.crewQuadrant = new CrewQuadrant();
+
+        // Initialize all components
+        this.shipSchematic.init();
+        this.powerQuadrant.init();
+        this.lifeSupportQuadrant.init();
+        this.navigationQuadrant.init();
+        this.crewQuadrant.init();
     }
 
     /**
@@ -77,27 +101,14 @@ class NostromoDashboard {
             return;
         }
 
-        screenContent.innerHTML = this.generateDashboardHTML();
-        this.setupSchematicClickHandlers();
-        this.updateData();
-
-        // Re-attach console if it exists
-        if (window.consoleSystem) {
-            window.consoleSystem.init();
-        }
-    }
-
-    /**
-     * Generate the complete dashboard HTML structure
-     */
-    generateDashboardHTML() {
-        return `
+        // Generate the dashboard HTML structure
+        screenContent.innerHTML = `
             <div class="dashboard-container">
                 <!-- Top Left: Ship Schematic & Summary -->
                 <div class="ship-schematic-section">
                     <div class="section-header">NOSTROMO VESSEL STATUS</div>
-                    <div class="ship-schematic">
-                        ${this.generateShipSchematic()}
+                    <div id="ship-schematic" class="ship-schematic">
+                        <!-- Ship schematic will be inserted here by component -->
                     </div>
                     <!-- System Summary Integrated here -->
                     <div class="system-summary">
@@ -119,47 +130,23 @@ class NostromoDashboard {
                 <!-- Top Right: 4-Quadrant Status Grid -->
                 <div class="status-grid">
                     <!-- Power Systems Quadrant -->
-                    <div class="status-quadrant" id="power-quadrant">
-                        <div class="quadrant-header">
-                            <span class="quadrant-title">POWER</span>
-                            <span class="status-indicator" id="power-status">●</span>
-                        </div>
-                        <div class="quadrant-content" id="power-content">
-                            <div class="data-loading">LOADING...</div>
-                        </div>
+                    <div id="power-quadrant" class="status-quadrant">
+                        <!-- Power quadrant content will be inserted here by component -->
                     </div>
 
                     <!-- Life Support Quadrant -->
-                    <div class="status-quadrant" id="life-support-quadrant">
-                        <div class="quadrant-header">
-                            <span class="quadrant-title">LIFE SUPPORT</span>
-                            <span class="status-indicator" id="life-support-status">●</span>
-                        </div>
-                        <div class="quadrant-content" id="life-support-content">
-                            <div class="data-loading">LOADING...</div>
-                        </div>
+                    <div id="life-support-quadrant" class="status-quadrant">
+                        <!-- Life support quadrant content will be inserted here by component -->
                     </div>
 
                     <!-- Navigation Quadrant -->
-                    <div class="status-quadrant" id="navigation-quadrant">
-                        <div class="quadrant-header">
-                            <span class="quadrant-title">NAV</span>
-                            <span class="status-indicator" id="navigation-status">●</span>
-                        </div>
-                        <div class="quadrant-content" id="navigation-content">
-                            <div class="data-loading">LOADING...</div>
-                        </div>
+                    <div id="navigation-quadrant" class="status-quadrant">
+                        <!-- Navigation quadrant content will be inserted here by component -->
                     </div>
 
                     <!-- Crew Status Quadrant -->
-                    <div class="status-quadrant" id="crew-quadrant">
-                        <div class="quadrant-header">
-                            <span class="quadrant-title">CREW</span>
-                            <span class="status-indicator" id="crew-status">●</span>
-                        </div>
-                        <div class="quadrant-content" id="crew-content">
-                            <div class="data-loading">LOADING...</div>
-                        </div>
+                    <div id="crew-quadrant" class="status-quadrant">
+                        <!-- Crew quadrant content will be inserted here by component -->
                     </div>
                 </div>
 
@@ -174,41 +161,59 @@ class NostromoDashboard {
                 </div>
             </div>
         `;
+
+        // Render all components
+        this.renderComponents();
+
+        // Update data initially
+        this.updateData();
+
+        // Re-attach console if it exists
+        if (window.consoleSystem) {
+            window.consoleSystem.init();
+        }
     }
 
     /**
-     * Generate ASCII art ship schematic with clickable system indicators
+     * Render all dashboard components
      */
-    generateShipSchematic() {
-        return `
-            <pre class="ascii-ship">
-╔═══════════════════════════════════╗
-║            NOSTROMO               ║
-║       COMMERCIAL TOWING           ║
-║            VEHICLE                ║
-╠═══════════════════════════════════╣
-║                                   ║
-║   [<span class="system-indicator clickable" data-system="life-support" id="schematic-life-support">LS</span>]      BRIDGE      [<span class="system-indicator clickable" data-system="navigation" id="schematic-navigation">NAV</span>]   ║
-║    │        ┌───┐        │        ║
-║    │   ┌────┤   ├────┐   │        ║
-║    └───┤    │   │    ├───┘        ║
-║        │    └───┘    │            ║
-║        │             │            ║
-║        │   CENTRAL   │            ║
-║        │    CORE     │            ║
-║        │             │            ║
-║    ┌───┤    ┌───┐    ├───┐        ║
-║    │   └────┤   ├────┘   │        ║
-║    │        └───┘        │        ║
-║   [<span class="system-indicator clickable" data-system="engineering" id="schematic-power">PWR</span>]    ENGINE ROOM    [<span class="system-indicator clickable" data-system="crew" id="schematic-crew">CRW</span>]   ║
-║    │     ╔═══════════╗     │       ║
-║    └─────╢ █████████ ╟─────┘       ║
-║          ╢ █████████ ╟             ║
-║          ╚═══════════╝             ║
-║                                   ║
-╚═══════════════════════════════════╝
-            </pre>
-        `;
+    renderComponents() {
+        // Render ship schematic
+        this.shipSchematic.render();
+
+        // Render quadrants (they render themselves in init)
+        // But we need to make sure their content is in the right place
+        this.ensureQuadrantContent();
+    }
+
+    /**
+     * Ensure quadrant content is in the right place in the DOM
+     */
+    ensureQuadrantContent() {
+        // Power quadrant
+        const powerContainer = document.getElementById('power-quadrant');
+        if (powerContainer && this.powerQuadrant.container) {
+            // Clear and replace with component content
+            powerContainer.innerHTML = this.powerQuadrant.container.innerHTML;
+        }
+
+        // Life support quadrant
+        const lifeSupportContainer = document.getElementById('life-support-quadrant');
+        if (lifeSupportContainer && this.lifeSupportQuadrant.container) {
+            lifeSupportContainer.innerHTML = this.lifeSupportQuadrant.container.innerHTML;
+        }
+
+        // Navigation quadrant
+        const navigationContainer = document.getElementById('navigation-quadrant');
+        if (navigationContainer && this.navigationQuadrant.container) {
+            navigationContainer.innerHTML = this.navigationQuadrant.container.innerHTML;
+        }
+
+        // Crew quadrant
+        const crewContainer = document.getElementById('crew-quadrant');
+        if (crewContainer && this.crewQuadrant.container) {
+            crewContainer.innerHTML = this.crewQuadrant.container.innerHTML;
+        }
     }
 
     /**
@@ -239,161 +244,39 @@ class NostromoDashboard {
 
     /**
      * Update power systems quadrant
+     * @param {Object} powerData - Power system data
      */
     updatePowerQuadrant(powerData) {
-        const content = document.getElementById('power-content');
-        const status = document.getElementById('power-status');
-
-        if (!content || !status) return;
-
-        // Determine power status
-        const powerLevel = powerData.generation - powerData.consumption;
-        let statusClass = 'status-ok';
-        if (powerLevel < 10) statusClass = 'status-warning';
-        if (powerLevel < 0) statusClass = 'status-critical';
-
-        status.className = `status-indicator ${statusClass}`;
-
-        content.innerHTML = `
-            <div class="data-row">
-                <span class="data-label">GENERATION:</span>
-                <span class="data-value">${powerData.generation.toFixed(1)}%</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">CONSUMPTION:</span>
-                <span class="data-value">${powerData.consumption.toFixed(1)}%</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">NET POWER:</span>
-                <span class="data-value ${powerLevel >= 0 ? 'positive' : 'negative'}">${powerLevel >= 0 ? '+' : ''}${powerLevel.toFixed(1)}%</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">EFFICIENCY:</span>
-                <span class="data-value">${powerData.efficiency.toFixed(1)}%</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">FUEL LEVEL:</span>
-                <span class="data-value">${powerData.fuel.toFixed(1)}%</span>
-            </div>
-        `;
+        this.powerQuadrant.update(powerData);
     }
 
     /**
      * Update life support quadrant
+     * @param {Object} lifeSupportData - Life support system data
      */
     updateLifeSupportQuadrant(lifeSupportData) {
-        const content = document.getElementById('life-support-content');
-        const status = document.getElementById('life-support-status');
-
-        if (!content || !status) return;
-
-        // Determine life support status
-        let statusClass = 'status-ok';
-        if (lifeSupportData.oxygen < 90 || lifeSupportData.co2 > 20 ||
-            lifeSupportData.pressure < 0.95 || lifeSupportData.pressure > 1.05) {
-            statusClass = 'status-warning';
-        }
-        if (lifeSupportData.oxygen < 80 || lifeSupportData.co2 > 30) {
-            statusClass = 'status-critical';
-        }
-
-        status.className = `status-indicator ${statusClass}`;
-
-        content.innerHTML = `
-            <div class="data-row">
-                <span class="data-label">OXYGEN:</span>
-                <span class="data-value">${lifeSupportData.oxygen.toFixed(1)}%</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">CO2 LEVEL:</span>
-                <span class="data-value">${lifeSupportData.co2.toFixed(1)} PPM</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">PRESSURE:</span>
-                <span class="data-value">${lifeSupportData.pressure.toFixed(2)} ATM</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">TEMPERATURE:</span>
-                <span class="data-value">${lifeSupportData.temperature.toFixed(1)}°C</span>
-            </div>
-        `;
+        this.lifeSupportQuadrant.update(lifeSupportData);
     }
 
     /**
      * Update navigation quadrant
+     * @param {Object} navigationData - Navigation system data
      */
     updateNavigationQuadrant(navigationData) {
-        const content = document.getElementById('navigation-content');
-        const status = document.getElementById('navigation-status');
-
-        if (!content || !status) return;
-
-        // Navigation is typically always operational
-        status.className = 'status-indicator status-ok';
-
-        content.innerHTML = `
-            <div class="data-row">
-                <span class="data-label">POSITION:</span>
-                <span class="data-value">${navigationData.coordinates.x.toFixed(1)}, ${navigationData.coordinates.y.toFixed(1)}</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">HEADING:</span>
-                <span class="data-value">${navigationData.heading.toFixed(1)}°</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">VELOCITY:</span>
-                <span class="data-value">${navigationData.velocity.toFixed(3)} C</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">DESTINATION:</span>
-                <span class="data-value">${navigationData.destination}</span>
-            </div>
-        `;
+        this.navigationQuadrant.update(navigationData);
     }
 
     /**
      * Update crew status quadrant
+     * @param {Array} crewData - Array of crew member objects
      */
     updateCrewQuadrant(crewData) {
-        const content = document.getElementById('crew-content');
-        const status = document.getElementById('crew-status');
-
-        if (!content || !status) return;
-
-        // Count crew by status
-        const activeCrew = crewData.filter(member => member.status === 'active').length;
-        const restingCrew = crewData.filter(member => member.status === 'resting').length;
-        const totalCrew = crewData.length;
-
-        // Determine crew status
-        let statusClass = 'status-ok';
-        if (activeCrew < totalCrew * 0.6) statusClass = 'status-warning';
-        if (activeCrew < totalCrew * 0.4) statusClass = 'status-critical';
-
-        status.className = `status-indicator ${statusClass}`;
-
-        content.innerHTML = `
-            <div class="data-row">
-                <span class="data-label">TOTAL CREW:</span>
-                <span class="data-value">${totalCrew}</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">ACTIVE:</span>
-                <span class="data-value">${activeCrew}</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">RESTING:</span>
-                <span class="data-value">${restingCrew}</span>
-            </div>
-            <div class="data-row">
-                <span class="data-label">AVG VITALS:</span>
-                <span class="data-value">NOMINAL</span>
-            </div>
-        `;
+        this.crewQuadrant.update(crewData);
     }
 
     /**
      * Update system summary information
+     * @param {Object} systemData - Complete system status data
      */
     updateSystemSummary(systemData) {
         const overallStatus = document.getElementById('overall-status');
@@ -436,62 +319,10 @@ class NostromoDashboard {
 
     /**
      * Update ship schematic system indicators
+     * @param {Object} systemData - Complete system status data
      */
     updateSchematicIndicators(systemData) {
-        // Update life support indicator
-        const lsIndicator = document.getElementById('schematic-life-support');
-        if (lsIndicator) {
-            let statusClass = 'status-ok';
-            if (systemData.lifeSupport.oxygen < 90 || systemData.lifeSupport.co2 > 20) {
-                statusClass = 'status-warning';
-            }
-            if (systemData.lifeSupport.oxygen < 80 || systemData.lifeSupport.co2 > 30) {
-                statusClass = 'status-critical';
-            }
-            lsIndicator.className = `system-indicator clickable ${statusClass}`;
-        }
-
-        // Update power indicator
-        const powerIndicator = document.getElementById('schematic-power');
-        if (powerIndicator) {
-            const powerLevel = systemData.power.generation - systemData.power.consumption;
-            let statusClass = 'status-ok';
-            if (powerLevel < 10) statusClass = 'status-warning';
-            if (powerLevel < 0) statusClass = 'status-critical';
-            powerIndicator.className = `system-indicator clickable ${statusClass}`;
-        }
-
-        // Update navigation indicator (typically always OK)
-        const navIndicator = document.getElementById('schematic-navigation');
-        if (navIndicator) {
-            navIndicator.className = 'system-indicator clickable status-ok';
-        }
-
-        // Update crew indicator
-        const crewIndicator = document.getElementById('schematic-crew');
-        if (crewIndicator) {
-            const activeCrew = systemData.crew.filter(member => member.status === 'active').length;
-            const totalCrew = systemData.crew.length;
-            let statusClass = 'status-ok';
-            if (activeCrew < totalCrew * 0.6) statusClass = 'status-warning';
-            if (activeCrew < totalCrew * 0.4) statusClass = 'status-critical';
-            crewIndicator.className = `system-indicator clickable ${statusClass}`;
-        }
-    }
-
-    /**
-     * Set up click handlers for schematic system indicators
-     */
-    setupSchematicClickHandlers() {
-        const indicators = document.querySelectorAll('.system-indicator.clickable');
-        indicators.forEach(indicator => {
-            indicator.addEventListener('click', (event) => {
-                const system = event.target.dataset.system;
-                if (system && window.router) {
-                    window.router.goTo(system);
-                }
-            });
-        });
+        this.shipSchematic.update(systemData);
     }
 }
 

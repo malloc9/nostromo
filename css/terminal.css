@@ -2,216 +2,389 @@
 
 /* Root Variables for CRT Effects */
 :root {
-    --crt-curvature: 3px;
-    --crt-scanline-opacity: 0.15;
-    --crt-flicker-opacity: 0.02;
-    --crt-glow-strength: 0.6;
-    --terminal-phosphor: #00ff41;
+  --crt-curvature: 8px;
+  --crt-scanline-opacity: 0.25;
+  --crt-flicker-opacity: 0.03;
+  --crt-glow-strength: 0.8;
+  --terminal-phosphor: #00ff41;
+  --terminal-phosphor-dim: #008020;
+  --terminal-green: #00ff41;
+  --terminal-green-bright: #33ff50;
+  --terminal-green-dim: #008020;
+  --terminal-red: #ff0040;
+  --terminal-yellow: #ffff40;
 }
 
 /* Main CRT Container - Simulates the physical monitor */
 body {
-    background-color: #050505;
-    overflow: hidden;
-    margin: 0;
-    height: 100vh;
-    width: 100vw;
-    perspective: 1000px;
+  background-color: #050505;
+  overflow: hidden;
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+  perspective: 1000px;
 }
 
 /* The Screen Surface - Curved and Distorted */
 .app-container {
-    position: relative;
-    width: 98vw;
-    height: 96vh;
-    margin: 2vh 1vw;
-    background-color: #001100;
-    border-radius: 20px;
-    box-shadow: 
-        0 0 0 10px #1a1a1a, /* Bezel */
-        0 0 0 12px #000,    /* Outer Bezel */
-        inset 0 0 40px rgba(0,0,0,0.8); /* Inner shadow */
-    overflow: hidden;
-    transform-style: preserve-3d;
-    /* Subtle curvature transform */
-    transform: scale(0.98); 
+  position: relative;
+  width: 98vw;
+  height: 96vh;
+  margin: 2vh 1vw;
+  background-color: #001100;
+  border-radius: 20px;
+  box-shadow:
+    0 0 0 10px #1a1a1a,
+    /* Bezel */ 0 0 0 12px #000,
+    /* Outer Bezel */ inset 0 0 40px rgba(0, 0, 0, 0.8); /* Inner shadow */
+  overflow: hidden;
+  transform-style: preserve-3d;
+  /* Enhanced curvature transform */
+  transform: scale(1) perspective(600px) rotateX(0deg);
+}
+
+/* Enhanced CRT curvature with bezel */
+.app-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 22px;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0) 40%,
+      rgba(0, 0, 0, 0.2) 70%
+    ),
+    radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.3) 80%
+    );
+  z-index: 1001;
+}
+
+/* Screen content wrapper for phosphor persistence effect */
+.screen-content-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Phosphor persistence (ghosting) effect */
+.phosphor-persistence {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 999;
+  mix-blend-mode: screen;
+}
+
+/* Ghost layers for phosphor persistence */
+.phosphor-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: inherit;
+  filter: brightness(0.3) saturate(1.5) hue-rotate(0deg);
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.phosphor-layer-1 {
+  transition-delay: 0.1s;
+}
+.phosphor-layer-2 {
+  transition-delay: 0.2s;
+}
+.phosphor-layer-3 {
+  transition-delay: 0.3s;
+}
+
+/* Trigger classes for phosphor effect */
+.phosphor-trigger-1 .phosphor-layer-1 {
+  opacity: 0.15;
+}
+.phosphor-trigger-2 .phosphor-layer-2 {
+  opacity: 0.1;
+}
+.phosphor-trigger-3 .phosphor-layer-3 {
+  opacity: 0.05;
 }
 
 /* CRT Screen Overlay Effects */
 .app-container::before {
-    content: " ";
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: 
-        /* Scanlines */
-        linear-gradient(
-            rgba(18, 16, 16, 0) 50%, 
-            rgba(0, 0, 0, 0.25) 50%
-        ),
-        /* RGB Split / Chromatic Aberration (Subtle) */
-        linear-gradient(90deg, 
-            rgba(255, 0, 0, 0.06), 
-            rgba(0, 255, 0, 0.02), 
-            rgba(0, 0, 255, 0.06)
-        );
-    z-index: 1000;
-    background-size: 100% 2px, 3px 100%;
-    pointer-events: none;
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background:
+        /* Enhanced Scanlines */
+    repeating-linear-gradient(
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 49%,
+      rgba(0, 0, 0, 0.25) 50%,
+      rgba(0, 0, 0, 0.25) 51%
+    ),
+    /* Enhanced RGB Split / Chromatic Aberration */
+    linear-gradient(
+        90deg,
+        rgba(255, 0, 0, 0.08),
+        rgba(0, 255, 0, 0.02),
+        rgba(0, 0, 255, 0.08)
+      );
+  z-index: 1000;
+  background-size:
+    100% 2px,
+    100% 100%;
+  pointer-events: none;
 }
 
-/* Screen Flicker and Vignette */
+/* Screen Flicker, Vignette and Additional CRT Effects */
 .app-container::after {
-    content: " ";
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: radial-gradient(
-        circle, 
-        rgba(0, 255, 65, 0.02) 0%, 
-        rgba(0, 0, 0, 0.4) 100%
-    );
-    z-index: 1000;
-    pointer-events: none;
-    animation: flicker 0.15s infinite;
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background:
+        /* Horizontal scanlines */
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 65, 0) 0%,
+      rgba(0, 255, 65, 0) 49%,
+      rgba(0, 255, 65, 0.08) 50%,
+      rgba(0, 255, 65, 0.08) 51%
+    ),
+    /* Subtle vertical lines for aperture grill effect */
+    repeating-linear-gradient(
+        90deg,
+        rgba(0, 255, 65, 0) 0%,
+        rgba(0, 255, 65, 0) 49%,
+        rgba(0, 255, 65, 0.02) 50%,
+        rgba(0, 255, 65, 0.02) 51%
+      ),
+    /* vignette */
+    radial-gradient(circle, rgba(0, 255, 65, 0.02) 0%, rgba(0, 0, 0, 0.4) 80%);
+  z-index: 1000;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
 }
 
 @keyframes flicker {
-    0% { opacity: 0.95; }
-    50% { opacity: 0.92; }
-    100% { opacity: 0.96; }
+  0% {
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0.96;
+  }
 }
 
 /* Text Glow and Phosphor Persistence */
-.terminal-content, .terminal-header, .nav-bar {
-    text-shadow: 
-        0 0 2px var(--terminal-green-dim),
-        0 0 8px var(--terminal-green-dim);
-    filter: contrast(1.2) brightness(1.1);
+.terminal-content,
+.terminal-header,
+.nav-bar {
+  text-shadow:
+    0 0 2px var(--terminal-green-dim),
+    0 0 8px var(--terminal-green-dim);
+  filter: contrast(1.2) brightness(1.1);
 }
 
 /* High Intensity Elements (Headers, Alerts) */
-h1, h2, .system-title, .status-critical, .alert-item {
-    text-shadow: 
-        0 0 2px var(--terminal-green-bright),
-        0 0 10px var(--terminal-green),
-        0 0 20px var(--terminal-green);
+h1,
+h2,
+.system-title,
+.status-critical,
+.alert-item {
+  text-shadow:
+    0 0 2px var(--terminal-green-bright),
+    0 0 10px var(--terminal-green),
+    0 0 20px var(--terminal-green);
 }
 
 /* Scanline Rolling Bar Effect */
 .scanline-bar {
-    width: 100%;
-    height: 10px;
-    background: rgba(0, 255, 65, 0.05);
-    position: absolute;
-    z-index: 999;
-    top: 0;
-    left: 0;
-    animation: scanline 8s linear infinite;
-    pointer-events: none;
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 255, 65, 0.05);
+  position: absolute;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes scanline {
-    0% { top: -10%; }
-    100% { top: 110%; }
+  0% {
+    top: -10%;
+  }
+  100% {
+    top: 110%;
+  }
 }
 
 /* Cursor Animation */
 .cursor {
-    display: inline-block;
-    width: 10px;
-    height: 1em;
-    background-color: var(--terminal-green);
-    animation: blink 1s step-end infinite;
-    vertical-align: text-bottom;
+  display: inline-block;
+  width: 10px;
+  height: 1em;
+  background-color: var(--terminal-green);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* Retro Button Styling */
 .retro-button {
-    background: transparent;
-    border: 1px solid var(--terminal-green);
-    color: var(--terminal-green);
-    padding: 5px 10px;
-    font-family: inherit;
-    text-transform: uppercase;
-    cursor: pointer;
-    box-shadow: 0 0 5px var(--terminal-green-dim);
-    transition: all 0.1s;
+  background: transparent;
+  border: 1px solid var(--terminal-green);
+  color: var(--terminal-green);
+  padding: 5px 10px;
+  font-family: inherit;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 5px var(--terminal-green-dim);
+  transition: all 0.1s;
 }
 
 .retro-button:hover {
-    background: var(--terminal-green);
-    color: #000;
-    box-shadow: 0 0 15px var(--terminal-green);
+  background: var(--terminal-green);
+  color: #000;
+  box-shadow: 0 0 15px var(--terminal-green);
 }
 
 .retro-button:active {
-    transform: scale(0.98);
+  transform: scale(0.98);
 }
 
 /* CRT Turn On Animation */
 @keyframes turn-on {
-    0% {
-        transform: scale(1, 0.002);
-        filter: brightness(30);
-        opacity: 0;
-    }
-    30% {
-        transform: scale(1, 0.002);
-        filter: brightness(30);
-        opacity: 1;
-    }
-    60% {
-        transform: scale(1, 0.002);
-        filter: brightness(30);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(1, 1);
-        filter: brightness(1);
-        opacity: 1;
-    }
+  0% {
+    transform: scale(1, 0.002);
+    filter: brightness(30);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1, 0.002);
+    filter: brightness(30);
+    opacity: 1;
+  }
+  60% {
+    transform: scale(1, 0.002);
+    filter: brightness(30);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    filter: brightness(1);
+    opacity: 1;
+  }
 }
 
 .boot-sequence {
-    animation: turn-on 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: turn-on 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 /* Chromatic Aberration on Text (Subtle) */
 .glitch-text {
-    position: relative;
+  position: relative;
 }
 
 .glitch-text::before,
 .glitch-text::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0.8;
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
 }
 
 .glitch-text::before {
-    color: #ff0000;
-    z-index: -1;
-    transform: translate(-1px, 0);
+  color: #ff0000;
+  z-index: -1;
+  transform: translate(-1px, 0);
 }
 
 .glitch-text::after {
-    color: #0000ff;
-    z-index: -2;
-    transform: translate(1px, 0);
+  color: #0000ff;
+  z-index: -2;
+  transform: translate(1px, 0);
+}
+
+/* Mother Interface Styles */
+.mother-interface {
+  background-color: #000000;
+  color: var(--terminal-green);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px;
+  font-family: var(--terminal-font-secondary);
+  overflow: hidden;
+}
+
+.mother-interface .mother-prompt {
+  font-size: 24px;
+  margin-bottom: 20px;
+  min-width: 10px;
+  display: inline-block;
+  width: 10px;
+  height: 1.4em;
+  background-color: var(--terminal-green);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+.mother-interface .mother-output {
+  font-size: 24px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+  text-shadow:
+    0 0 2px var(--terminal-green-dim),
+    0 0 8px var(--terminal-green-dim);
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }

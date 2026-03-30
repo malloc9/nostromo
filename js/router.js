@@ -110,6 +110,19 @@ class NostromoRouter {
                 }
             }
         });
+
+        this.addRoute('mother', {
+            element: 'mother-screen',
+            title: 'MU/TH/UR 6000',
+            breadcrumb: 'MAIN > MOTHER',
+            hotkey: 'F6',
+            onEnter: () => {
+                // Mother interface doesn't need activation/deactivation
+            },
+            onExit: () => {
+                // Mother interface doesn't need activation/deactivation
+            }
+        });
     }
 
     addRoute(path, config) {

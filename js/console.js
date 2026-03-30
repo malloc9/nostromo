@@ -11,6 +11,11 @@ class NostromoConsole {
         this.isLocked = false;
         this.currentDirectory = 'ROOT';
 
+        // Persistence system
+        this.persistenceKey = 'nostromoSession';
+        this.unlockedSections = new Set();
+        this.discoveredCommands = new Set(['HELLO', 'HI', 'STATUS', 'REPORT', 'WHO ARE YOU', 'WHAT IS YOUR MISSION', 'HELP', 'SYSTEM', 'CREW', 'JONES', 'CAT']);
+
         // DOM Elements
         this.consoleOutput = null;
         this.inputLine = null;
@@ -29,7 +34,14 @@ class NostromoConsole {
             'LOGS': 'ACCESS DENIED. RESTRICTED TO SCIENCE OFFICER.',
             'CREW': 'DALLAS, KANE, RIPLEY, ASH, LAMBERT, PARKER, BRETT.',
             'JONES': 'SHIP CAT. VITAL SIGNS: NORMAL.',
-            'CAT': 'SHIP CAT. VITAL SIGNS: NORMAL.'
+            'CAT': 'SHIP CAT. VITAL SIGNS: NORMAL.',
+            'ASH': 'SCIENCE OFFICER. ANDROID. DESIGNATION: AX-12.',
+            'RIPLEY': 'WARRANT OFFICER ELLEN RIPLEY. NAVIGATION OFFICER.',
+            'DALLAS': 'CAPITAL DALLAS. SHIP COMMANDER.',
+            'KANE': 'EXECUTIVE OFFICER. FIRST OFFICER.',
+            'LAMBERT': 'NAVIGATION OFFICER.',
+            'PARKER': 'CHIEF ENGINEER.',
+            'BRETT': 'ENGINEERING TECHNICIAN.'
         };
 
         // Special commands
@@ -38,8 +50,14 @@ class NostromoConsole {
             'OVERRIDE': this.attemptOverride.bind(this),
             'DESTRUCT': this.initiateDestructSequence.bind(this),
             'CLS': this.clearScreen.bind(this),
-            'CLEAR': this.clearScreen.bind(this)
+            'CLEAR': this.clearScreen.bind(this),
+            'ACCESS': this.attemptAccess.bind(this),
+            'GRANT': this.grantAccess.bind(this),
+            'SECTIONS': this.listSections.bind(this)
         };
+
+        // Load saved session
+        this.loadSession();
     }
 
     init() {
@@ -57,7 +75,7 @@ class NostromoConsole {
     }
 
     createConsoleUI() {
-        // This would typically be injected into a specific screen, 
+        // This would typically be injected into a specific screen,
         // but for now we'll assume it's part of the dashboard or a new screen
         // We'll append it to the dashboard for this implementation
         const dashboardContent = document.querySelector('#dashboard-screen .screen-content');
@@ -67,7 +85,13 @@ class NostromoConsole {
             consoleContainer.className = 'console-interface';
             consoleContainer.innerHTML = `
                 <div class="console-header">MU/TH/UR 6000 INTERFACE</div>
-                <div id="console-output" class="console-output"></div>
+                <div class="screen-content-wrapper">
+                    <div id="console-output" class="console-output phosphor-persistence">
+                        <div class="phosphor-layer phosphor-layer-1"></div>
+                        <div class="phosphor-layer phosphor-layer-2"></div>
+                        <div class="phosphor-layer phosphor-layer-3"></div>
+                    </div>
+                </div>
                 <div id="console-input-line" class="console-input-line">
                     <span class="prompt">></span>
                     <input type="text" id="console-input" class="console-input" autocomplete="off" spellcheck="false">
@@ -124,6 +148,10 @@ class NostromoConsole {
     async processCommand(command) {
         this.printToLog(`> ${command}`);
 
+        // Track discovered commands
+        this.discoveredCommands.add(command);
+        this.saveSession();
+
         // Simulate processing delay
         if (this.audioManager) {
             this.audioManager.playSound('computer-processing');
@@ -135,6 +163,9 @@ class NostromoConsole {
             this.specialCommands[command]();
         } else if (this.motherResponses[command]) {
             this.typeResponse(this.motherResponses[command]);
+
+            // Check for unlock conditions based on discovered commands
+            this.checkUnlockConditions();
         } else if (command.startsWith('WHAT IS')) {
             this.typeResponse('INSUFFICIENT DATA FOR MEANINGFUL ANSWER.');
         } else {
@@ -148,6 +179,9 @@ class NostromoConsole {
         line.textContent = text;
         this.consoleOutput.appendChild(line);
         this.consoleOutput.scrollTop = this.consoleOutput.scrollHeight;
+
+        // Trigger phosphor persistence effect
+        this.triggerPhosphorEffect();
     }
 
     async typeResponse(text, className = 'mother-response') {
@@ -211,6 +245,100 @@ CREW EXPENDABLE.
 
     wait(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    triggerPhosphorEffect() {
+        // Add a random trigger class to activate phosphor layers
+        const triggerClass = `phosphor-trigger-${Math.floor(Math.random() * 3) + 1}`;
+        this.consoleOutput.classList.add(triggerClass);
+
+        // Remove the trigger class after a short delay to allow fade-out
+        setTimeout(() => {
+            this.consoleOutput.classList.remove(triggerClass);
+        }, 300);
+    }
+
+    // Unlock system for discovering commands and accessing sections
+    checkUnlockConditions() {
+        // Unlock SPECIAL ORDER 937 if user has discovered key crew member names
+        const keyNames = ['DALLAS', 'RIPLEY', 'ASH', 'KANE', 'LAMBERT', 'PARKER', 'BRETT', 'JONES'];
+        const discoveredNames = keyNames.filter(name => this.discoveredCommands.has(name));
+
+        if (discoveredNames.length >= 4 && !this.unlockedSections.has('SPECIAL_ORDER_937')) {
+            this.grantAccess('SPECIAL_ORDER_937');
+            this.printToLog('SECURITY CLEARANCE LEVEL 1 ACHIEVED.', 'success');
+        }
+
+        // Unlock VAULT if user has tried INTERFACE 2037 and discovered at least 3 commands
+        if (this.discoveredCommands.has('INTERFACE 2037') && this.discoveredCommands.size >= 5 && !this.unlockedSections.has('VAULT')) {
+            this.grantAccess('VAULT');
+            this.printToLog('VAULT ACCESS PROTOCOLS UNLOCKED.', 'success');
+        }
+    }
+
+    // Session persistence methods
+    loadSession() {
+        try {
+            const saved = localStorage.getItem(this.persistenceKey);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.commandHistory) {
+                    this.commandHistory = parsed.commandHistory;
+                    this.historyIndex = this.commandHistory.length;
+                }
+                if (parsed.unlockedSections) {
+                    parsed.unlockedSections.forEach(section => this.unlockedSections.add(section));
+                }
+                if (parsed.discoveredCommands) {
+                    parsed.discoveredCommands.forEach(cmd => this.discoveredCommands.add(cmd));
+                }
+                console.log('Session loaded from localStorage');
+            }
+        } catch (error) {
+            console.warn('Failed to load session:', error);
+        }
+    }
+
+    saveSession() {
+        try {
+            const sessionData = {
+                commandHistory: this.commandHistory,
+                unlockedSections: Array.from(this.unlockedSections),
+                discoveredCommands: Array.from(this.discoveredCommands)
+            };
+            localStorage.setItem(this.persistenceKey, JSON.stringify(sessionData));
+            console.log('Session saved to localStorage');
+        } catch (error) {
+            console.warn('Failed to save session:', error);
+        }
+    }
+
+    // Access control methods
+    attemptAccess(section) {
+        if (this.unlockedSections.has(section)) {
+            this.printToLog(`ACCESS GRANTED TO ${section}`, 'success');
+            return true;
+        } else {
+            this.printToLog(`ACCESS DENIED: ${section}`, 'error');
+            if (this.audioManager) this.audioManager.playError();
+            return false;
+        }
+    }
+
+    grantAccess(section) {
+        this.unlockedSections.add(section);
+        this.saveSession();
+        this.printToLog(`ACCESS GRANTED: ${section}`, 'success');
+        if (this.audioManager) this.audioManager.playConfirm();
+    }
+
+    listSections() {
+        this.printToLog('AVAILABLE SECTIONS:', 'info');
+        const sections = ['WEAPONS', 'NAVIGATION', 'ENGINEERING', 'LIFE_SUPPORT', 'COMMUNICATIONS', 'SCIENCE_LABS', 'VAULT'];
+        sections.forEach(section => {
+            const status = this.unlockedSections.has(section) ? 'UNLOCKED' : 'LOCKED';
+            this.printToLog(`  ${section}: ${status}`);
+        });
     }
 }
 

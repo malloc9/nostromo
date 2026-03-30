@@ -17,6 +17,8 @@
     --terminal-border: #003300;
     --terminal-shadow: rgba(0, 255, 65, 0.3);
     --terminal-glow: rgba(0, 255, 65, 0.1);
+    --terminal-font-primary: 'VT323', 'Courier New', 'Monaco', monospace;
+    --terminal-font-secondary: 'Space Mono', 'Courier New', 'Monaco', monospace;
 }
 
 /* Base HTML and Body Styles */
@@ -24,7 +26,7 @@ html,
 body {
     height: 100%;
     /* Authentic 70s Terminal Font Stack */
-    font-family: 'VT323', 'Courier New', 'Monaco', monospace;
+    font-family: var(--terminal-font-primary);
     background-color: var(--terminal-bg);
     color: var(--terminal-green);
     overflow: hidden;
@@ -89,7 +91,7 @@ body {
 .terminal-content {
     font-size: 14px;
     line-height: 1.4;
-    font-family: 'Courier New', monospace;
+    font-family: var(--terminal-font-secondary);
     white-space: pre-wrap;
     height: 100%;
     display: flex;
@@ -1672,8 +1674,8 @@ tion Screen Styles */
     height: 100%;
     width: 100%;
     display: flex;
-    align-items: stretch;
-    justify-content: stretch;
+    align-items: center;
+    justify-content: center;
 }
 
 .star-field {
