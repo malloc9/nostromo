@@ -1,5 +1,6 @@
 // Nostromo Monitoring System - Main Application Controller
 // Integrates router, data simulation, and terminal effects
+// Test comment to verify hooks are working
 
 // Global instances
 let dataSimulator;

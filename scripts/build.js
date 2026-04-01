@@ -45,13 +45,19 @@ async function cleanDist() {
 
 async function copyAssets() {
   console.log('📁 Copying assets...');
-  
+
   // Copy assets directory if it exists
   const assetsDir = path.join(srcDir, 'assets');
   if (await fs.pathExists(assetsDir)) {
     await fs.copy(assetsDir, path.join(distDir, 'assets'));
   }
-  
+
+  // Copy dashboard-components directory if it exists
+  const dashboardComponentsDir = path.join(srcDir, 'js', 'dashboard-components');
+  if (await fs.pathExists(dashboardComponentsDir)) {
+    await fs.copy(dashboardComponentsDir, path.join(distDir, 'js', 'dashboard-components'));
+  }
+
   // Copy any other static files
   const staticFiles = ['favicon.ico', 'robots.txt', '.nojekyll'];
   for (const file of staticFiles) {
@@ -123,17 +129,39 @@ async function processJS() {
 
 async function processHTML() {
   console.log('📄 Processing HTML files...');
-  
+
   const htmlFiles = ['index.html'];
-  
+
   for (const file of htmlFiles) {
     const srcFile = path.join(srcDir, file);
     const distFile = path.join(distDir, file);
-    
+
     if (await fs.pathExists(srcFile)) {
-      const htmlContent = await fs.readFile(srcFile, 'utf8');
+      let htmlContent = await fs.readFile(srcFile, 'utf8');
+
+      // Inject dashboard-component scripts before dashboard.js
+      const dashboardComponents = [
+        'base-component.js',
+        'crew-quadrant.js',
+        'life-support-quadrant.js',
+        'navigation-quadrant.js',
+        'power-quadrant.js',
+        'quadrant-component.js',
+        'ship-schematic-component.js'
+      ];
+
+      const componentScripts = dashboardComponents.map(
+        component => `    <script src="js/dashboard-components/${component}"></script>`
+      ).join('\n');
+
+      // Insert the component scripts before the dashboard.js script
+      htmlContent = htmlContent.replace(
+        '<script src="js/dashboard.js"></script>',
+        `${componentScripts}\n    <script src="js/dashboard.js"></script>`
+      );
+
       const minified = minifyHTML(htmlContent, config.html);
-      
+
       await fs.writeFile(distFile, minified);
       console.log(`   ✅ ${file} (${htmlContent.length} → ${minified.length} bytes)`);
     }

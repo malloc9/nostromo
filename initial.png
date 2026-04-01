@@ -1,0 +1,26 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]: USCSS Nostromo, registration number 1809246(09)
+    - generic [ref=e5]:
+      - text: MU/TH/UR 6000 |
+      - text: "| STATUS:"
+      - generic [ref=e6]: OPERATIONAL
+  - navigation [ref=e7]:
+    - generic [ref=e8]:
+      - generic [ref=e9] [cursor=pointer]: "[F1] DASHBOARD"
+      - generic [ref=e10] [cursor=pointer]: "[F2] LIFE SUPPORT"
+      - generic [ref=e11] [cursor=pointer]: "[F3] NAVIGATION"
+      - generic [ref=e12] [cursor=pointer]: "[F4] ENGINEERING"
+      - generic [ref=e13] [cursor=pointer]: "[F5] CREW"
+      - generic [ref=e14] [cursor=pointer]: "[F6] MOTHER"
+    - generic [ref=e16] [cursor=pointer]: "[F8] AUDIO: ON"
+  - main [ref=e17]:
+    - generic [ref=e21]:
+      - generic [ref=e22]: ███╗ ██╗ ██████╗ ███████╗████████╗██████╗ ██████╗ ███╗ ███╗ ██████╗ ████╗ ██║██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗████╗ ████║██╔═══██╗ ██╔██╗ ██║██║ ██║███████╗ ██║ ██████╔╝██║ ██║██╔████╔██║██║ ██║ ██║╚██╗██║██║ ██║╚════██║ ██║ ██╔══██╗██║ ██║██║╚██╔╝██║██║ ██║ ██║ ╚████║╚██████╔╝███████║ ██║ ██║ ██║╚██████╔╝██║ ╚═╝ ██║╚██████╔╝ ╚═╝ ╚═══╝ ╚═════╝ ╚══════╝ ╚═╝ ╚═╝ ╚═╝ ╚═════╝ ╚═╝ ╚═╝ ╚═════╝
+      - generic [ref=e23]:
+        - generic [ref=e24]: WEYLAND-YUTANI CORPORATION
+        - generic [ref=e25]: MU/TH/UR 6000 MAINFRAME
+        - generic [ref=e26]: COMMERCIAL TOWING VEHICLE NOSTROMO
+  - contentinfo [ref=e27]:
+    - generic [ref=e28]: WEYLAND-YUTANI CORP. | COMMERCIAL TOWING VEHICLE
+    - generic [ref=e29]: CONNECTED | 1.2KB/s

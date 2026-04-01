@@ -201,6 +201,6 @@ class ShipSchematicComponent extends BaseDashboardComponent {
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = ShipSchematicComponent;
-} else {
-    window.ShipSchematicComponent = ShipSchematicComponent;
 }
+// Always export to window for browser environments
+window.ShipSchematicComponent = ShipSchematicComponent;
