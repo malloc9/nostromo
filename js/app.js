@@ -195,7 +195,7 @@ function initializeKeyboardControls() {
         const bootScreen = document.getElementById('boot-screen');
         if (bootScreen && bootScreen.classList.contains('active')) {
             event.preventDefault();
-            if (bootSequence) {
+            if (bootSequence && bootSequence.bootComplete) {
                 bootSequence.completeBootSequence();
             } else if (router) {
                 router.completeBootSequence();

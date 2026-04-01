@@ -190,6 +190,11 @@ class NostromoBootSequence {
         setInterval(() => {
             cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
         }, 500);
+
+        // Auto-dismiss after 1.5s — keyboard press still works to skip immediately
+        setTimeout(() => {
+            this.completeBootSequence();
+        }, 1500);
     }
     
     // Type a message with animation
