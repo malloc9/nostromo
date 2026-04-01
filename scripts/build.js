@@ -155,27 +155,6 @@ async function processHTML() {
       await fs.writeFile(versionFile, versionString);
       console.log(`   📌 Version: MU/TH-UR FW 6000.${versionString}`);
 
-      // Inject dashboard-component scripts before dashboard.js
-      const dashboardComponents = [
-        'base-component.js',
-        'crew-quadrant.js',
-        'life-support-quadrant.js',
-        'navigation-quadrant.js',
-        'power-quadrant.js',
-        'quadrant-component.js',
-        'ship-schematic-component.js'
-      ];
-
-      const componentScripts = dashboardComponents.map(
-        component => `    <script src="js/dashboard-components/${component}"></script>`
-      ).join('\n');
-
-      // Insert the component scripts before the dashboard.js script
-      htmlContent = htmlContent.replace(
-        '<script src="js/dashboard.js"></script>',
-        `${componentScripts}\n    <script src="js/dashboard.js"></script>`
-      );
-
       const minified = minifyHTML(htmlContent, config.html);
 
       await fs.writeFile(distFile, minified);

@@ -79,7 +79,7 @@ class ShipSchematicComponent extends BaseDashboardComponent {
      * Cache references to the indicator elements for later updates
      */
     cacheIndicatorElements() {
-        const systems = ['life-support', 'navigation', 'engineering', 'crew'];
+        const systems = ['life-support', 'navigation', 'power', 'crew'];
         systems.forEach(system => {
             const indicatorId = `schematic-${system}`;
             const element = document.getElementById(indicatorId);

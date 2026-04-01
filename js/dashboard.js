@@ -26,19 +26,13 @@ class NostromoDashboard {
     init() {
         console.log('Dashboard initialized');
 
-        // Initialize components
+        // Create component instances but defer initialization
+        // Components need their container elements which only exist after render() creates the HTML structure
         this.shipSchematic = new ShipSchematicComponent('ship-schematic');
         this.powerQuadrant = new PowerQuadrant();
         this.lifeSupportQuadrant = new LifeSupportQuadrant();
         this.navigationQuadrant = new NavigationQuadrant();
         this.crewQuadrant = new CrewQuadrant();
-
-        // Initialize all components
-        this.shipSchematic.init();
-        this.powerQuadrant.init();
-        this.lifeSupportQuadrant.init();
-        this.navigationQuadrant.init();
-        this.crewQuadrant.init();
     }
 
     /**
@@ -162,8 +156,15 @@ class NostromoDashboard {
             </div>
         `;
 
-        // Render all components
-        this.renderComponents();
+        // Initialize and render all components NOW that their container elements exist
+        // Quadrant components have direct references to their container elements from init(),
+        // so we don't need to copy content with ensureQuadrantContent()
+        this.shipSchematic.init();
+        this.shipSchematic.render();
+        this.powerQuadrant.init();
+        this.lifeSupportQuadrant.init();
+        this.navigationQuadrant.init();
+        this.crewQuadrant.init();
 
         // Update data initially
         this.updateData();
@@ -171,48 +172,6 @@ class NostromoDashboard {
         // Re-attach console if it exists
         if (window.consoleSystem) {
             window.consoleSystem.init();
-        }
-    }
-
-    /**
-     * Render all dashboard components
-     */
-    renderComponents() {
-        // Render ship schematic
-        this.shipSchematic.render();
-
-        // Render quadrants (they render themselves in init)
-        // But we need to make sure their content is in the right place
-        this.ensureQuadrantContent();
-    }
-
-    /**
-     * Ensure quadrant content is in the right place in the DOM
-     */
-    ensureQuadrantContent() {
-        // Power quadrant
-        const powerContainer = document.getElementById('power-quadrant');
-        if (powerContainer && this.powerQuadrant.container) {
-            // Clear and replace with component content
-            powerContainer.innerHTML = this.powerQuadrant.container.innerHTML;
-        }
-
-        // Life support quadrant
-        const lifeSupportContainer = document.getElementById('life-support-quadrant');
-        if (lifeSupportContainer && this.lifeSupportQuadrant.container) {
-            lifeSupportContainer.innerHTML = this.lifeSupportQuadrant.container.innerHTML;
-        }
-
-        // Navigation quadrant
-        const navigationContainer = document.getElementById('navigation-quadrant');
-        if (navigationContainer && this.navigationQuadrant.container) {
-            navigationContainer.innerHTML = this.navigationQuadrant.container.innerHTML;
-        }
-
-        // Crew quadrant
-        const crewContainer = document.getElementById('crew-quadrant');
-        if (crewContainer && this.crewQuadrant.container) {
-            crewContainer.innerHTML = this.crewQuadrant.container.innerHTML;
         }
     }
 
