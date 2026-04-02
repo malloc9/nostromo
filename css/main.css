@@ -748,9 +748,6 @@ body {
 .system-indicator {
     color: var(--terminal-green-bright);
     font-weight: bold;
-    padding: 1px 2px;
-    border-radius: 2px;
-    transition: all 0.2s ease;
 }
 
 .system-indicator.clickable {
@@ -761,7 +758,6 @@ body {
 .system-indicator.clickable:hover {
     background: var(--terminal-glow);
     text-shadow: 0 0 8px currentColor;
-    transform: scale(1.1);
 }
 
 .system-indicator.status-ok {
@@ -5842,9 +5838,8 @@ shboard Screen Styles - Compact Layout */
     color: var(--terminal-green);
     white-space: pre;
     font-family: 'Courier New', monospace;
-    font-size: 7px;
-    line-height: 1.0;
-    transform: scale(0.85);
+    font-size: 11px;
+    line-height: 1.2;
     transform-origin: center;
 }
 
@@ -5871,7 +5866,7 @@ shboard Screen Styles - Compact Layout */
 }
 
 .system-indicator.status-critical {
-    color: #ff6666;
+    color: #ff0000;
     animation: pulse-critical 1s infinite;
 }
 
