@@ -10,11 +10,27 @@ class NostromoLifeSupport {
         this.refreshRate = 2000; // 2 seconds for life support monitoring
         this.isActive = false;
         this.historicalData = [];
-        this.maxHistoryLength = 20; // Keep last 20 readings for trends
+        this.maxHistoryLength = 12; // 12 readings = ~24s of trend history
         this.alertThresholds = this.initializeAlertThresholds();
         this.zones = this.initializeZones();
+        this.seedHistory();
 
         this.init();
+    }
+
+    seedHistory() {
+        if (!this.dataSimulator) return;
+        const baseData = this.dataSimulator.generateSystemStatus().lifeSupport;
+        for (let i = 0; i < this.maxHistoryLength - 1; i++) {
+            const jitter = () => (Math.random() - 0.5) * 0.6;
+            this.historicalData.push({
+                timestamp: Date.now() - (this.maxHistoryLength - 1 - i) * this.refreshRate,
+                oxygen:        Math.max(80, Math.min(100, baseData.oxygen + jitter())),
+                co2:           Math.max(8,  Math.min(20, baseData.co2 + jitter())),
+                pressure:      Math.max(0.98, Math.min(1.04, baseData.pressure + jitter() * 0.02)),
+                temperature:   Math.max(20, Math.min(24, baseData.temperature + jitter() * 0.3))
+            });
+        }
     }
 
     init() {
@@ -132,90 +148,89 @@ class NostromoLifeSupport {
      */
     generateLifeSupportHTML() {
         return `
-            <div class="life-support-container">
-                <div class="life-support-main-grid">
-                    <div class="life-support-col-left">
-                        <!-- Environmental Status Overview -->
-                        <div class="environmental-overview">
-                            <div class="section-header">ENVIRONMENTAL STATUS OVERVIEW</div>
-                            <div class="env-metrics-grid">
-                                <div class="metric-panel" id="oxygen-panel">
-                                    <div class="metric-header">
-                                        <span class="metric-title">OXYGEN LEVEL</span>
-                                        <span class="metric-status" id="oxygen-status">●</span>
-                                    </div>
-                                    <div class="metric-display">
-                                        <div class="metric-value" id="oxygen-value">--.--%</div>
-                                        <div class="metric-bar" id="oxygen-bar"></div>
-                                    </div>
-                                </div>
-
-                                <div class="metric-panel" id="co2-panel">
-                                    <div class="metric-header">
-                                        <span class="metric-title">CO2 LEVEL</span>
-                                        <span class="metric-status" id="co2-status">●</span>
-                                    </div>
-                                    <div class="metric-display">
-                                        <div class="metric-value" id="co2-value">-- PPM</div>
-                                        <div class="metric-bar" id="co2-bar"></div>
-                                    </div>
-                                </div>
-
-                                <div class="metric-panel" id="pressure-panel">
-                                    <div class="metric-header">
-                                        <span class="metric-title">PRESSURE</span>
-                                        <span class="metric-status" id="pressure-status">●</span>
-                                    </div>
-                                    <div class="metric-display">
-                                        <div class="metric-value" id="pressure-value">-.-- ATM</div>
-                                        <div class="metric-bar" id="pressure-bar"></div>
-                                    </div>
-                                </div>
-
-                                <div class="metric-panel" id="temperature-panel">
-                                    <div class="metric-header">
-                                        <span class="metric-title">TEMPERATURE</span>
-                                        <span class="metric-status" id="temperature-status">●</span>
-                                    </div>
-                                    <div class="metric-display">
-                                        <div class="metric-value" id="temperature-value">--.-°C</div>
-                                        <div class="metric-bar" id="temperature-bar"></div>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="ls-1979">
+                <!-- Row 1: 4 large primary metrics -->
+                <section class="ls-row ls-row-metrics">
+                    <div class="ls-metric" id="oxygen-panel">
+                        <div class="ls-metric-tag">PRIMARY &middot; ATMOSPHERE</div>
+                        <div class="ls-metric-label">OXYGEN</div>
+                        <div class="ls-metric-value" id="oxygen-value">--.-<span class="ls-unit">%</span></div>
+                        <div class="ls-metric-bar" id="oxygen-bar"></div>
+                        <div class="ls-metric-foot">
+                            <span class="ls-metric-status" id="oxygen-status">●</span>
+                            <span class="ls-metric-range">RANGE 0&ndash;100%</span>
                         </div>
+                    </div>
 
-                        <!-- Alert Panel -->
-                        <div class="alert-section">
-                            <div class="section-header">
-                                SYSTEM ALERTS
-                                <span class="alert-count" id="alert-count">0</span>
-                            </div>
-                            <div class="alert-panel" id="alert-panel">
-                                <div class="no-alerts">NO ACTIVE ALERTS</div>
+                    <div class="ls-metric" id="co2-panel">
+                        <div class="ls-metric-tag">PRIMARY &middot; ATMOSPHERE</div>
+                        <div class="ls-metric-label">CO2</div>
+                        <div class="ls-metric-value" id="co2-value">--.-<span class="ls-unit">PPM</span></div>
+                        <div class="ls-metric-bar" id="co2-bar"></div>
+                        <div class="ls-metric-foot">
+                            <span class="ls-metric-status" id="co2-status">●</span>
+                            <span class="ls-metric-range">RANGE 0&ndash;50 PPM</span>
+                        </div>
+                    </div>
+
+                    <div class="ls-metric" id="pressure-panel">
+                        <div class="ls-metric-tag">PRIMARY &middot; HULL</div>
+                        <div class="ls-metric-label">PRESSURE</div>
+                        <div class="ls-metric-value" id="pressure-value">-.--<span class="ls-unit">ATM</span></div>
+                        <div class="ls-metric-bar" id="pressure-bar"></div>
+                        <div class="ls-metric-foot">
+                            <span class="ls-metric-status" id="pressure-status">●</span>
+                            <span class="ls-metric-range">NOMINAL 0.90&ndash;1.10</span>
+                        </div>
+                    </div>
+
+                    <div class="ls-metric" id="temperature-panel">
+                        <div class="ls-metric-tag">PRIMARY &middot; CLIMATE</div>
+                        <div class="ls-metric-label">TEMP</div>
+                        <div class="ls-metric-value" id="temperature-value">--.-<span class="ls-unit">&deg;C</span></div>
+                        <div class="ls-metric-bar" id="temperature-bar"></div>
+                        <div class="ls-metric-foot">
+                            <span class="ls-metric-status" id="temperature-status">●</span>
+                            <span class="ls-metric-range">NOMINAL 19&ndash;23 &deg;C</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Row 2: zone grid + trend charts -->
+                <section class="ls-row ls-row-body">
+                    <div class="ls-section ls-zones">
+                        <div class="ls-section-header">
+                            <span>ZONE ENVIRONMENTAL STATUS</span>
+                            <span class="ls-section-sub">6 / 6 ZONES ONLINE</span>
+                        </div>
+                        <div class="ls-zone-grid" id="zone-grid">
+                            ${this.generateZoneGridHTML()}
+                        </div>
+                    </div>
+
+                    <div class="ls-section ls-trends">
+                        <div class="ls-section-header">
+                            <span>ENVIRONMENTAL TRENDS</span>
+                            <span class="ls-section-sub">20 SAMPLE WINDOW</span>
+                        </div>
+                        <div class="ls-trend-display" id="trend-display">
+                            <div class="trend-chart" id="trend-chart">
+                                <div class="chart-loading">COLLECTING TREND DATA...</div>
                             </div>
                         </div>
                     </div>
-                    <div class="life-support-col-right">
-                        <!-- Zone Status Grid -->
-                        <div class="zone-status-section">
-                            <div class="section-header">ZONE ENVIRONMENTAL STATUS</div>
-                            <div class="zone-grid" id="zone-grid">
-                                ${this.generateZoneGridHTML()}
-                            </div>
-                        </div>
+                </section>
 
-                        <!-- Trend Analysis -->
-                        <div class="trend-section">
-                            <div class="section-header">ENVIRONMENTAL TRENDS</div>
-                            <div class="trend-display" id="trend-display">
-                                <div class="trend-chart" id="trend-chart">
-                                    <div class="chart-loading">COLLECTING TREND DATA...</div>
-                                </div>
-                            </div>
-                        </div>
+                <!-- Row 3: alerts -->
+                <section class="ls-row ls-row-alerts">
+                    <div class="ls-section-header">
+                        <span>SYSTEM ALERTS</span>
+                        <span class="ls-alert-count" id="alert-count">0 ACTIVE</span>
                     </div>
-                </div>
+                    <div class="ls-alert-panel" id="alert-panel">
+                        <div class="no-alerts">NO ACTIVE ALERTS</div>
+                    </div>
+                </section>
             </div>
         `;
     }
@@ -225,25 +240,25 @@ class NostromoLifeSupport {
      */
     generateZoneGridHTML() {
         return this.zones.map(zone => `
-            <div class="zone-item" id="zone-${zone.id.toLowerCase()}">
-                <div class="zone-header">
-                    <span class="zone-name">${zone.name}</span>
-                    <span class="zone-priority priority-${zone.priority.toLowerCase()}">${zone.priority}</span>
+            <div class="ls-zone-item" id="zone-${zone.id.toLowerCase()}">
+                <div class="ls-zone-head">
+                    <span class="ls-zone-name">${zone.name}</span>
+                    <span class="ls-zone-priority priority-${zone.priority.toLowerCase()}">${zone.priority}</span>
                 </div>
-                <div class="zone-status">
-                    <div class="zone-metric">
-                        <span class="zone-label">O2:</span>
-                        <span class="zone-value" id="zone-${zone.id.toLowerCase()}-oxygen">--%</span>
+                <div class="ls-zone-body">
+                    <div class="ls-zone-cell">
+                        <span class="ls-zone-label">O2</span>
+                        <span class="ls-zone-value" id="zone-${zone.id.toLowerCase()}-oxygen">--%</span>
                     </div>
-                    <div class="zone-metric">
-                        <span class="zone-label">CO2:</span>
-                        <span class="zone-value" id="zone-${zone.id.toLowerCase()}-co2">--</span>
+                    <div class="ls-zone-cell">
+                        <span class="ls-zone-label">CO2</span>
+                        <span class="ls-zone-value" id="zone-${zone.id.toLowerCase()}-co2">--</span>
                     </div>
-                    <div class="zone-metric">
-                        <span class="zone-label">TEMP:</span>
-                        <span class="zone-value" id="zone-${zone.id.toLowerCase()}-temp">--°C</span>
+                    <div class="ls-zone-cell">
+                        <span class="ls-zone-label">TEMP</span>
+                        <span class="ls-zone-value" id="zone-${zone.id.toLowerCase()}-temp">--&deg;C</span>
                     </div>
-                    <div class="zone-indicator" id="zone-${zone.id.toLowerCase()}-indicator">●</div>
+                    <div class="ls-zone-ind" id="zone-${zone.id.toLowerCase()}-indicator">●</div>
                 </div>
             </div>
         `).join('');
@@ -369,17 +384,16 @@ class NostromoLifeSupport {
      * Generate ASCII bar chart
      */
     generateASCIIBar(percentage, status) {
-        const barWidth = 20;
+        const barWidth = 16;
         const filledBars = Math.round((percentage / 100) * barWidth);
         const emptyBars = barWidth - filledBars;
 
-        const filled = '█'.repeat(filledBars);
-        const empty = '░'.repeat(emptyBars);
+        const filled = '\u2588'.repeat(filledBars);
+        const empty = '\u2591'.repeat(emptyBars);
 
         return `
             <div class="ascii-bar ${status}">
                 <span class="bar-filled">${filled}</span><span class="bar-empty">${empty}</span>
-                <span class="bar-percentage">${percentage.toFixed(1)}%</span>
             </div>
         `;
     }
@@ -469,14 +483,14 @@ class NostromoLifeSupport {
             return '<div class="chart-loading">COLLECTING TREND DATA...</div>';
         }
 
-        const chartHeight = 4;
-        const chartWidth = 40; // Adjusted width for better fit
+        const chartHeight = 6;
+        const chartWidth = 24;
 
         const parameters = [
             { key: 'oxygen', label: 'OXYGEN', unit: '%' },
-            { key: 'co2', label: 'CO2', unit: 'ppm' },
-            { key: 'pressure', label: 'PRESSURE', unit: 'atm' },
-            { key: 'temperature', label: 'TEMP', unit: '°C' }
+            { key: 'co2', label: 'CO2', unit: 'PPM' },
+            { key: 'pressure', label: 'PRESSURE', unit: 'ATM' },
+            { key: 'temperature', label: 'TEMP', unit: '\u00B0C' }
         ];
 
         let chart = '<div class="trend-charts-list">';
@@ -513,11 +527,11 @@ class NostromoLifeSupport {
                 const value = data[dataIndex];
 
                 if (Math.abs(value - threshold) < range / (chartHeight * 2)) {
-                    line += '█';
+                    line += '\u2588';
                 } else if (value > threshold) {
                     line += ' ';
                 } else {
-                    line += '░';
+                    line += '\u2591';
                 }
             }
             chartLines += `<div class="chart-line">${line}</div>\n`;
@@ -525,8 +539,11 @@ class NostromoLifeSupport {
         chart += chartLines;
 
         const trend = this.calculateTrend(data);
-        const trendSymbol = trend > 0.1 ? '↗' : trend < -0.1 ? '↘' : '→';
-        chart += `<div class="chart-current">${currentValue.toFixed(param.key === 'temperature' ? 1 : 2)}${param.unit} ${trendSymbol}</div>\n`;
+        const trendSymbol = trend > 0.1 ? '\u2197' : trend < -0.1 ? '\u2198' : '\u2192';
+        const formatted = (param.key === 'pressure')
+            ? currentValue.toFixed(2)
+            : currentValue.toFixed(1);
+        chart += `<div class="chart-current">${formatted}${param.unit} ${trendSymbol}</div>\n`;
 
         chart += '</div>';
         chart += '</div>';

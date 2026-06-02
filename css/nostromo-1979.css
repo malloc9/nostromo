@@ -1062,3 +1062,477 @@ html, body {
   .data-label, .data-value { font-size: 10px; }
 }
 
+/* ===================================================================
+   21. LIFE SUPPORT SCREEN (1979 redesign)
+   Big type, full-width usage, two-column body.
+   =================================================================== */
+
+.ls-1979 {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 10px;
+  height: 100%;
+  padding: 4px 2px;
+  font-size: 14px;
+  color: var(--phosphor-bright);
+  text-shadow: 0 0 3px var(--phosphor-glow);
+}
+
+.ls-row {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+}
+
+/* ---------- Row 1: 4 big primary metrics ---------- */
+
+.ls-row-metrics {
+  grid-template-columns: repeat(4, 1fr);
+  height: 168px;
+}
+
+.ls-metric {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto auto;
+  gap: 4px;
+  padding: 10px 14px 8px;
+  background: rgba(8, 22, 10, 0.55);
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 18px rgba(47, 191, 58, 0.08),
+    0 0 0 1px rgba(47, 191, 58, 0.05);
+}
+
+.ls-metric::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg,
+      rgba(47, 191, 58, 0.06) 0%,
+      transparent 35%,
+      transparent 65%,
+      rgba(47, 191, 58, 0.04) 100%);
+}
+
+.ls-metric-tag {
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  text-shadow: 0 0 2px var(--phosphor-glow);
+}
+
+.ls-metric-label {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  color: var(--phosphor-bright);
+  text-transform: uppercase;
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+}
+
+.ls-metric-value {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 44px;
+  line-height: 1.05;
+  font-weight: 400;
+  color: var(--phosphor-core);
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 6px var(--phosphor-bright),
+    0 0 16px var(--phosphor-glow);
+  letter-spacing: 0.02em;
+  margin: 2px 0 0;
+  white-space: nowrap;
+}
+
+.ls-metric-value .ls-unit {
+  font-size: 18px;
+  color: var(--phosphor-bright);
+  margin-left: 4px;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.ls-metric-bar {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--phosphor-dim);
+  position: relative;
+  overflow: hidden;
+  padding: 0 3px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--phosphor-core);
+  text-shadow: 0 0 4px var(--phosphor-glow);
+  white-space: pre;
+  letter-spacing: 0;
+}
+
+.ls-metric-bar .ascii-bar,
+.ls-metric-bar > .ascii-bar {
+  display: contents !important;
+}
+
+.ls-metric-bar .bar-filled { color: var(--phosphor-core) !important; }
+.ls-metric-bar .bar-empty  { color: rgba(47, 191, 58, 0.18) !important; }
+.ls-metric-bar .bar-percentage { display: none; }
+
+.ls-metric-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+}
+
+.ls-metric-status { font-size: 14px; }
+.ls-metric-status.status-ok      { color: var(--phosphor-core);  text-shadow: 0 0 6px var(--phosphor-glow); }
+.ls-metric-status.status-warning { color: #ffb24a;                text-shadow: 0 0 6px rgba(255, 178, 74, 0.7); animation: pulse-warning 1.4s ease-in-out infinite; }
+.ls-metric-status.status-critical{ color: #ff5566;                text-shadow: 0 0 8px rgba(255, 85, 102, 0.85); animation: pulse-critical 0.9s ease-in-out infinite; }
+
+.ls-metric-range {
+  font-size: 10px;
+  color: var(--phosphor-dim);
+  letter-spacing: 0.14em;
+}
+
+/* ---------- Row 2: zones + trends (2 columns) ---------- */
+
+.ls-row-body {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  min-height: 0;
+}
+
+.ls-section {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background: rgba(8, 22, 10, 0.4);
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ls-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--phosphor-bright);
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--phosphor-dim);
+  background: rgba(47, 191, 58, 0.05);
+  text-shadow:
+    0 0 3px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+}
+
+.ls-section-sub {
+  font-size: 10px;
+  color: var(--phosphor-dim);
+  letter-spacing: 0.18em;
+  font-weight: 400;
+  text-shadow: 0 0 2px var(--phosphor-glow);
+}
+
+/* ----- Zones grid: 3 cols x 2 rows so each card stays wide ----- */
+
+.ls-zone-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 6px;
+  padding: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ls-zone-item {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--phosphor-dim);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 8px 4px;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.ls-zone-item::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--phosphor-dim), transparent);
+}
+
+.ls-zone-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 3px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--phosphor-dim);
+  flex-shrink: 0;
+}
+
+.ls-zone-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-bright);
+  text-transform: uppercase;
+  text-shadow: 0 0 3px var(--phosphor-glow);
+}
+
+.ls-zone-priority {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  padding: 1px 5px;
+  border: 1px solid;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.priority-high   { color: #ff7a8c; border-color: #ff7a8c; text-shadow: 0 0 4px rgba(255, 122, 140, 0.6); }
+.priority-medium { color: #ffb24a; border-color: #ffb24a; text-shadow: 0 0 4px rgba(255, 178, 74, 0.6); }
+.priority-low    { color: var(--phosphor-dim); border-color: var(--phosphor-dim); }
+
+.ls-zone-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+}
+
+.ls-zone-cell {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ls-zone-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+}
+
+.ls-zone-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--phosphor-core);
+  text-shadow:
+    0 0 3px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+  font-family: 'Share Tech Mono', monospace;
+  white-space: nowrap;
+}
+
+.ls-zone-ind {
+  font-size: 18px;
+  text-align: right;
+  padding-left: 6px;
+  align-self: center;
+}
+.ls-zone-ind.status-ok      { color: var(--phosphor-core); text-shadow: 0 0 6px var(--phosphor-glow); }
+.ls-zone-ind.status-warning { color: #ffb24a; text-shadow: 0 0 6px rgba(255, 178, 74, 0.6); }
+.ls-zone-ind.status-critical{ color: #ff5566; text-shadow: 0 0 6px rgba(255, 85, 102, 0.7); animation: pulse-critical 1s ease-in-out infinite; }
+
+/* ----- Trends: 4 stacked sparkline rows ----- */
+
+.ls-trend-display {
+  padding: 6px 8px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-chart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.trend-charts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+  min-height: 0;
+}
+
+.parameter-chart {
+  display: grid;
+  grid-template-columns: 64px 1fr 80px;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px;
+  border-left: 2px solid var(--phosphor-dim);
+  background: rgba(0, 0, 0, 0.25);
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.chart-subtitle {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-bright);
+  text-transform: uppercase;
+  text-shadow: 0 0 3px var(--phosphor-glow);
+}
+
+.chart-display {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  line-height: 1.05;
+  color: var(--phosphor-core);
+  text-shadow: 0 0 3px var(--phosphor-glow);
+  min-height: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.chart-line { white-space: pre; }
+
+.chart-current {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--phosphor-core);
+  font-family: 'Share Tech Mono', monospace;
+  text-align: right;
+  text-shadow:
+    0 0 3px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+}
+
+.chart-loading {
+  color: var(--phosphor-dim);
+  text-align: center;
+  font-style: italic;
+  font-size: 13px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* ---------- Row 3: alerts strip ---------- */
+
+.ls-row-alerts {
+  grid-template-rows: auto 1fr;
+  min-height: 0;
+  height: 130px;
+  display: grid;
+  background: rgba(8, 22, 10, 0.4);
+  border: 1px solid var(--phosphor-dim);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ls-row-alerts .ls-section-header { border-bottom: 1px solid var(--phosphor-dim); }
+
+.ls-alert-count {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--phosphor-bright);
+  padding: 1px 6px;
+  border: 1px solid var(--phosphor-dim);
+  text-shadow: 0 0 3px var(--phosphor-glow);
+}
+.ls-alert-count.has-alerts {
+  color: #ffb24a;
+  border-color: #ffb24a;
+  animation: pulse-warning 1.6s ease-in-out infinite;
+}
+
+.ls-alert-panel {
+  padding: 4px 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 0;
+}
+
+.ls-alert-panel .no-alerts {
+  color: var(--phosphor-dim);
+  text-align: center;
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.ls-alert-panel .alert-item {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 8px;
+  border-left: 3px solid;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.ls-alert-panel .alert-item.alert-warning {
+  border-left-color: #ffb24a;
+  background: rgba(255, 178, 74, 0.08);
+  color: #ffd596;
+}
+.ls-alert-panel .alert-item.alert-critical {
+  border-left-color: #ff5566;
+  background: rgba(255, 85, 102, 0.1);
+  color: #ffb0b8;
+  animation: pulse-critical 1.3s ease-in-out infinite;
+}
+
+.ls-alert-panel .alert-icon   { font-size: 14px; font-weight: 700; }
+.ls-alert-panel .alert-message { font-weight: 700; }
+.ls-alert-panel .alert-time   { font-size: 10px; color: var(--phosphor-dim); letter-spacing: 0.12em; }
+
+@media (max-width: 1280px) {
+  .ls-row-metrics { height: 150px; }
+  .ls-metric-value { font-size: 36px; }
+  .ls-metric-value .ls-unit { font-size: 15px; }
+  .ls-zone-name { font-size: 12px; }
+  .ls-zone-value { font-size: 14px; }
+  .parameter-chart { grid-template-columns: 56px 1fr 72px; }
+  .chart-subtitle { font-size: 10px; }
+  .chart-current { font-size: 12px; }
+}
+
+@media (max-width: 980px) {
+  .ls-row-metrics { grid-template-columns: repeat(2, 1fr); height: auto; }
+  .ls-row-body { grid-template-columns: 1fr; }
+  .ls-zone-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+}
+
