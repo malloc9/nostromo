@@ -49,3 +49,4 @@ temp/
 
 #Claude
 .claude/
+.gstack/

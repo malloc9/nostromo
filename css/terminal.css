@@ -2,17 +2,17 @@
 
 /* Root Variables for CRT Effects */
 :root {
-  --crt-curvature: 8px;
-  --crt-scanline-opacity: 0.25;
+  --crt-curvature: 12px;
+  --crt-scanline-opacity: 0.4;
   --crt-flicker-opacity: 0.03;
-  --crt-glow-strength: 0.8;
-  --terminal-phosphor: #00ff41;
-  --terminal-phosphor-dim: #008020;
-  --terminal-green: #00ff41;
-  --terminal-green-bright: #33ff50;
-  --terminal-green-dim: #008020;
-  --terminal-red: #ff0040;
-  --terminal-yellow: #ffff40;
+  --crt-glow-strength: 0.85;
+  --terminal-phosphor: #2fbf3a;
+  --terminal-phosphor-dim: #1f9a28;
+  --terminal-green: #2fbf3a;
+  --terminal-green-bright: #6bff5b;
+  --terminal-green-dim: #0f6b18;
+  --terminal-red: #ff3b3b;
+  --terminal-yellow: #ffb84d;
 }
 
 /* Main CRT Container - Simulates the physical monitor */

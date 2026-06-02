@@ -9,16 +9,16 @@
 
 /* Root Variables for Consistent Color Scheme */
 :root {
-    --terminal-green: #00ff41;
-    --terminal-green-dim: #00cc33;
-    --terminal-green-bright: #66ff66;
-    --terminal-bg: #000000;
-    --terminal-bg-alt: #001100;
-    --terminal-border: #003300;
-    --terminal-shadow: rgba(0, 255, 65, 0.3);
-    --terminal-glow: rgba(0, 255, 65, 0.1);
-    --terminal-font-primary: 'VT323', 'Courier New', 'Monaco', monospace;
-    --terminal-font-secondary: 'Space Mono', 'Courier New', 'Monaco', monospace;
+    --terminal-green: #2fbf3a;
+    --terminal-green-dim: #1f9a28;
+    --terminal-green-bright: #6bff5b;
+    --terminal-bg: #020a04;
+    --terminal-bg-alt: #04140a;
+    --terminal-border: #0f6b18;
+    --terminal-shadow: rgba(47, 191, 58, 0.4);
+    --terminal-glow: rgba(47, 191, 58, 0.08);
+    --terminal-font-primary: 'Share Tech Mono', 'VT323', 'Courier New', 'Monaco', monospace;
+    --terminal-font-secondary: 'Share Tech Mono', 'Space Mono', 'Courier New', 'Monaco', monospace;
 }
 
 /* Base HTML and Body Styles */

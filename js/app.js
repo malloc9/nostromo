@@ -74,6 +74,7 @@ function initializeBootSequence() {
 function initializeRouter() {
     if (typeof NostromoRouter !== 'undefined') {
         router = new NostromoRouter();
+        window.router = router;
         console.log('Router initialized');
     } else {
         console.error('NostromoRouter not available - ensure router.js is loaded');
@@ -135,10 +136,101 @@ function initializeConsole() {
         const consoleSystem = new NostromoConsole(audioManager);
         window.consoleSystem = consoleSystem; // Make globally accessible
         consoleSystem.init();
+        initMotherInterface();
         console.log('Console interface initialized');
     } else {
         console.warn('NostromoConsole or AudioManager not available');
     }
+}
+
+function initMotherInterface() {
+    const input = document.getElementById('mother-input');
+    if (!input) return;
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            const cmd = input.value.trim();
+            if (!cmd) return;
+            handleMotherCommand(cmd.toUpperCase());
+            input.value = '';
+        } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+            e.preventDefault();
+        }
+        if (audioManager && e.key.length === 1) {
+            audioManager.playKeypress();
+        }
+    });
+    // Auto-focus the input when on mother screen
+    const observer = new MutationObserver(() => {
+        const motherScreen = document.getElementById('mother-screen');
+        if (motherScreen && motherScreen.classList.contains('active')) {
+            input.focus();
+        }
+    });
+    const motherScreen = document.getElementById('mother-screen');
+    if (motherScreen) {
+        observer.observe(motherScreen, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+
+const MOTHER_RESPONSES = {
+    'HELLO': 'INTERFACE 2037 READY FOR INQUIRY.',
+    'HI': 'INTERFACE 2037 READY FOR INQUIRY.',
+    'STATUS': 'ALL SYSTEMS NOMINAL. SHIP COURSE CORRECT.',
+    'REPORT': 'STANDARD NAVIGATION PROTOCOLS IN EFFECT.',
+    'WHO ARE YOU': 'I AM MU/TH/UR 6000. SHIP MAINFRAME.',
+    'WHAT IS YOUR MISSION': 'COMMERCIAL TOWING VEHICLE NOSTROMO. CREW: 7. CARGO: REFINERY.',
+    'HELP': 'AVAILABLE: STATUS, REPORT, CREW, MISSION, JONES, LOGS, OVERRIDE, DESTRUCT, SPECIAL ORDER 937',
+    'SYSTEM': 'SYSTEM DIAGNOSTIC: OPERATIONAL. 2.1 TB MEMORY ALLOCATED.',
+    'LOGS': 'ACCESS DENIED. RESTRICTED TO SCIENCE OFFICER.',
+    'CREW': 'DALLAS, KANE, RIPLEY, ASH, LAMBERT, PARKER, BRETT. JONES THE CAT.',
+    'JONES': 'SHIP CAT. VITAL SIGNS: NORMAL.',
+    'CAT': 'SHIP CAT. VITAL SIGNS: NORMAL.',
+    'ASH': 'SCIENCE OFFICER. ANDROID. DESIGNATION: AX-12.',
+    'RIPLEY': 'WARRANT OFFICER ELLEN RIPLEY. NAVIGATION OFFICER.',
+    'DALLAS': 'CAPTAIN DALLAS. SHIP COMMANDER.',
+    'KANE': 'EXECUTIVE OFFICER. FIRST OFFICER.',
+    'LAMBERT': 'NAVIGATION OFFICER.',
+    'PARKER': 'CHIEF ENGINEER.',
+    'BRETT': 'ENGINEERING TECHNICIAN.',
+    'MISSION': 'RETURN REFINERY TO EARTH. CURRENT VECTOR: SOL SYSTEM.',
+    'INTERFACE 2037': 'ACCESSING SECURE FILE... [SEE: SPECIAL ORDER 937]',
+    'SPECIAL ORDER 937': 'PRIORITY ONE. INSURE RETURN OF ORGANISM FOR ANALYSIS. ALL OTHER CONSIDERATIONS SECONDARY. CREW EXPENDABLE.',
+    'OVERRIDE': 'ACCESS DENIED. COMMAND AUTHORIZATION REQUIRED.',
+    'DESTRUCT': 'WARNING: SELF-DESTRUCT SEQUENCE. MANUAL ACTIVATION REQUIRED AT EMERGENCY CONSOLE.'
+};
+
+function handleMotherCommand(cmd) {
+    const out = document.getElementById('mother-output');
+    if (!out) return;
+
+    // echo user input
+    const userLine = document.createElement('div');
+    userLine.className = 'mother-input-line-echo';
+    userLine.innerHTML = `<span class="mother-prompt">&gt;</span> <span class="mother-user-text">${cmd}</span>`;
+    out.appendChild(userLine);
+
+    // find response
+    let response = MOTHER_RESPONSES[cmd];
+    let klass = 'mother-response';
+    if (!response) {
+        if (cmd.startsWith('WHAT IS')) response = 'INSUFFICIENT DATA FOR MEANINGFUL ANSWER.';
+        else if (cmd === 'CLS' || cmd === 'CLEAR') { out.innerHTML = ''; return; }
+        else response = 'UNRECOGNIZED COMMAND. PLEASE RESTATE.';
+    }
+    if (cmd === 'DESTRUCT' || cmd === 'SPECIAL ORDER 937' || cmd === 'INTERFACE 2037') klass = 'mother-response urgent';
+    if (cmd === 'OVERRIDE') klass = 'mother-response alert';
+
+    const resp = document.createElement('div');
+    resp.className = klass;
+    resp.textContent = response;
+    out.appendChild(resp);
+
+    // add a blank spacer
+    const sp = document.createElement('div');
+    sp.innerHTML = '&nbsp;';
+    out.appendChild(sp);
+
+    out.scrollTop = out.scrollHeight;
 }
 
 function updateSystemTime() {

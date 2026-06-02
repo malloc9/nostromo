@@ -24,11 +24,12 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Major+Mono+Display&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/terminal.css">
+    <link rel="stylesheet" href="css/nostromo-1979.css">
 
     <!-- Preload critical resources -->
     <link rel="preload" href="css/main.css" as="style">
@@ -79,25 +80,24 @@
 
         <!-- Main Content Area -->
         <main class="terminal-screen" id="terminal-main">
+            <div class="crt-roll"></div>
+            <div class="mother-watermark"></div>
+            <div class="screen-corner-id" id="screen-corner-id">INTERFACE 2037</div>
             <!-- Screen Container - Different screens will be loaded here -->
             <div id="screen-container" class="terminal-content">
                 <!-- Boot Screen (initial) -->
                 <div id="boot-screen" class="screen active">
                     <div class="boot-content">
-                        <div class="boot-header">
-                            <pre class="ascii-art">
- ███╗   ██╗ ██████╗ ███████╗████████╗██████╗  ██████╗ ███╗   ███╗ ██████╗ 
- ████╗  ██║██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗██╔═══██╗████╗ ████║██╔═══██╗
- ██╔██╗ ██║██║   ██║███████╗   ██║   ██████╔╝██║   ██║██╔████╔██║██║   ██║
- ██║╚██╗██║██║   ██║╚════██║   ██║   ██╔══██╗██║   ██║██║╚██╔╝██║██║   ██║
- ██║ ╚████║╚██████╔╝███████║   ██║   ██║  ██║╚██████╔╝██║ ╚═╝ ██║╚██████╔╝
- ╚═╝  ╚═══╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝ ╚═════╝ 
-                            </pre>
-                            <div class="system-info">
-                                <div>WEYLAND-YUTANI CORPORATION</div>
-                                <div>MU/TH/UR 6000 MAINFRAME</div>
-                                <div>COMMERCIAL TOWING VEHICLE NOSTROMO</div>
-                            </div>
+                        <h1 class="boot-headline">N O S T R O M O</h1>
+                        <div class="boot-divider">
+                            <span></span><span>UNITED STATES COMMERCIAL STARSHIP</span><span></span>
+                        </div>
+                        <div class="boot-reg">REGISTRATION NUMBER &nbsp;<strong>1809246(09)</strong></div>
+                        <div class="boot-info">
+                            <div class="boot-info-line"><span class="boot-info-tag">OPERATOR</span> WEYLAND-YUTANI CORPORATION</div>
+                            <div class="boot-info-line"><span class="boot-info-tag">MAINFRAME</span> MU/TH/UR &nbsp;6000 &nbsp;SERIES</div>
+                            <div class="boot-info-line"><span class="boot-info-tag">CLASS</span> COMMERCIAL TOWING VEHICLE</div>
+                            <div class="boot-info-line"><span class="boot-info-tag">REGISTRY</span> NOSTROMO &nbsp;1809246(09)</div>
                         </div>
                         <div class="boot-messages" id="boot-messages">
                             <!-- Boot messages will be populated by JavaScript -->
@@ -123,13 +123,25 @@
                 <!-- Mother Interface Screen -->
                 <div id="mother-screen" class="screen">
                     <div class="screen-header">
-                        <h2>MU/TH/UR 6000</h2>
-                        <div class="breadcrumb">MAIN > MOTHER</div>
+                        <h2>MU/TH/UR 6000 &nbsp; &mdash; &nbsp; INTERFACE 2037</h2>
+                        <div class="breadcrumb">MAIN &gt; MOTHER</div>
                     </div>
                     <div class="screen-content mother-interface">
-                        <div class="mother-prompt">></div>
-                        <div class="mother-output">
-                            <!-- Mother responses will appear here -->
+                        <div class="mother-session-info">
+                            <span>SESSION: <span id="mother-session-id">0000-A7F3</span></span>
+                            <span>PRIVILEGE: <span id="mother-priv-level">COMMANDER</span></span>
+                            <span>STATUS: <span class="status-ok">ONLINE</span></span>
+                        </div>
+                        <div class="mother-output" id="mother-output">
+                            <div class="mother-response">MU/TH/UR 6000 ONLINE.</div>
+                            <div class="mother-response">AWAITING INPUT.</div>
+                            <div class="mother-response">&nbsp;</div>
+                            <div class="mother-response">TRY: <span class="mother-cmd">STATUS</span> &middot; <span class="mother-cmd">REPORT</span> &middot; <span class="mother-cmd">CREW</span> &middot; <span class="mother-cmd">MISSION</span> &middot; <span class="mother-cmd">SPECIAL ORDER 937</span> &middot; <span class="mother-cmd">OVERRIDE</span> &middot; <span class="mother-cmd">DESTRUCT</span> &middot; <span class="mother-cmd">HELP</span></div>
+                        </div>
+                        <div class="mother-input-line">
+                            <span class="mother-prompt">&gt;</span>
+                            <input type="text" id="mother-input" class="mother-input" autocomplete="off" spellcheck="false" autofocus>
+                            <span class="mother-cursor"></span>
                         </div>
                     </div>
                 </div>

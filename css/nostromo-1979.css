@@ -1,0 +1,1064 @@
+/* =====================================================================
+   NOSTROMO MONITORING SYSTEM — 1979 Film-Accurate Visual Treatment
+   Inspired by the MU/TH-UR 6000 interface from Ridley Scott's "Alien"
+   ===================================================================== */
+
+:root {
+  /* Film-accurate phosphor palette (slightly desaturated, "burnt" green) */
+  --phosphor-core:        #6bff5b;   /* bright core of lit glyphs */
+  --phosphor-bright:      #44d649;   /* strong glow tone */
+  --phosphor:             #2fbf3a;   /* primary terminal text */
+  --phosphor-mid:         #1f9a28;   /* mid-level text */
+  --phosphor-dim:         #0f6b18;   /* low-level labels, dim rows */
+  --phosphor-shadow:      #053309;   /* deepest "burn" around glyphs */
+  --phosphor-glow:        rgba(47, 191, 58, 0.55);
+  --phosphor-glow-strong: rgba(107, 255, 91, 0.85);
+
+  /* Hull & bezel tones (the physical monitor) */
+  --hull-black:    #020503;
+  --bezel-dark:    #0b0a08;
+  --bezel-light:   #1a1815;
+  --rivet:         #2a2620;
+  --scuff:         #3a3530;
+
+  /* Alert colors (rarely used in the film) */
+  --alert-amber:   #ffb84d;
+  --alert-red:     #ff3b3b;
+
+  /* Background hues */
+  --crt-bg:        #020a04;
+  --crt-bg-deep:   #000000;
+  --crt-bg-warm:   #04140a;
+}
+
+/* ===================================================================
+   1. TYPOGRAPHY
+   The MU/TH-UR 6000 used a clean 5x7 bitmap terminal. We approximate
+   that with "Share Tech Mono" (primary) layered with "VT323" (legacy).
+   Title uses Major Mono Display for the chunky, all-caps look.
+   =================================================================== */
+
+body, .terminal-font, .ascii-ship, .chart-display, .star-field,
+.metric-value, .data-value, .nav-value, .coord-value,
+.section-header, .screen-header, .terminal-header,
+.console-line, .boot-line, .summary-value, .ship-name {
+  font-family: 'Share Tech Mono', 'VT323', 'Courier New', monospace !important;
+  font-weight: 400;
+  font-feature-settings: "kern" 0, "liga" 0;
+  font-variant-ligatures: none;
+}
+
+/* Chunky display face for big numbers, headers, titles */
+.display-font, .system-title, .ascii-art, .boot-title,
+.section-header, .ship-name, h1, h2, h3 {
+  font-family: 'Share Tech Mono', 'VT323', 'Courier New', monospace !important;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+/* Tighten leading — the film has very tight vertical rhythm */
+body, .terminal-content { line-height: 1.15; }
+
+/* Always uppercase, like the film (no lowercase letters in MU/TH/UR) */
+.terminal-content, .nav-bar, .terminal-header, .terminal-footer,
+.console-line, .data-label, .data-value, .metric-label,
+.summary-label, .summary-value, .boot-line, .ascii-art,
+.section-header, .screen-header h2 {
+  text-transform: uppercase;
+}
+
+/* Character-set hint — the film terminal had a defined glyph palette;
+   we can't truly enforce that in CSS, but the font + size approximation
+   reads as authentic. */
+
+/* ===================================================================
+   2. THE PHYSICAL MONITOR (BEZEL, RIVETS, SCREEN)
+   The film shows the MU/TH/UR in a metal console frame. We replicate
+   the dark, scuffed-metal industrial look and the curved-glass face.
+   =================================================================== */
+
+html, body {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 50%,
+      #0a0907 0%, #050403 40%, #000 100%) !important;
+  background-color: #050403 !important;
+}
+
+.app-container {
+  position: relative;
+  background:
+    linear-gradient(180deg,
+      #1a1815 0%,
+      #0a0908 20%,
+      #050403 50%,
+      #0a0908 80%,
+      #1a1815 100%) !important;
+  border-radius: 26px;
+  padding: 22px;
+  box-shadow:
+    /* outer ambient */
+    0 0 100px rgba(0, 0, 0, 0.95),
+    0 0 200px rgba(0, 0, 0, 0.7),
+    /* metal frame top highlight */
+    inset 0 3px 0 rgba(190, 180, 160, 0.15),
+    inset 0 1px 0 rgba(220, 210, 190, 0.08),
+    /* metal frame bottom shadow */
+    inset 0 -3px 0 rgba(0, 0, 0, 0.9),
+    /* inner bezel layers (visible as concentric metal rings) */
+    inset 0 0 0 1px rgba(90, 80, 70, 0.5),
+    inset 0 0 0 4px #0c0b09,
+    inset 0 0 0 5px #221f1b,
+    inset 0 0 0 8px #050403,
+    inset 0 0 0 9px #1a1815,
+    inset 0 0 0 12px #050403,
+    /* CRT face inset shadow */
+    inset 0 0 80px rgba(0, 0, 0, 0.95);
+}
+
+/* Metal-rivet corner screws on the bezel */
+.app-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background:
+    /* Top-left rivet */
+    radial-gradient(circle 7px at 11px 11px, #050403 35%, #1a1815 36%, #3a3530 50%, #1a1815 65%, transparent 70%),
+    radial-gradient(circle 2px at 11px 11px, transparent 30%, #050403 31%, #0a0908 60%, transparent 70%),
+    /* Top-right rivet */
+    radial-gradient(circle 7px at calc(100% - 11px) 11px, #050403 35%, #1a1815 36%, #3a3530 50%, #1a1815 65%, transparent 70%),
+    radial-gradient(circle 2px at calc(100% - 11px) 11px, transparent 30%, #050403 31%, #0a0908 60%, transparent 70%),
+    /* Bottom-left rivet */
+    radial-gradient(circle 7px at 11px calc(100% - 11px), #050403 35%, #1a1815 36%, #3a3530 50%, #1a1815 65%, transparent 70%),
+    radial-gradient(circle 2px at 11px calc(100% - 11px), transparent 30%, #050403 31%, #0a0908 60%, transparent 70%),
+    /* Bottom-right rivet */
+    radial-gradient(circle 7px at calc(100% - 11px) calc(100% - 11px), #050403 35%, #1a1815 36%, #3a3530 50%, #1a1815 65%, transparent 70%),
+    radial-gradient(circle 2px at calc(100% - 11px) calc(100% - 11px), transparent 30%, #050403 31%, #0a0908 60%, transparent 70%);
+}
+
+/* The curved CRT face — sits inside the metal bezel */
+.terminal-screen {
+  position: relative;
+  background: var(--crt-bg-deep);
+  border-radius: 14px;
+  border: 1px solid #0a0908;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 90px rgba(0, 0, 0, 0.95),
+    inset 0 0 0 1px #0a0f0a,
+    inset 0 0 30px rgba(47, 191, 58, 0.05);
+  transform: perspective(2400px) rotateX(0.4deg);
+  transform-origin: center 60%;
+}
+
+/* Subtle glass reflection — top-left highlight on the curved face */
+.terminal-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background:
+    radial-gradient(ellipse 80% 40% at 20% 0%,
+      rgba(140, 220, 150, 0.025) 0%,
+      transparent 60%),
+    radial-gradient(ellipse 60% 30% at 90% 100%,
+      rgba(0, 0, 0, 0.4) 0%,
+      transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* ===================================================================
+   3. THE CRT FACE — SCANLINES, GLOW, PHOSPHOR
+   This is the heart of the look. Multiple layers combine:
+     a) Dense horizontal scanlines
+     b) A rolling bright bar (refresh line)
+     c) Faint vertical aperture-grill
+     d) Vignette
+     e) Chromatic aberration (RGB split) at the edges
+     f) Global phosphor glow (per-glyph text-shadow)
+   =================================================================== */
+
+/* The rolling refresh line */
+@keyframes nostromo-scan-roll {
+  0%   { transform: translateY(-10vh); opacity: 0; }
+  4%   { opacity: 0.6; }
+  96%  { opacity: 0.6; }
+  100% { transform: translateY(110vh); opacity: 0; }
+}
+
+.terminal-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  /* combined scanlines + aperture-grill + vignette + chromatic edges */
+  background:
+    /* (a) dense scanlines (1px lit, 1px dark) */
+    repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 1px,
+      rgba(0, 0, 0, 0.45) 1px,
+      rgba(0, 0, 0, 0.45) 2px),
+    /* (c) vertical aperture grill */
+    repeating-linear-gradient(
+      to right,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.10) 2px,
+      rgba(0, 0, 0, 0.10) 3px),
+    /* (d) vignette */
+    radial-gradient(ellipse at center,
+      transparent 30%,
+      rgba(0, 0, 0, 0.55) 95%),
+    /* (e) chromatic aberration at edges */
+    linear-gradient(90deg,
+      rgba(255, 0, 0, 0.04) 0%,
+      transparent 8%,
+      transparent 92%,
+      rgba(0, 100, 255, 0.04) 100%);
+  /* subtle global flicker */
+  animation: crt-flicker 7s infinite;
+}
+
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  3%       { opacity: 0.93; }
+  6%       { opacity: 1; }
+  43%      { opacity: 0.97; }
+  44%      { opacity: 1; }
+  79%      { opacity: 0.95; }
+  80%      { opacity: 1; }
+}
+
+/* The rolling refresh bar (separate so it can animate independently) */
+.crt-roll {
+  position: absolute;
+  left: 0; right: 0;
+  height: 8vh;
+  background: linear-gradient(to bottom,
+    transparent 0%,
+    rgba(120, 255, 130, 0.04) 30%,
+    rgba(180, 255, 180, 0.10) 50%,
+    rgba(120, 255, 130, 0.04) 70%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 9997;
+  animation: nostromo-scan-roll 9s linear infinite;
+  mix-blend-mode: screen;
+}
+
+/* ===================================================================
+   4. PHOSPHOR GLOW ON TEXT
+   The film shows bright glyphs with a soft green bloom. We layer
+   multiple text-shadows to approximate the bloom.
+   =================================================================== */
+
+.terminal-content, .terminal-header, .nav-bar, .terminal-footer,
+.console-interface, .screen-header, .ascii-ship, .chart-display {
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 3px var(--phosphor-bright),
+    0 0 6px var(--phosphor-glow),
+    0 0 10px var(--phosphor-glow);
+}
+
+.system-title, h1, h2, .ascii-art, .boot-title,
+.section-header, .ship-name, .boot-prompt, .boot-line.diagnostic-header,
+.terminal-header .system-title, .data-value {
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 10px var(--phosphor-bright),
+    0 0 18px var(--phosphor-glow),
+    0 0 30px var(--phosphor-glow);
+}
+
+.terminal-content,
+.console-output,
+.boot-messages {
+  /* very subtle global contrast/brightness boost to deepen blacks */
+  filter: contrast(1.05) saturate(0.95) brightness(1.02);
+}
+
+/* ===================================================================
+   5. THE MU/TH/UR "MOTHER" CHROME
+   The film has a fixed top-left identifier and a fixed bottom status
+   strip. We layer these on top of every screen.
+   =================================================================== */
+
+.mother-watermark {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  pointer-events: none;
+  z-index: 5;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+  opacity: 0.85;
+}
+
+.mother-watermark::before {
+  content: "[ MU/TH/UR 6000 ]";
+}
+
+.screen-corner-id {
+  position: absolute;
+  bottom: 6px;
+  right: 12px;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-dim);
+  pointer-events: none;
+  z-index: 5;
+  text-transform: uppercase;
+}
+
+/* ===================================================================
+   6. NAV BAR — like the film, it's a row of bracketed function keys
+   [F1] DASHBOARD    [F2] LIFE SUPPORT    etc.
+   The active screen has a brighter, double-bracketed look.
+   =================================================================== */
+
+.nav-bar {
+  background: linear-gradient(180deg,
+    var(--crt-bg) 0%,
+    var(--crt-bg-warm) 50%,
+    var(--crt-bg) 100%) !important;
+  border-top: 1px solid var(--phosphor-dim) !important;
+  border-bottom: 1px solid var(--phosphor-dim) !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  letter-spacing: 0.12em;
+}
+
+.nav-item {
+  color: var(--phosphor-mid) !important;
+  padding: 4px 10px !important;
+  border: 1px solid transparent !important;
+  transition: all 0.15s ease;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.nav-item:hover {
+  color: var(--phosphor-bright) !important;
+  background: rgba(47, 191, 58, 0.05) !important;
+}
+
+.nav-item.active {
+  color: var(--phosphor-core) !important;
+  border: 1px solid var(--phosphor-bright) !important;
+  background: rgba(47, 191, 58, 0.08) !important;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 6px var(--phosphor-bright),
+    0 0 12px var(--phosphor-glow);
+  box-shadow: 0 0 12px rgba(47, 191, 58, 0.25);
+}
+
+.nav-item .key {
+  color: var(--phosphor-bright);
+  font-weight: 400;
+  margin-right: 4px;
+}
+
+/* ===================================================================
+   7. SCREEN HEADERS & BREADCRUMBS
+   The film uses simple bracketed titles with a thin underline rule.
+   We replace the modern "h2" look with a thin, all-caps banner.
+   =================================================================== */
+
+.screen-header {
+  border-bottom: 1px solid var(--phosphor-dim) !important;
+  padding: 4px 6px !important;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(47, 191, 58, 0.04) 50%,
+    transparent 100%);
+}
+
+.screen-header h2 {
+  font-size: 14px !important;
+  color: var(--phosphor-core) !important;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.breadcrumb {
+  font-size: 11px !important;
+  color: var(--phosphor-dim) !important;
+  letter-spacing: 0.15em;
+}
+
+/* ===================================================================
+   8. SECTION CARDS / QUADRANTS
+   The film uses thin single-line borders, not heavy boxed panels.
+   We strip the heavy borders and use single-pixel rules.
+   =================================================================== */
+
+.ship-schematic-section, .status-quadrant, .zone-status-section,
+.environmental-overview, .trend-section, .alert-section,
+.nav-status-section, .star-map-section, .coordinate-details-section,
+.power-overview-section, .power-diagram-section, .system-consumption-section,
+.power-summary-section, .personnel-section, .location-section,
+.vitals-section, .quarters-section, .crew-alerts-section,
+.personnel-section, .dashboard-container > div,
+.console-interface, .summary-display, .consumption-item,
+.metric-panel, .data-group, .quarters-item, .crew-member,
+.zone-item, .vitals-chart, .selected-crew-vitals {
+  background: var(--crt-bg) !important;
+  border: 1px solid var(--phosphor-dim) !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.section-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--phosphor-dim) !important;
+  color: var(--phosphor-core) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding-bottom: 3px;
+  margin-bottom: 6px;
+}
+
+/* ===================================================================
+   9. ASCII ART (ship schematic, charts)
+   The film draws the ship as a wireframe with line segments. Our
+   current schematic is okay — we add color/glow weight.
+   =================================================================== */
+
+.ascii-ship, .star-field, .chart-display, .power-grid-ascii,
+.ship-layout, .ship-schematic {
+  color: var(--phosphor) !important;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  line-height: 1.0;
+}
+
+.system-indicator.clickable {
+  color: var(--phosphor-core) !important;
+  font-weight: 700;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 6px var(--phosphor-bright),
+    0 0 14px var(--phosphor-glow);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.system-indicator.clickable:hover {
+  color: #fff !important;
+  text-shadow:
+    0 0 1px #fff,
+    0 0 8px var(--phosphor-core),
+    0 0 18px var(--phosphor-bright);
+}
+
+/* ===================================================================
+   10. BOOT SCREEN — Authentic 1979 "NOSTROMO" title and boot log
+   The film title was painted in chunky, slightly italic block letters.
+   We use a multi-row letter-built wordmark in CSS-only (no image).
+   =================================================================== */
+
+.boot-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  text-align: center;
+  position: relative;
+}
+
+/* Big NOSTROMO wordmark — large tracked headline, not ASCII art
+   (block-letter ASCII was being mangled by font substitution). */
+.boot-headline {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  color: var(--phosphor-core);
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 12px var(--phosphor-glow),
+    0 0 22px var(--phosphor-glow);
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  line-height: 1.0;
+}
+
+.boot-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 auto 10px;
+  max-width: 80%;
+  color: var(--phosphor-bright);
+  font-size: clamp(8px, 0.9vw, 11px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.boot-divider span:nth-child(1),
+.boot-divider span:nth-child(3) {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--phosphor-dim) 30%,
+    var(--phosphor-bright) 50%,
+    var(--phosphor-dim) 70%,
+    transparent 100%);
+  box-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.boot-reg {
+  font-size: clamp(10px, 1.1vw, 13px);
+  letter-spacing: 0.25em;
+  color: var(--phosphor-bright);
+  text-transform: uppercase;
+  margin-bottom: 18px;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.boot-reg strong {
+  color: var(--phosphor-core);
+  font-weight: 400;
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 10px var(--phosphor-glow);
+}
+
+.boot-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: clamp(9px, 1vw, 12px);
+  letter-spacing: 0.2em;
+  color: var(--phosphor-bright);
+  line-height: 1.5;
+  text-transform: uppercase;
+  margin-top: 0;
+  text-align: left;
+  max-width: 540px;
+  margin-left: auto;
+  margin-right: auto;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.boot-info-line {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  border-left: 1px solid var(--phosphor-dim);
+  padding-left: 10px;
+}
+
+.boot-info-tag {
+  color: var(--phosphor-dim);
+  letter-spacing: 0.25em;
+  min-width: 90px;
+  flex-shrink: 0;
+  text-shadow: 0 0 2px var(--phosphor-glow);
+}
+
+.boot-info .strong {
+  color: var(--phosphor-core);
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 10px var(--phosphor-glow);
+}
+
+.boot-messages {
+  margin-top: 18px;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--phosphor);
+  text-align: center;
+  min-height: 70px;
+  text-transform: uppercase;
+}
+
+.boot-line {
+  color: var(--phosphor);
+  margin: 3px 0;
+  white-space: nowrap;
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.boot-line.diagnostic-header {
+  color: var(--phosphor-core);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 10px var(--phosphor-glow);
+}
+
+.boot-line.diagnostic-line {
+  font-size: 13px;
+  color: var(--phosphor-mid);
+  letter-spacing: 0.1em;
+}
+
+.boot-prompt {
+  margin-top: 14px;
+  color: var(--phosphor-core);
+  letter-spacing: 0.2em;
+  font-weight: 700;
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 12px var(--phosphor-glow);
+  animation: boot-prompt-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes boot-prompt-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+
+/* ===================================================================
+   11. "MOTHER" INTERFACE — the iconic blinking > prompt
+   The film has an almost-empty black screen with a single caret
+   waiting for input. We replicate that minimalist feel.
+   =================================================================== */
+
+.mother-interface {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 50%,
+      var(--crt-bg-warm) 0%,
+      var(--crt-bg-deep) 80%) !important;
+  padding: 16px 22px !important;
+  height: 100%;
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  font-size: 17px !important;
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: var(--phosphor-bright);
+  overflow-y: auto;
+  display: block;
+}
+
+.mother-session-info {
+  display: flex;
+  gap: 24px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--phosphor-dim);
+  text-transform: uppercase;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--phosphor-shadow);
+  margin-bottom: 18px;
+}
+
+.mother-session-info .status-ok {
+  color: var(--phosphor-core);
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+.mother-interface .mother-output {
+  font-size: 17px !important;
+  line-height: 1.5;
+  color: var(--phosphor-bright);
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mother-prompt {
+  display: inline-block;
+  color: var(--phosphor-core);
+  font-weight: 700;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 6px var(--phosphor-bright),
+    0 0 12px var(--phosphor-glow);
+  margin-right: 6px;
+  font-size: 18px;
+  flex-shrink: 0;
+  animation: mother-cursor 1.06s steps(2, end) infinite;
+}
+
+@keyframes mother-cursor {
+  0%, 50%   { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.mother-input-line {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--phosphor-dim);
+  padding-top: 8px;
+  margin-top: 4px;
+  position: relative;
+}
+
+.mother-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--phosphor-core) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  font-size: 17px !important;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  caret-color: transparent;
+  flex: 1;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+  padding: 4px 0;
+}
+
+.mother-cursor {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  width: 0.6em;
+  height: 1.05em;
+  background: var(--phosphor-core);
+  transform: translateY(-50%);
+  box-shadow: 0 0 4px var(--phosphor-bright), 0 0 8px var(--phosphor-glow);
+  animation: mother-cursor 1.06s steps(2) infinite;
+  pointer-events: none;
+}
+
+.mother-interface .mother-input-line {
+  /* when input is focused, hide the static cursor so the native caret shows */
+  position: relative;
+}
+
+/* Mother conversation: a > for user input, response in bright phosphor */
+.mother-interface .mother-response {
+  color: var(--phosphor-bright);
+  margin: 4px 0 14px 0;
+  display: block;
+  font-size: 17px;
+}
+
+.mother-interface .mother-input-line {
+  /* hide static cursor when user is actively typing */
+}
+
+.mother-interface .mother-input:focus ~ .mother-cursor {
+  display: none;
+}
+
+.mother-interface .mother-cmd {
+  color: var(--phosphor-core);
+  font-weight: 700;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright);
+  padding: 0 2px;
+}
+
+.mother-interface .mother-response.urgent {
+  color: var(--alert-amber);
+  text-shadow:
+    0 0 4px var(--alert-amber),
+    0 0 10px rgba(255, 184, 77, 0.5);
+  font-weight: 700;
+}
+
+.mother-interface .mother-response.alert {
+  color: var(--alert-red);
+  text-shadow:
+    0 0 4px var(--alert-red),
+    0 0 10px rgba(255, 59, 59, 0.5);
+  font-weight: 700;
+  animation: alert-blink 0.8s steps(2) infinite;
+}
+
+@keyframes alert-blink {
+  0%, 50%   { opacity: 1; }
+  51%, 100% { opacity: 0.4; }
+}
+
+/* ===================================================================
+   12. HEADER & FOOTER CHROME
+   =================================================================== */
+
+.terminal-header {
+  background: linear-gradient(180deg,
+    var(--crt-bg) 0%,
+    var(--crt-bg-warm) 100%) !important;
+  border-bottom: 1px solid var(--phosphor-dim) !important;
+  padding: 4px 14px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.1em;
+}
+
+.system-title {
+  font-size: 14px !important;
+  color: var(--phosphor-core) !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 5px var(--phosphor-bright),
+    0 0 10px var(--phosphor-glow);
+}
+
+.system-status {
+  font-size: 11px !important;
+  color: var(--phosphor-mid) !important;
+  letter-spacing: 0.1em;
+}
+
+.terminal-footer {
+  background: linear-gradient(180deg,
+    var(--crt-bg-warm) 0%,
+    var(--crt-bg) 100%) !important;
+  border-top: 1px solid var(--phosphor-dim) !important;
+  padding: 4px 14px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.1em;
+  color: var(--phosphor-dim) !important;
+}
+
+/* ===================================================================
+   13. DATA ROWS, VALUES, BARS
+   The film renders values flush-right with monospaced alignment.
+   We tighten the rhythm and use a brighter, more bloomed value.
+   =================================================================== */
+
+.data-row, .nav-row, .coord-row, .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1px 0;
+  border-bottom: 1px dotted rgba(15, 107, 24, 0.25);
+  font-size: 13px;
+}
+
+.data-label, .nav-label, .coord-label, .info-label, .metric-label,
+.summary-label, .group-header {
+  color: var(--phosphor-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+}
+
+.data-value, .nav-value, .coord-value, .info-value, .summary-value,
+.metric-value, .consumption-value {
+  color: var(--phosphor-core);
+  font-weight: 700;
+  font-size: 14px;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright),
+    0 0 8px var(--phosphor-glow);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-ok    { color: var(--phosphor-core); }
+.status-warning { color: var(--alert-amber); text-shadow: 0 0 4px var(--alert-amber); }
+.status-critical { color: var(--alert-red); text-shadow: 0 0 4px var(--alert-red); animation: alert-blink 0.8s steps(2) infinite; }
+
+/* ASCII progress bars — brighter filled, dim empty */
+.bar-filled { color: var(--phosphor-core); text-shadow: 0 0 4px var(--phosphor-glow); }
+.bar-empty  { color: var(--phosphor-shadow); }
+
+/* ===================================================================
+   14. CONSOLE INPUT ROW
+   The film shows a > prompt with a steady cursor. We add the
+   prompt + blinking cursor like the actual MU/TH/UR.
+   =================================================================== */
+
+.console-input-line {
+  display: flex;
+  align-items: center;
+  border-top: 1px solid var(--phosphor-dim);
+  padding: 6px 0 0 0;
+  margin-top: 4px;
+}
+
+.console-input-line .prompt {
+  color: var(--phosphor-core);
+  font-weight: 700;
+  margin-right: 8px;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 6px var(--phosphor-bright);
+  font-size: 18px;
+}
+
+.console-input {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  color: var(--phosphor-core) !important;
+  font-family: 'Share Tech Mono', 'Courier New', monospace !important;
+  font-size: 18px !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  caret-color: var(--phosphor-core);
+  flex: 1;
+  text-shadow:
+    0 0 1px var(--phosphor-core),
+    0 0 4px var(--phosphor-bright);
+}
+
+.console-line {
+  font-size: 16px !important;
+  line-height: 1.4;
+  letter-spacing: 0.05em;
+  color: var(--phosphor);
+}
+
+.console-line.mother-response { color: var(--phosphor-bright); }
+.console-line.warning { color: var(--alert-amber); }
+.console-line.error   { color: var(--alert-red); }
+.console-line.critical {
+  color: var(--alert-red);
+  font-weight: 700;
+  animation: alert-blink 0.6s steps(2) infinite;
+}
+.console-line.special-order {
+  color: var(--phosphor-core);
+  border: 1px solid var(--phosphor-bright);
+  background: rgba(47, 191, 58, 0.04);
+  padding: 8px 12px;
+  white-space: pre;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+/* ===================================================================
+   15. WEYLAND-YUTANI TYPE TREATMENT
+   The film shows the corporation name in a specific spacing. We
+   apply slightly tighter letter-spacing for a more industrial feel.
+   =================================================================== */
+
+.weyland-yutani {
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--phosphor-bright);
+  text-shadow: 0 0 4px var(--phosphor-glow);
+}
+
+/* ===================================================================
+   16. LOADING / SPINNER — replaced with a tickering scan-line
+   =================================================================== */
+
+.loading-spinner {
+  display: none; /* the film has no spinners, just blinking text */
+}
+
+.loading-text {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--phosphor-core);
+  text-shadow:
+    0 0 4px var(--phosphor-bright),
+    0 0 10px var(--phosphor-glow);
+  animation: boot-prompt-pulse 1.6s ease-in-out infinite;
+}
+
+/* ===================================================================
+   17. GLOBAL CRT TUNING
+   The film has a slightly off-axis, dim, hot-rolled feel. We
+   apply a global hue/contrast filter to the screen contents.
+   =================================================================== */
+
+.terminal-screen > .terminal-content {
+  background: var(--crt-bg-deep);
+}
+
+.terminal-content {
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 50%,
+      var(--crt-bg-warm) 0%,
+      var(--crt-bg-deep) 80%);
+}
+
+/* ===================================================================
+   18. SCREEN POWER-ON ANIMATION
+   When the boot completes, the screen "snaps on" with a vertical
+   line collapse — the iconic CRT power-on effect from the film.
+   =================================================================== */
+
+@keyframes crt-power-on {
+  0%   { transform: scaleY(0.005) scaleX(0.9); filter: brightness(40); opacity: 0; }
+  10%  { transform: scaleY(0.005) scaleX(0.9); filter: brightness(40); opacity: 1; }
+  20%  { transform: scaleY(0.05) scaleX(0.9);  filter: brightness(20); }
+  60%  { transform: scaleY(0.6)  scaleX(0.95); filter: brightness(2.5); }
+  100% { transform: scaleY(1)    scaleX(1);    filter: brightness(1);   opacity: 1; }
+}
+
+.screen.active {
+  animation: crt-power-on 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  transform-origin: center center;
+}
+
+/* The cursor blink — used everywhere */
+@keyframes crt-blink {
+  0%, 49%   { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+.cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1em;
+  background: var(--phosphor-core);
+  vertical-align: text-bottom;
+  margin-left: 2px;
+  box-shadow: 0 0 4px var(--phosphor-bright), 0 0 8px var(--phosphor-glow);
+  animation: crt-blink 1.06s steps(2) infinite;
+}
+
+/* ===================================================================
+   19. FONT IMPORTS — pulled via Google Fonts CDN
+   =================================================================== */
+
+/* Inlined as data-URI wouldn't fit; index.html links them. */
+
+/* ===================================================================
+   20. RESPONSIVE TWEAKS
+   =================================================================== */
+
+@media (max-width: 768px) {
+  .boot-headline { font-size: 32px; letter-spacing: 0.3em; }
+  .boot-divider { font-size: 9px; max-width: 95%; }
+  .boot-info-line { flex-direction: column; gap: 2px; }
+  .boot-info-tag { min-width: 0; }
+  .mother-interface { font-size: 15px !important; padding: 14px !important; }
+  .console-line, .console-input { font-size: 15px !important; }
+  .system-title { font-size: 12px !important; }
+  .nav-bar { font-size: 11px !important; flex-wrap: wrap; }
+  .nav-item { padding: 3px 6px !important; }
+  .data-row, .nav-row, .coord-row { font-size: 11px; }
+  .data-value, .nav-value, .coord-value { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .boot-headline { font-size: 24px; letter-spacing: 0.25em; }
+  .boot-info { font-size: 11px; letter-spacing: 0.18em; }
+  .screen-header h2 { font-size: 12px !important; }
+  .nav-item { font-size: 10px !important; }
+  .data-label, .data-value { font-size: 10px; }
+}
+
