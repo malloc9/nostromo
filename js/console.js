@@ -345,6 +345,16 @@ CREW EXPENDABLE.
         this.printToLog('INSERT AND TURN KEYS TO COMMENCE COUNTDOWN.', 'warning');
     }
 
+    clearScreen() {
+        if (this.consoleOutput) {
+            this.consoleOutput.innerHTML = '';
+            // Add initial greeting after clearing
+            setTimeout(() => {
+                this.typeResponse('MU/TH/UR 6000 ONLINE. AWAITING COMMAND.', 'mother-response');
+            }, 100);
+        }
+    }
+
     async performSystemScan() {
         this.printToLog('INITIATING FULL SYSTEM SCAN...', 'warning');
         await this.wait(500);
