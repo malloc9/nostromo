@@ -57,9 +57,6 @@ class NostromoConsole {
             'DESTRUCT': this.initiateDestructSequence.bind(this),
             'CLS': this.clearScreen.bind(this),
             'CLEAR': this.clearScreen.bind(this),
-            'ACCESS': this.attemptAccess.bind(this),
-            'GRANT': this.grantAccess.bind(this),
-            'SECTIONS': this.listSections.bind(this)
         };
 
         // Load saved session
