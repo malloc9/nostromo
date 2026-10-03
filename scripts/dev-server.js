@@ -25,25 +25,62 @@ const mimeTypes = {
   '.ogg': 'audio/ogg'
 };
 
+// Read the version number from the VERSION file (source of truth)
+function getVersionString() {
+  try {
+    const version = fs.readFileSync(path.join(ROOT_DIR, 'VERSION'), 'utf8').trim();
+    return version || '0';
+  } catch (err) {
+    console.warn('⚠️  Could not read VERSION file, using "0"');
+    return '0';
+  }
+}
+
 function getMimeType(filePath) {
   const ext = path.extname(filePath).toLowerCase();
   return mimeTypes[ext] || 'application/octet-stream';
 }
 
 function serveFile(res, filePath) {
+  // For HTML files, inject the version number from the VERSION file
+  if (filePath.endsWith('.html')) {
+    serveHTMLWithVersion(res, filePath);
+    return;
+  }
+
   fs.readFile(filePath, (err, data) => {
     if (err) {
       res.writeHead(404, { 'Content-Type': 'text/html' });
       res.end('<h1>404 - File Not Found</h1>');
       return;
     }
-    
+
     const mimeType = getMimeType(filePath);
-    res.writeHead(200, { 
+    res.writeHead(200, {
       'Content-Type': mimeType,
       'Cache-Control': 'no-cache'
     });
     res.end(data);
+  });
+}
+
+function serveHTMLWithVersion(res, htmlPath) {
+  fs.readFile(htmlPath, (err, data) => {
+    if (err) {
+      res.writeHead(404, { 'Content-Type': 'text/html' });
+      res.end('<h1>404 - File Not Found</h1>');
+      return;
+    }
+
+    const html = data.toString('utf8');
+    const version = getVersionString();
+    const processed = html.replace(/MU\/TH-UR FW 6000\.__VERSION__/g, `MU/TH-UR FW 6000.${version}`);
+
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache'
+    });
+    res.end(processed);
   });
 }
 

@@ -176,6 +176,22 @@ class NostromoNavigation {
                             <span class="status-label">HEADING:</span>
                             <span class="status-value" id="nav-heading">---°</span>
                         </div>
+                        <div class="status-item">
+                            <span class="status-label">INCLIN:</span>
+                            <span class="status-value" id="nav-inclination">--.-°</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">ECCENTRIC:</span>
+                            <span class="status-value" id="nav-eccentricity">.--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">PERIOD:</span>
+                            <span class="status-value" id="nav-period">--:--:--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">APOAPSIS:</span>
+                            <span class="status-value" id="nav-apoapsis">---- km</span>
+                        </div>
                     </div>
                 </div>
 
@@ -499,6 +515,14 @@ LV-426</pre>
     }
 
     /**
+     * Update radar (motion tracker) display
+     * The sweep angle is time-based, so each tick naturally advances it
+     */
+    updateRadarDisplay() {
+        this.regenerateRadar();
+    }
+
+    /**
      * Update all navigation displays
      */
     updateAllDisplays() {
@@ -577,6 +601,49 @@ LV-426</pre>
             const orbitStatus = navData.velocity > 0.1 ? 'DECAY' : 'STABLE';
             orbit.textContent = orbitStatus;
             orbit.className = `status-value ${orbitStatus === 'STABLE' ? 'status-ok' : 'status-warning'}`;
+        }
+        
+        // Update additional orbital parameters
+        const inclination = document.getElementById('nav-inclination');
+        if (inclination) {
+            // Simulate orbital inclination based on coordinates
+            const inc = 28.5 + Math.sin(Date.now() * 0.0005) * 2; // Base inclination with slow variation
+            inclination.textContent = `${inc.toFixed(1)}°`;
+            inclination.className = 'status-value status-ok';
+        }
+        
+        const eccentricity = document.getElementById('nav-eccentricity');
+        if (eccentricity) {
+            // Calculate orbital eccentricity from velocity and altitude
+            const speed = Math.abs(navData.velocity);
+            const altFactor = Math.max(0, Math.min(1, navData.coordinates.z / 1000));
+            const ecc = Math.min(0.9, Math.max(0.01, speed * 0.5 + altFactor * 0.1));
+            eccentricity.textContent = `${ecc.toFixed(2)}`;
+            eccentricity.className = `status-value ${ecc < 0.1 ? 'status-ok' : ecc < 0.3 ? 'status-warning' : 'status-critical'}`;
+        }
+        
+        const period = document.getElementById('nav-period');
+        if (period) {
+            // Calculate orbital period based on altitude (simplified)
+            const alt = Math.max(0, navData.coordinates.z + 200);
+            // Kepler's third law simplified: T² ∝ r³
+            const periodHours = Math.max(1, Math.pow((alt + 6371) / 6371, 1.5) * 1.5); // Rough approximation
+            const hours = Math.floor(periodHours).toString().padStart(2, '0');
+            const minutes = Math.floor((periodHours % 1) * 60).toString().padStart(2, '0');
+            const seconds = Math.floor((periodHours * 60 % 1) * 60).toString().padStart(2, '0');
+            period.textContent = `${hours}:${minutes}:${seconds}`;
+            period.className = 'status-value status-ok';
+        }
+        
+        const apoapsis = document.getElementById('nav-apoapsis');
+        if (apoapsis) {
+            // Calculate apoapsis (farthest point) based on energy
+            const speedSquared = navData.velocity * navData.velocity;
+            const altitude = Math.max(0, navData.coordinates.z + 200);
+            // Simplified energy calculation for apoapsis
+            const apoapsisKm = Math.max(altitude, altitude + (speedSquared * 10000));
+            apoapsis.textContent = `${Math.floor(apoapsisKm).toString().padStart(4, ' ')} km`;
+            apoapsis.className = 'status-value status-ok';
         }
         
         // Update course and waypoint information

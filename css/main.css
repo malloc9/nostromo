@@ -2070,6 +2070,53 @@ overflow: hidden;
     line-height: 1.4;
 }
 
+/* Terrain scanline overlay for authentic CRT feel */
+.terrain-container {
+    position: relative;
+}
+
+.terrain-scanlines {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(47, 191, 58, 0.04) 2px,
+        rgba(47, 191, 58, 0.04) 4px
+    );
+    z-index: 2;
+}
+
+/* Subtle pulse on the orbital path to give it life */
+.orbit-ascii .orbit-display {
+    animation: orbitPulse 3s ease-in-out infinite;
+}
+
+@keyframes orbitPulse {
+    0%, 100% { opacity: 0.85; text-shadow: 0 0 2px var(--terminal-glow); }
+    50% { opacity: 1; text-shadow: 0 0 6px var(--terminal-glow); }
+}
+
+/* Slight glow on active waypoint / course readouts */
+#nav-waypoint.status-ok,
+#nav-course.status-ok {
+    text-shadow: 0 0 3px var(--terminal-glow);
+}
+
+#nav-course.status-critical {
+    animation: courseAlertFlash 1s infinite;
+}
+
+@keyframes courseAlertFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 /* Emergency Alert Styles */
 .emergency-alert {
     position: relative;

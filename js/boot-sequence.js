@@ -5,27 +5,22 @@ class NostromoBootSequence {
     constructor() {
         this.bootMessages = [
             'INITIALIZING MU/TH/UR 6000 MAINFRAME...',
-            'LOADING SHIP SYSTEM PROTOCOLS...',
             'ESTABLISHING SENSOR NETWORK...',
             'CONNECTING TO NAVIGATION ARRAY...',
-            'ACTIVATING CREW MONITORING...',
-            'RUNNING SYSTEM DIAGNOSTICS...',
             'ALL SYSTEMS NOMINAL',
         ];
         
         this.diagnosticMessages = [
             'CPU: MU/TH/UR 6000 SERIES - OK',
             'MEMORY: 2048KB AVAILABLE - OK',
-            'STORAGE: MAGNETIC TAPE DRIVES - OK',
             'NETWORK: SHIP SYSTEMS ONLINE - OK',
-            'SENSORS: ALL ARRAYS RESPONDING - OK',
             'POWER: FUSION REACTOR STABLE - OK'
         ];
         
         this.isBooting = false;
         this.bootComplete = false;
-        this.typingSpeed = 20; // milliseconds per character (faster)
-        this.messageDelay = 800; // delay between messages (faster)
+        this.typingSpeed = 15; // milliseconds per character
+        this.messageDelay = 400; // delay between messages
         this.currentMessageIndex = 0;
         
         this.init();
@@ -129,36 +124,16 @@ class NostromoBootSequence {
         // Clear boot messages
         messagesContainer.innerHTML = '';
         
-        // Add diagnostics header with typing animation
-        const headerElement = document.createElement('div');
-        headerElement.className = 'boot-line diagnostic-header';
-        headerElement.style.opacity = '0';
-        messagesContainer.appendChild(headerElement);
-        
-        // Fade in and type the diagnostics header
-        await this.wait(100);
-        headerElement.style.opacity = '1';
-        await this.typeMessage(headerElement, 'RUNNING SYSTEM DIAGNOSTICS...');
-        
-        await this.wait(500);
-        
-        // Run diagnostic checks
-        for (let i = 0; i < this.diagnosticMessages.length; i++) {
-            const diagnostic = this.diagnosticMessages[i];
-            
+        // Show all diagnostics instantly — no per-char typing
+        for (const diagnostic of this.diagnosticMessages) {
             const diagElement = document.createElement('div');
             diagElement.className = 'boot-line diagnostic-line';
-            diagElement.style.opacity = '0';
+            diagElement.textContent = diagnostic;
             messagesContainer.appendChild(diagElement);
-            
-            await this.wait(150);
-            diagElement.style.opacity = '1';
-            
-            await this.typeMessage(diagElement, diagnostic);
-            await this.wait(250);
+            await this.wait(120);
         }
         
-        await this.wait(500);
+        await this.wait(300);
         
         // Clear diagnostics
         messagesContainer.innerHTML = '';
@@ -191,10 +166,10 @@ class NostromoBootSequence {
             cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
         }, 500);
 
-        // Auto-dismiss after 1.5s — keyboard press still works to skip immediately
+        // Auto-dismiss after 800ms — keyboard press still works to skip immediately
         setTimeout(() => {
             this.completeBootSequence();
-        }, 1500);
+        }, 800);
     }
     
     // Type a message with animation

@@ -2,7 +2,6 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { execSync } = require('child_process');
 const { minify: minifyHTML } = require('html-minifier');
 const CleanCSS = require('clean-css');
 const { minify: minifyJS } = require('terser');
@@ -140,19 +139,12 @@ async function processHTML() {
     if (await fs.pathExists(srcFile)) {
       let htmlContent = await fs.readFile(srcFile, 'utf8');
 
-      // Inject version number from git commit count
-      let versionString;
+      // Read version number from VERSION file (source of truth)
       const versionFile = path.join(srcDir, 'VERSION');
-      try {
-        versionString = String(execSync('git rev-list --count HEAD', { encoding: 'utf8' })).trim();
-      } catch {
-        versionString = (await fs.pathExists(versionFile))
-          ? (await fs.readFile(versionFile, 'utf8')).trim()
-          : '0';
-      }
+      const versionString = (await fs.pathExists(versionFile))
+        ? (await fs.readFile(versionFile, 'utf8')).trim() || '0'
+        : '0';
       htmlContent = htmlContent.replace(/MU\/TH-UR FW 6000\.__VERSION__/, `MU/TH-UR FW 6000.${versionString}`);
-      // Sync VERSION file to match commit count
-      await fs.writeFile(versionFile, versionString);
       console.log(`   📌 Version: MU/TH-UR FW 6000.${versionString}`);
 
       const minified = minifyHTML(htmlContent, config.html);
