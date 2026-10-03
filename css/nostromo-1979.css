@@ -1407,12 +1407,13 @@ html, body {
   justify-content: space-between;
   font-family: 'Share Tech Mono', monospace;
   font-size: 9px;
-  line-height: 1.05;
+  line-height: 1.2;
   color: var(--phosphor-core);
   text-shadow: 0 0 3px var(--phosphor-glow);
   min-height: 0;
-  overflow: hidden;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
+  height: auto;
 }
 
 .chart-line { white-space: pre; }
