@@ -9,6 +9,14 @@ class DataSimulator {
         this.baseData = this.initializeBaseData();
         this.fluctuationRanges = this.initializeFluctuationRanges();
         this.crewMembers = this.initializeCrewMembers();
+        // Historical data storage for trend analysis
+        this.history = {
+            power: [],
+            lifeSupport: [],
+            navigation: [],
+            crew: []
+        };
+        this.maxHistoryPoints = 50; // Keep last 50 data points for trends
     }
 
     /**
@@ -303,13 +311,69 @@ class DataSimulator {
      * Generate complete system status snapshot
      */
     generateSystemStatus() {
-        return {
+        const status = {
             timestamp: new Date(),
             power: this.generatePowerData(),
             lifeSupport: this.generateLifeSupportData(),
             navigation: this.generateNavigationData(),
             crew: this.generateCrewData()
         };
+
+        // Store data in history for trend analysis
+        this.updateHistory(status);
+
+        return status;
+    }
+
+    /**
+     * Update historical data for trend analysis
+     * @param {Object} status - Current system status
+     */
+    updateHistory(status) {
+        // Add current data to history arrays
+        this.history.power.push({
+            timestamp: status.timestamp,
+            generation: status.power.generation,
+            consumption: status.power.consumption,
+            efficiency: status.power.efficiency,
+            fuel: status.power.fuel,
+            netPower: status.power.netPower
+        });
+
+        this.history.lifeSupport.push({
+            timestamp: status.timestamp,
+            oxygen: status.lifeSupport.oxygen,
+            co2: status.lifeSupport.co2,
+            pressure: status.lifeSupport.pressure,
+            temperature: status.lifeSupport.temperature
+        });
+
+        this.history.navigation.push({
+            timestamp: status.timestamp,
+            heading: status.navigation.heading,
+            velocity: status.navigation.velocity,
+            x: status.navigation.coordinates.x,
+            y: status.navigation.coordinates.y
+        });
+
+        // Store average crew vitals for trend analysis
+        const avgHeartRate = status.crew.reduce((sum, member) => sum + member.vitals.heartRate, 0) / status.crew.length;
+        const avgOxygenSat = status.crew.reduce((sum, member) => sum + member.vitals.oxygenSat, 0) / status.crew.length;
+        
+        this.history.crew.push({
+            timestamp: status.timestamp,
+            avgHeartRate: avgHeartRate,
+            avgOxygenSat: avgOxygenSat,
+            activeCount: status.crew.filter(c => c.status === 'active').length
+        });
+
+        // Limit history size
+        if (this.history.power.length > this.maxHistoryPoints) {
+            this.history.power.shift();
+            this.history.lifeSupport.shift();
+            this.history.navigation.shift();
+            this.history.crew.shift();
+        }
     }
 
     /**
@@ -351,6 +415,60 @@ class DataSimulator {
         });
         
         return errors;
+    }
+
+    /**
+     * Get trend data for a specific metric
+     * @param {string} system - System name ('power', 'lifeSupport', 'navigation', 'crew')
+     * @param {string} metric - Metric name to get trend for
+     * @returns {Object} Trend data with direction and change rate
+     */
+    getTrend(system, metric) {
+        const history = this.history[system];
+        if (!history || history.length < 2) {
+            return { direction: 'stable', change: 0, trend: 'insufficient_data' };
+        }
+
+        // Get latest and previous values
+        const latest = history[history.length - 1];
+        const previous = history[history.length - 2];
+        
+        if (!latest[metric] || !previous[metric]) {
+            return { direction: 'stable', change: 0, trend: 'invalid_metric' };
+        }
+
+        const change = latest[metric] - previous[metric];
+        const changePercent = (change / previous[metric]) * 100;
+
+        let direction = 'stable';
+        let trend = 'stable';
+
+        if (change > 0.1) {
+            direction = 'up';
+            trend = 'improving';
+        } else if (change < -0.1) {
+            direction = 'down';
+            trend = 'declining';
+        }
+
+        // For certain metrics, reverse the interpretation
+        const reverseMetrics = ['co2', 'consumption'];
+        if (reverseMetrics.includes(metric)) {
+            if (change > 0.1) {
+                trend = 'declining';
+            } else if (change < -0.1) {
+                trend = 'improving';
+            }
+        }
+
+        return {
+            direction: direction,
+            change: change,
+            changePercent: changePercent,
+            trend: trend,
+            latest: latest[metric],
+            previous: previous[metric]
+        };
     }
 }
 

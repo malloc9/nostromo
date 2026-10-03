@@ -118,6 +118,9 @@ class NostromoDashboard {
                             <span class="summary-label">ALERTS:</span>
                             <span class="summary-value" id="alert-count">0</span>
                         </div>
+                        <div id="alert-details" class="alert-details" style="display: none;">
+                            <div class="alert-header">ACTIVE ALERTS:</div>
+                        </div>
                     </div>
                 </div>
 
@@ -240,30 +243,63 @@ class NostromoDashboard {
     updateSystemSummary(systemData) {
         const overallStatus = document.getElementById('overall-status');
         const alertCount = document.getElementById('alert-count');
+        const alertDetails = document.getElementById('alert-details');
 
         if (!overallStatus || !alertCount) return;
 
         // Calculate overall system health
         let alerts = 0;
         let overallHealth = 'OPERATIONAL';
+        const alertMessages = [];
+        const predictiveAlerts = [];
 
         // Check power status
         const powerLevel = systemData.power.generation - systemData.power.consumption;
         if (powerLevel < 0) {
             alerts++;
             overallHealth = 'CRITICAL';
+            alertMessages.push('POWER DEFICIT: Consumption exceeds generation');
         } else if (powerLevel < 10) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
+            alertMessages.push('LOW POWER MARGIN: Monitor consumption');
         }
 
         // Check life support
         if (systemData.lifeSupport.oxygen < 80 || systemData.lifeSupport.co2 > 30) {
             alerts++;
             overallHealth = 'CRITICAL';
+            alertMessages.push('LIFE SUPPORT CRITICAL: O2 low or CO2 high');
         } else if (systemData.lifeSupport.oxygen < 90 || systemData.lifeSupport.co2 > 20) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
+            alertMessages.push('LIFE SUPPORT WARNING: O2 marginal or CO2 elevated');
+        }
+
+        // Check navigation
+        if (systemData.navigation.velocity < 0.1) {
+            alerts++;
+            if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
+            alertMessages.push('NAVIGATION WARNING: Sub-optimal velocity');
+        }
+
+        // Check crew status
+        const activeCrew = systemData.crew.filter(c => c.status === 'ACTIVE').length;
+        if (activeCrew < 5) {
+            alerts++;
+            if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
+            alertMessages.push('CREW STATUS: Below optimal active personnel');
+        }
+
+        // Add predictive alerts based on trends
+        const predictivePowerAlert = this.checkPredictivePowerAlert(systemData);
+        if (predictivePowerAlert) {
+            predictiveAlerts.push(predictivePowerAlert);
+        }
+
+        const predictiveLifeSupportAlert = this.checkPredictiveLifeSupportAlert(systemData);
+        if (predictiveLifeSupportAlert) {
+            predictiveAlerts.push(predictiveLifeSupportAlert);
         }
 
         // Update display
@@ -274,6 +310,72 @@ class NostromoDashboard {
 
         alertCount.textContent = alerts.toString();
         alertCount.className = `summary-value ${alerts > 0 ? 'status-warning' : 'status-ok'}`;
+
+        // Update alert details if element exists
+        if (alertDetails) {
+            let alertHTML = '';
+            if (alerts > 0) {
+                alertHTML += `<div class="alert-list">${alertMessages.map(msg => `<div class="alert-item">${msg}</div>`).join('')}</div>`;
+            }
+            if (predictiveAlerts.length > 0) {
+                if (alerts > 0) {
+                    alertHTML += `<div class="alert-divider"></div>`;
+                }
+                alertHTML += `<div class="predictive-alerts-header">PREDICTIVE ALERTS:</div>`;
+                alertHTML += `<div class="alert-list">${predictiveAlerts.map(msg => `<div class="alert-item predictive">${msg}</div>`).join('')}</div>`;
+            }
+            alertDetails.innerHTML = alertHTML;
+            alertDetails.style.display = (alerts > 0 || predictiveAlerts.length > 0) ? 'block' : 'none';
+        }
+
+        // Add trend indicators to system summary
+        this.addTrendIndicators(systemData);
+    }
+
+    /**
+     * Check for predictive power system alerts based on trends
+     * @param {Object} systemData - Current system data
+     * @returns {string|null} Predictive alert message or null
+     */
+    checkPredictivePowerAlert(systemData) {
+        const powerTrend = this.dataSimulator.getTrend('power', 'generation');
+        const consumptionTrend = this.dataSimulator.getTrend('power', 'consumption');
+        
+        // Predict power margin in 5 minutes based on current trends
+        const currentMargin = systemData.power.generation - systemData.power.consumption;
+        const predictedGeneration = systemData.power.generation + (powerTrend.change * 5); // 5 minutes ahead
+        const predictedConsumption = systemData.power.consumption + (consumptionTrend.change * 5); // 5 minutes ahead
+        const predictedMargin = predictedGeneration - predictedConsumption;
+        
+        if (predictedMargin < 0 && currentMargin >= 0) {
+            return `PREDICTIVE: POWER DEFICIT EXPECTED IN ~5 MIN (Margin: ${predictedMargin.toFixed(1)}%)`;
+        } else if (predictedMargin < 5 && currentMargin >= 5) {
+            return `PREDICTIVE: LOW POWER MARGIN EXPECTED IN ~5 MIN (Margin: ${predictedMargin.toFixed(1)}%)`;
+        }
+        
+        return null;
+    }
+
+    /**
+     * Check for predictive life support alerts based on trends
+     * @param {Object} systemData - Current system data
+     * @returns {string|null} Predictive alert message or null
+     */
+    checkPredictiveLifeSupportAlert(systemData) {
+        const oxygenTrend = this.dataSimulator.getTrend('lifeSupport', 'oxygen');
+        const co2Trend = this.dataSimulator.getTrend('lifeSupport', 'co2');
+        
+        // Predict O2 levels in 10 minutes based on current trends
+        const predictedO2 = systemData.lifeSupport.oxygen + (oxygenTrend.change * 10); // 10 minutes ahead
+        const predictedCO2 = systemData.lifeSupport.co2 + (co2Trend.change * 10); // 10 minutes ahead
+        
+        if (predictedO2 < 85 && systemData.lifeSupport.oxygen >= 85) {
+            return `PREDICTIVE: OXYGEN LEVEL MAY DROP BELOW SAFE THRESHOLD (~10 MIN: ${predictedO2.toFixed(1)}%)`;
+        } else if (predictedCO2 > 25 && systemData.lifeSupport.co2 <= 25) {
+            return `PREDICTIVE: CO2 LEVEL MAY RISE ABOVE SAFE THRESHOLD (~10 MIN: ${predictedCO2.toFixed(1)} PPM)`;
+        }
+        
+        return null;
     }
 
     /**
@@ -282,6 +384,52 @@ class NostromoDashboard {
      */
     updateSchematicIndicators(systemData) {
         this.shipSchematic.update(systemData);
+    }
+
+    /**
+     * Add trend indicators to system summary
+     * @param {Object} systemData - Complete system status data
+     */
+    addTrendIndicators(systemData) {
+        // Remove existing trend indicators
+        const existingTrends = document.querySelectorAll('.trend-indicator');
+        existingTrends.forEach(indicator => indicator.remove());
+
+        const systemSummary = document.querySelector('.system-summary');
+        if (!systemSummary) return;
+
+        // Get trend data for key metrics
+        const powerTrend = this.dataSimulator.getTrend('power', 'generation');
+        const oxygenTrend = this.dataSimulator.getTrend('lifeSupport', 'oxygen');
+        const fuelTrend = this.dataSimulator.getTrend('power', 'fuel');
+
+        // Create trend indicator elements
+        const trendContainer = document.createElement('div');
+        trendContainer.className = 'trend-indicators';
+        trendContainer.style.marginTop = '8px';
+        trendContainer.style.fontSize = '11px';
+        trendContainer.style.display = 'flex';
+        trendContainer.style.gap = '12px';
+
+        // Power trend
+        const powerTrendEl = document.createElement('div');
+        powerTrendEl.className = `trend-indicator power-trend ${powerTrend.trend}`;
+        powerTrendEl.innerHTML = `<span class="trend-label">PWR:</span> <span class="trend-value">${powerTrend.direction === 'up' ? '↑' : powerTrend.direction === 'down' ? '↓' : '→'}</span> <span class="trend-change">${Math.abs(powerTrend.changePercent).toFixed(1)}%</span>`;
+        trendContainer.appendChild(powerTrendEl);
+
+        // Oxygen trend
+        const oxygenTrendEl = document.createElement('div');
+        oxygenTrendEl.className = `trend-indicator oxygen-trend ${oxygenTrend.trend}`;
+        oxygenTrendEl.innerHTML = `<span class="trend-label">O2:</span> <span class="trend-value">${oxygenTrend.direction === 'up' ? '↑' : oxygenTrend.direction === 'down' ? '↓' : '→'}</span> <span class="trend-change">${Math.abs(oxygenTrend.changePercent).toFixed(1)}%</span>`;
+        trendContainer.appendChild(oxygenTrendEl);
+
+        // Fuel trend
+        const fuelTrendEl = document.createElement('div');
+        fuelTrendEl.className = `trend-indicator fuel-trend ${fuelTrend.trend}`;
+        fuelTrendEl.innerHTML = `<span class="trend-label">FUEL:</span> <span class="trend-value">${fuelTrend.direction === 'up' ? '↑' : fuelTrend.direction === 'down' ? '↓' : '→'}</span> <span class="trend-change">${Math.abs(fuelTrend.changePercent).toFixed(1)}%</span>`;
+        trendContainer.appendChild(fuelTrendEl);
+
+        systemSummary.appendChild(trendContainer);
     }
 }
 

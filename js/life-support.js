@@ -468,11 +468,16 @@ class NostromoLifeSupport {
      */
     updateTrendDisplay() {
         const trendChart = document.getElementById('trend-chart');
-        if (!trendChart || this.historicalData.length < 3) {
+        if (!trendChart) {
             return;
         }
 
-        trendChart.innerHTML = this.generateTrendChart();
+        if (this.historicalData.length < 3) {
+            trendChart.innerHTML = '<div class="chart-loading">COLLECTING TREND DATA...</div>';
+            return;
+        }
+
+        trendChart.innerHTML = this.generateEnhancedTrendChart();
     }
 
     /**
@@ -501,6 +506,311 @@ class NostromoLifeSupport {
 
         chart += '</div>';
         return chart;
+    }
+
+    /**
+     * Generate enhanced ASCII trend chart with detailed historical analysis
+     */
+    generateEnhancedTrendChart() {
+        if (this.historicalData.length < 5) {
+            return this.generateTrendChart(); // Fallback to basic chart
+        }
+
+        // Create a more detailed trend analysis display
+        let chart = '<div class="enhanced-trend-display">';
+        
+        // Add trend summary
+        chart += '<div class="trend-summary">';
+        chart += this.generateTrendSummary();
+        chart += '</div>';
+        
+        // Add detailed parameter charts
+        chart += '<div class="detailed-charts">';
+        chart += this.generateDetailedParameterCharts();
+        chart += '</div>';
+        
+        // Add predictive analysis
+        chart += '<div class="predictive-analysis">';
+        chart += this.generatePredictiveAnalysis();
+        chart += '</div>';
+        
+        chart += '</div>';
+        
+        return chart;
+    }
+
+    /**
+     * Generate trend summary section
+     */
+    generateTrendSummary() {
+        const oxygenTrend = this.calculateParameterTrend('oxygen');
+        const co2Trend = this.calculateParameterTrend('co2');
+        const pressureTrend = this.calculateParameterTrend('pressure');
+        const temperatureTrend = this.calculateParameterTrend('temperature');
+
+        let summary = '<div class="trend-grid">';
+        summary += `<div class="trend-item"><span class="trend-label">O2:</span> <span class="trend-value ${oxygenTrend.direction}">${oxygenTrend.symbol} ${Math.abs(oxygenTrend.change).toFixed(2)}%/hr</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">CO2:</span> <span class="trend-value ${co2Trend.direction}">${co2Trend.symbol} ${Math.abs(co2Trend.change).toFixed(2)} PPM/hr</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">PRES:</span> <span class="trend-value ${pressureTrend.direction}">${pressureTrend.symbol} ${Math.abs(pressureTrend.change).toFixed(3)} ATM/hr</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">TEMP:</span> <span class="trend-value ${temperatureTrend.direction}">${temperatureTrend.symbol} ${Math.abs(temperatureTrend.change).toFixed(2)}°C/hr</span></div>`;
+        summary += '</div>';
+
+        return summary;
+    }
+
+    /**
+     * Calculate trend for a specific parameter
+     */
+    calculateParameterTrend(param) {
+        const data = this.historicalData.map(d => d[param]);
+        if (data.length < 3) {
+            return { direction: 'stable', symbol: '→', change: 0 };
+        }
+
+        // Calculate linear regression slope for more accurate trend
+        const n = data.length;
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        
+        data.forEach((value, index) => {
+            const x = index;
+            sumX += x;
+            sumY += value;
+            sumXY += x * value;
+            sumX2 += x * x;
+        });
+
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        
+        let direction = 'stable';
+        let symbol = '→';
+        
+        if (slope > 0.05) {
+            direction = 'improving';
+            symbol = '↗';
+        } else if (slope < -0.05) {
+            direction = 'declining';
+            symbol = '↘';
+        }
+
+        return { direction: direction, symbol: symbol, change: slope };
+    }
+
+    /**
+     * Generate detailed parameter charts with historical context
+     */
+    generateDetailedParameterCharts() {
+        const parameters = [
+            { key: 'oxygen', label: 'OXYGEN LEVEL', unit: '%', min: 80, max: 100 },
+            { key: 'co2', label: 'CO2 CONCENTRATION', unit: 'PPM', min: 0, max: 20 },
+            { key: 'pressure', label: 'HULL PRESSURE', unit: 'ATM', min: 0.9, max: 1.1 },
+            { key: 'temperature', label: 'AMBIENT TEMP', unit: '°C', min: 18, max: 24 }
+        ];
+
+        let charts = '<div class="parameter-charts-container">';
+        
+        for (const param of parameters) {
+            charts += this.generateSingleParameterHistoryChart(param);
+        }
+        
+        charts += '</div>';
+        return charts;
+    }
+
+    /**
+     * Generate single parameter history chart
+     */
+    generateSingleParameterHistoryChart(param) {
+        const data = this.historicalData.map(d => d[param.key]);
+        const labels = this.historicalData.map(d => new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}));
+        
+        if (data.length === 0) {
+            return `<div class="parameter-chart-placeholder">NO ${param.label} DATA</div>`;
+        }
+
+        const currentValue = data[data.length - 1];
+        const minValue = Math.min(...data);
+        const maxValue = Math.max(...data);
+        const avgValue = data.reduce((sum, val) => sum + val, 0) / data.length;
+
+        // Calculate percentage ranges for coloring
+        const currentPct = ((currentValue - param.min) / (param.max - param.min)) * 100;
+        const minPct = ((param.min - param.min) / (param.max - param.min)) * 100;
+        const maxPct = ((param.max - param.min) / (param.max - param.min)) * 100;
+
+        let chart = `<div class="parameter-chart-card">`;
+        chart += `<div class="chart-header">${param.label}</div>`;
+        chart += `<div class="chart-current-value">${currentValue.toFixed(1)} ${param.unit}</div>`;
+        
+        // Mini ASCII sparkline
+        chart += `<div class="chart-sparkline">`;
+        chart += this.generateSparkline(data, param.min, param.max);
+        chart += `</div>`;
+        
+        // Statistics
+        chart += `<div class="chart-stats">`;
+        chart += `<span>MIN: ${minValue.toFixed(1)}</span> `;
+        chart += `<span>MAX: ${maxValue.toFixed(1)}</span> `;
+        chart += `<span>AVG: ${avgValue.toFixed(1)}</span>`;
+        chart += `</div>`;
+        
+        chart += `<div class="chart-range-indicator">`;
+        chart += `<div class="range-bar">`;
+        chart += `<div class="range-fill" style="left: ${minPct}%; width: ${maxPct - minPct}%;"></div>`;
+        chart += `<div class="current-marker" style="left: ${currentPct}%;"></div>`;
+        chart += `</div>`;
+        chart += `<div class="range-labels">`;
+        chart += `<span class="range-min">${param.min}</span> `;
+        chart += `<span class="range-max">${param.max}</span>`;
+        chart += `</div>`;
+        chart += `</div>`;
+        
+        chart += `</div>`;
+        
+        return chart;
+    }
+
+    /**
+     * Generate ASCII sparkline for data series
+     */
+    generateSparkline(data, minVal, maxVal) {
+        if (data.length < 2) return '';
+        
+        const width = 20; // Sparkline width
+        const step = Math.max(1, Math.floor(data.length / width));
+        const sampledData = [];
+        
+        for (let i = 0; i < data.length; i += step) {
+            sampledData.push(data[i]);
+        }
+        
+        // Ensure we include the last point
+        if (sampledData[sampledData.length - 1] !== data[data.length - 1]) {
+            sampledData.push(data[data.length - 1]);
+        }
+        
+        let sparkline = '';
+        const range = maxVal - minVal;
+        
+        for (let i = 0; i < sampledData.length; i++) {
+            const normalized = (sampledData[i] - minVal) / range;
+            const position = Math.floor(normalized * 7); // 8 levels (0-7)
+            const chars = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+            sparkline += chars[Math.min(7, Math.max(0, position))];
+        }
+        
+        return sparkline;
+    }
+
+    /**
+     * Generate predictive analysis based on historical trends
+     */
+    generatePredictiveAnalysis() {
+        if (this.historicalData.length < 10) {
+            return '<div class="prediction-note">INSUFFICIENT DATA FOR PREDICTION</div>';
+        }
+
+        let analysis = '<div class="prediction-container">';
+        analysis += '<div class="prediction-title">TREND PREDICTION (NEXT HOUR)</div>';
+        
+        const predictions = [
+            { param: 'oxygen', label: 'OXYGEN', unit: '%', critical: 80, warning: 90 },
+            { param: 'co2', label: 'CO2', unit: 'PPM', warning: 20, critical: 30 },
+            { param: 'pressure', label: 'PRESSURE', unit: 'ATM', warningLow: 0.95, warningHigh: 1.05, criticalLow: 0.90, criticalHigh: 1.10 },
+            { param: 'temperature', label: 'TEMPERATURE', unit: '°C', warningLow: 19, warningHigh: 23, criticalLow: 18, criticalHigh: 24 }
+        ];
+
+        analysis += '<div class="prediction-grid">';
+        for (const pred of predictions) {
+            const prediction = this.predictParameterValue(pred.param, 60); // Predict 60 minutes ahead
+            analysis += this.formatPrediction(pred, prediction);
+        }
+        analysis += '</div>';
+        
+        analysis += '</div>';
+        return analysis;
+    }
+
+    /**
+     * Predict future parameter value based on historical trend
+     */
+    predictParameterValue(param, minutesAhead) {
+        const data = this.historicalData.map(d => d[param]);
+        if (data.length < 5) return null;
+
+        // Use linear regression for prediction
+        const n = data.length;
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+        
+        data.forEach((value, index) => {
+            const x = index;
+            sumX += x;
+            sumY += value;
+            sumXY += x * value;
+            sumX2 += x * x;
+        });
+
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        const intercept = (sumY - slope * sumX) / n;
+        
+        // Predict value at future point
+        const futureIndex = data.length - 1 + (minutesAhead / 2); // Assuming 2-second intervals
+        const predictedValue = slope * futureIndex + intercept;
+        
+        return predictedValue;
+    }
+
+    /**
+     * Format prediction for display
+     */
+    formatPrediction(pred, predictedValue) {
+        if (predictedValue === null) {
+            return `<div class="prediction-item"><span class="pred-label">${pred.label}:</span> <span class="pred-value">--.--</span> <span class="pred-unit">${pred.unit}</span></div>`;
+        }
+
+        let statusClass = 'pred-ok';
+        let statusSymbol = '●';
+        
+        // Determine status based on thresholds
+        if (pred.label === 'OXYGEN') {
+            if (predictedValue < pred.critical) {
+                statusClass = 'pred-critical';
+                statusSymbol = '⚠';
+            } else if (predictedValue < pred.warning) {
+                statusClass = 'pred-warning';
+                statusSymbol = '⚠';
+            }
+        } else if (pred.label === 'CO2') {
+            if (predictedValue > pred.critical) {
+                statusClass = 'pred-critical';
+                statusSymbol = '⚠';
+            } else if (predictedValue > pred.warning) {
+                statusClass = 'pred-warning';
+                statusSymbol = '⚠';
+            }
+        } else if (pred.label === 'PRESSURE') {
+            if (predictedValue < pred.criticalLow || predictedValue > pred.criticalHigh) {
+                statusClass = 'pred-critical';
+                statusSymbol = '⚠';
+            } else if (predictedValue < pred.warningLow || predictedValue > pred.warningHigh) {
+                statusClass = 'pred-warning';
+                statusSymbol = '⚠';
+            }
+        } else if (pred.label === 'TEMPERATURE') {
+            if (predictedValue < pred.criticalLow || predictedValue > pred.criticalHigh) {
+                statusClass = 'pred-critical';
+                statusSymbol = '⚠';
+            } else if (predictedValue < pred.warningLow || predictedValue > pred.warningHigh) {
+                statusClass = 'pred-warning';
+                statusSymbol = '⚠';
+            }
+        }
+
+        return `<div class="prediction-item ${statusClass}">` +
+               `<span class="pred-label">${pred.label}:</span> ` +
+               `<span class="pred-value">${predictedValue.toFixed(2)}</span> ` +
+               `<span class="pred-unit">${pred.unit}</span> ` +
+               `<span class="pred-status">${statusSymbol}</span>` +
+               `</div>`;
     }
 
     /**

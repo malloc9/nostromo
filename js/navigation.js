@@ -255,25 +255,32 @@ class NostromoNavigation {
     }
 
     /**
-     * Generate wireframe terrain HTML
+     * Generate wireframe terrain HTML with 3D enhancements
      */
     generateTerrainHTML() {
         const size = 20; // Grid size for display
         let html = '<pre class="terrain-wireframe">';
         
-        // Generate contour lines
+        // Generate contour lines with 3D shading
         for (let y = 0; y < size; y++) {
             let line = '';
             for (let x = 0; x < size; x++) {
                 // Sample terrain height
                 const height = this.getTerrainHeight(x * 5 - size*2.5, y * 5 - size*2.5);
                 
-                // Convert height to display character
+                // Calculate shading based on height and simulated lighting
+                const shadedHeight = height + Math.sin((x * 0.3) + (y * 0.2)) * 3;
+                
+                // Convert height to display character with 3D depth cues
                 let char = ' ';
-                if (height > 20) char = '#'; // High ground
-                else if (height > 10) char = '+'; // Medium
-                else if (height > 0) char = '.'; // Low
-                else if (height > -10) char = ','; // Very low
+                if (shadedHeight > 25) char = '█'; // Very high ground
+                else if (shadedHeight > 20) char = '▓'; // High ground
+                else if (shadedHeight > 15) char = '▒'; // Medium-high
+                else if (shadedHeight > 10) char = '░'; // Medium
+                else if (shadedHeight > 5) char = '‗'; // Slightly elevated
+                else if (shadedHeight > 0) char = '▄'; // Low ground
+                else if (shadedHeight > -5) char = '▀'; // Very low
+                else if (shadedHeight > -10) char = '▐'; // Deep depression
                 else char = ' '; // Deep/minimum
                 
                 line += char;
@@ -286,13 +293,13 @@ class NostromoNavigation {
     }
 
     /**
-     * Generate radar display HTML
+     * Generate radar display HTML with 3D enhancements
      */
     generateRadarHTML() {
         const size = 20;
         let html = '<pre class="radar-scope">';
         
-        // Generate radar concentric circles and sweeps
+        // Generate radar concentric circles and sweeps with 3D effects
         for (let y = 0; y < size; y++) {
             let line = '';
             for (let x = 0; x < size; x++) {
@@ -300,21 +307,28 @@ class NostromoNavigation {
                 const dy = y - size/2;
                 const distance = Math.sqrt(dx*dx + dy*dy);
                 
-                // Radar sweep line (current angle)
+                // Radar sweep line (current angle) with 3D pulse effect
                 const sweepAngle = (Date.now() % 10000) / 10000 * Math.PI * 2;
                 const angleToPoint = Math.atan2(dy, dx);
                 const angleDiff = Math.abs(((sweepAngle - angleToPoint + Math.PI) % (Math.PI*2)) - Math.PI);
                 
+                // Add 3D depth shading based on distance from center
+                const depthShading = Math.max(0, 1 - (distance / (size/2))) * 0.7;
+                
                 let char = ' ';
                 if (distance < 1) {
-                    char = '+'; // Center
+                    char = '♦'; // Center (enhanced)
                 } else if (Math.abs(distance - 3) < 0.5 || Math.abs(distance - 6) < 0.5 || 
                           Math.abs(distance - 9) < 0.5 || Math.abs(distance - 12) < 0.5) {
-                    char = '○'; // Range rings
+                    char = '◐'; // Enhanced range rings
                 } else if (angleDiff < 0.1 && distance > 1 && distance < size/2 - 1) {
-                    char = '▋'; // Sweep line
+                    // 3D sweep line with intensity based on depth
+                    const sweepIntensity = 0.5 + depthShading * 0.5;
+                    char = sweepIntensity > 0.7 ? '▋' : sweepIntensity > 0.4 ? '▊' : '▉';
                 } else if (this.isBlipAt(x, y)) {
-                    char = '●'; // Motion tracker blip
+                    // 3D blip with depth shading
+                    const blipDepth = distance < size/2 * 0.7 ? '●' : distance < size/2 * 0.9 ? '○' : '◦';
+                    char = blipDepth;
                 }
                 
                 line += char;

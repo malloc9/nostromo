@@ -13,6 +13,7 @@ class NostromoEngineering {
         this.maxHistoryLength = 20; // Keep last 20 readings for trends
         this.powerSystems = this.initializePowerSystems();
         this.alertThresholds = this.initializeAlertThresholds();
+        this.emergencyProcedures = this.initializeEmergencyProcedures();
         
         this.init();
     }
@@ -103,6 +104,19 @@ class NostromoEngineering {
                 warning: 10,
                 critical: 0
             }
+        };
+    }
+
+    /**
+     * Initialize emergency procedures
+     */
+    initializeEmergencyProcedures() {
+        return {
+            POWER_SURGE: 'ENGAGE_CIRCUIT_BREAKERS',
+            POWER_LOSS: 'ACTIVATE_BACKUP_GENERATORS',
+            OVERHEATING: 'INITIATE_COOLING_PROTOCOLS',
+            NETWORK_FAILURE: 'ISOLATE_AFFECTED_SECTORS',
+            CASCADE_FAILURE: 'EXECUTE_LOAD_SHEDDING'
         };
     }
 
@@ -550,7 +564,10 @@ class NostromoEngineering {
                 statusTextElement.textContent = statusText;
             }
         });
-    }
+         
+         // Handle power alerts and display emergency procedures
+         this.handlePowerAlert(powerData);
+     }
 
     /**
      * Update power summary display
@@ -633,11 +650,216 @@ class NostromoEngineering {
     }
 
     /**
+     * Handle power alerts and display emergency procedures
+     */
+    handlePowerAlert(powerData) {
+        // Clear any existing alert display
+        const existingAlert = document.getElementById('emergency-procedure-display');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        // Check for critical conditions that require emergency procedures
+        const alerts = this.calculatePowerAlerts(powerData);
+        
+        if (alerts > 0) {
+            let procedureType = null;
+            let urgency = 'LOW';
+            
+            // Determine the type of emergency based on the most critical alert
+            if (powerData.generation < this.alertThresholds.generation.critical) {
+                procedureType = 'POWER_LOSS';
+                urgency = 'CRITICAL';
+            } else if (powerData.consumption > this.alertThresholds.consumption.critical) {
+                procedureType = 'POWER_SURGE';
+                urgency = 'CRITICAL';
+            } else if (powerData.efficiency < this.alertThresholds.efficiency.critical) {
+                procedureType = 'OVERHEATING';
+                urgency = 'HIGH';
+            } else if (powerData.fuel < this.alertThresholds.fuel.critical) {
+                procedureType = 'POWER_LOSS'; // Treat low fuel as potential power loss
+                urgency = 'CRITICAL';
+            } else {
+                const netPower = powerData.generation - powerData.consumption;
+                if (netPower <= this.alertThresholds.netPower.critical) {
+                    procedureType = 'CASCADE_FAILURE';
+                    urgency = 'CRITICAL';
+                }
+            }
+            
+            if (procedureType) {
+                const procedure = this.getEmergencyPowerRedistributionProcedure(procedureType);
+                
+                // Create emergency procedure display
+                const alertContainer = document.createElement('div');
+                alertContainer.id = 'emergency-procedure-display';
+                alertContainer.className = `emergency-alert ${urgency.toLowerCase()}`;
+                
+                alertContainer.innerHTML = `
+                    <div class="alert-header">
+                        <span class="alert-type">${procedure.name}</span>
+                        <span class="alert-urgency">${urgency}</span>
+                    </div>
+                    <div class="alert-content">
+                        <h3>EMERGENCY POWER REDISTRIBUTION PROCEDURE</h3>
+                        <p><strong>ESTIMATED TIME:</strong> ${procedure.estimatedTime}</p>
+                        
+                        <div class="alert-steps">
+                            <h4>PROCEDURE STEPS:</h4>
+                            <ol>
+                                ${procedure.steps.map(step => `<li>${step}</li>`).join('')}
+                            </ol>
+                        </div>
+                        
+                        <div class="alert-redistribution">
+                            <h4>POWER REDISTRIBUTION DIRECTIVES:</h4>
+                            <ul>
+                                ${Object.entries(procedure.powerRedistribution).map(([system, action]) => {
+                                    const systemName = system.replace('_', ' ');
+                                    return `<li><strong>${systemName}:</strong> ${action.replace(/_/g, ' ')}</li>`;
+                                }).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="alert-systems-affected">
+                            <h4>SYSTEMS AFFECTED:</h4>
+                            <p>${procedure.systemsAffected.map(s => s.replace('_', ' ')).join(', ') || 'NONE SPECIFIED'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert the alert display at the top of the engineering screen, but below the header
+                const engineeringScreen = document.getElementById('engineering-screen');
+                if (engineeringScreen) {
+                    const header = engineeringScreen.querySelector('.screen-header');
+                    if (header) {
+                        header.insertAdjacentElement('afterend', alertContainer);
+                    } else {
+                        engineeringScreen.insertAdjacentElement('afterbegin', alertContainer);
+                    }
+                }
+                
+                // Also trigger an audible alert if audio manager is available
+                if (window.audioManager && typeof window.audioManager.playAlertSound === 'function') {
+                    window.audioManager.playAlertSound(urgency.toLowerCase());
+                }
+            }
+        }
+    }
+
+    /**
      * Get current power data for external use
      */
     getCurrentPowerData() {
         if (!this.dataSimulator) return null;
         return this.dataSimulator.generateSystemStatus().power;
+    }
+
+    /**
+     * Get detailed emergency power redistribution procedures
+     * @param {string} procedureType - Type of emergency procedure
+     * @returns {Object} Detailed procedure information
+     */
+    getEmergencyPowerRedistributionProcedure(procedureType) {
+        const procedures = {
+            POWER_SURGE: {
+                name: 'POWER SURGE PROTECTION',
+                priority: 'CRITICAL',
+                steps: [
+                    '1. IMMEDIATELY ENGAGE MAIN CIRCUIT BREAKERS',
+                    '2. DIVERT EXCESS POWER TO BUFFER CAPACITORS',
+                    '3. ISOLATE NON-ESSENTIAL SYSTEMS',
+                    '4. MONITOR VOLTAGE STABILIZATION',
+                    '5. GRADUALLY RESTORE NORMAL POWER FLOW'
+                ],
+                systemsAffected: ['LIGHTING', 'COMPUTER_CORE'],
+                estimatedTime: '15-30 seconds',
+                powerRedistribution: {
+                    LIFE_SUPPORT: 'MAINTAIN_100_PERCENT',
+                    NAVIGATION: 'REDUCE_TO_80_PERCENT',
+                    PROPULSION: 'MAINTAIN_MINIMUM',
+                    COMMUNICATIONS: 'MAINTAIN_90_PERCENT',
+                    LIGHTING: 'REDUCE_TO_50_PERCENT',
+                    COMPUTER_CORE: 'REDUCE_TO_70_PERCENT',
+                    ARTIFICIAL_GRAVITY: 'MAINTAIN_100_PERCENT'
+                }
+            },
+            POWER_LOSS: {
+                name: 'EMERGENCY POWER ACTIVATION',
+                priority: 'CRITICAL',
+                steps: [
+                    '1. ACTIVATE SECONDARY FUSION GENERATORS',
+                    '2. ENGAGE BATTERY BACKUP SYSTEMS',
+                    '3. PRIORITIZE LIFE SUPPORT SYSTEMS',
+                    '4. SHUT DOWN NON-CRITICAL SYSTEMS',
+                    '5. ESTABLISH POWER CONSERVATION MODE'
+                ],
+                systemsAffected: ['ALL_SYSTEMS'],
+                estimatedTime: '5-10 seconds',
+                powerRedistribution: {
+                    LIFE_SUPPORT: 'MAINTAIN_100_PERCENT',
+                    NAVIGATION: 'REDUCE_TO_60_PERCENT',
+                    PROPULSION: 'SHUT_DOWN_NON_ESSENTIAL',
+                    COMMUNICATIONS: 'MAINTAIN_80_PERCENT',
+                    LIGHTING: 'REDUCE_TO_30_PERCENT',
+                    COMPUTER_CORE: 'MAINTAIN_75_PERCENT',
+                    ARTIFICIAL_GRAVITY: 'MAINTAIN_100_PERCENT'
+                }
+            },
+            OVERHEATING: {
+                name: 'THERMAL MANAGEMENT PROTOCOL',
+                priority: 'HIGH',
+                steps: [
+                    '1. ACTIVATE EMERGENCY COOLING SYSTEMS',
+                    '2. REDUCE POWER TO HIGH-HEAT GENERATING SYSTEMS',
+                    '3. INCREASE HEAT SINK CIRCULATION',
+                    '4. MONITOR CORE TEMPERATURE SENSORS',
+                    '5. GRADUALLY RESTORE NORMAL OPERATIONS'
+                ],
+                systemsAffected: ['PROPULSION', 'COMPUTER_CORE'],
+                estimatedTime: '20-40 seconds',
+                powerRedistribution: {
+                    LIFE_SUPPORT: 'MAINTAIN_100_PERCENT',
+                    NAVIGATION: 'MAINTAIN_90_PERCENT',
+                    PROPULSION: 'REDUCE_TO_40_PERCENT',
+                    COMMUNICATIONS: 'MAINTAIN_100_PERCENT',
+                    LIGHTING: 'MAINTAIN_100_PERCENT',
+                    COMPUTER_CORE: 'REDUCE_TO_60_PERCENT',
+                    ARTIFICIAL_GRAVITY: 'MAINTAIN_100_PERCENT'
+                }
+            },
+            CASCADE_FAILURE: {
+                name: 'LOAD SHEDDING PROCEDURE',
+                priority: 'CRITICAL',
+                steps: [
+                    '1. IMMEDIATELY SHUT DOWN NON-ESSENTIAL SYSTEMS',
+                    '2. PRESERVE POWER FOR LIFE SUPPORT AND BRIDGE',
+                    '3. ISOLATE FAILED POWER NODES',
+                    '4. ACTIVATE MANUAL OVERRIDE CONTROLS',
+                    '5. PREPARE FOR SYSTEMATIC RESTORATION'
+                ],
+                systemsAffected: ['LIGHTING', 'COMMUNICATIONS'],
+                estimatedTime: '10-20 seconds',
+                powerRedistribution: {
+                    LIFE_SUPPORT: 'MAINTAIN_100_PERCENT',
+                    NAVIGATION: 'MAINTAIN_85_PERCENT',
+                    PROPULSION: 'SHUT_DOWN',
+                    COMMUNICATIONS: 'MAINTAIN_70_PERCENT',
+                    LIGHTING: 'SHUT_DOWN',
+                    COMPUTER_CORE: 'MAINTAIN_60_PERCENT',
+                    ARTIFICIAL_GRAVITY: 'MAINTAIN_100_PERCENT'
+                }
+            }
+        };
+
+        return procedures[procedureType] || {
+            name: 'UNKNOWN PROCEDURE',
+            priority: 'UNKNOWN',
+            steps: ['PROCEDURE NOT DEFINED'],
+            systemsAffected: [],
+            estimatedTime: 'UNKNOWN',
+            powerRedistribution: {}
+        };
     }
 
     /**
@@ -673,6 +895,104 @@ class NostromoEngineering {
         }
         
         return errors;
+    }
+    
+    /**
+     * Handle power alerts and display emergency procedures
+     */
+    handlePowerAlert(powerData) {
+        // Clear any existing alert display
+        const existingAlert = document.getElementById('emergency-procedure-display');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+        
+        // Check for critical conditions that require emergency procedures
+        const alerts = this.calculatePowerAlerts(powerData);
+        
+        if (alerts > 0) {
+            let procedureType = null;
+            let urgency = 'LOW';
+            
+            // Determine the type of emergency based on the most critical alert
+            if (powerData.generation < this.alertThresholds.generation.critical) {
+                procedureType = 'POWER_LOSS';
+                urgency = 'CRITICAL';
+            } else if (powerData.consumption > this.alertThresholds.consumption.critical) {
+                procedureType = 'POWER_SURGE';
+                urgency = 'CRITICAL';
+            } else if (powerData.efficiency < this.alertThresholds.efficiency.critical) {
+                procedureType = 'OVERHEATING';
+                urgency = 'HIGH';
+            } else if (powerData.fuel < this.alertThresholds.fuel.critical) {
+                procedureType = 'POWER_LOSS'; // Treat low fuel as potential power loss
+                urgency = 'CRITICAL';
+            } else {
+                const netPower = powerData.generation - powerData.consumption;
+                if (netPower <= this.alertThresholds.netPower.critical) {
+                    procedureType = 'CASCADE_FAILURE';
+                    urgency = 'CRITICAL';
+                }
+            }
+            
+            if (procedureType) {
+                const procedure = this.getEmergencyPowerRedistributionProcedure(procedureType);
+                
+                // Create emergency procedure display
+                const alertContainer = document.createElement('div');
+                alertContainer.id = 'emergency-procedure-display';
+                alertContainer.className = `emergency-alert ${urgency.toLowerCase()}`;
+                
+                alertContainer.innerHTML = `
+                    <div class="alert-header">
+                        <span class="alert-type">${procedure.name}</span>
+                        <span class="alert-urgency">${urgency}</span>
+                    </div>
+                    <div class="alert-content">
+                        <h3>EMERGENCY POWER REDISTRIBUTION PROCEDURE</h3>
+                        <p><strong>ESTIMATED TIME:</strong> ${procedure.estimatedTime}</p>
+                        
+                        <div class="alert-steps">
+                            <h4>PROCEDURE STEPS:</h4>
+                            <ol>
+                                ${procedure.steps.map(step => `<li>${step}</li>`).join('')}
+                            </ol>
+                        </div>
+                        
+                        <div class="alert-redistribution">
+                            <h4>POWER REDISTRIBUTION DIRECTIVES:</h4>
+                            <ul>
+                                ${Object.entries(procedure.powerRedistribution).map(([system, action]) => {
+                                    const systemName = system.replace('_', ' ');
+                                    return `<li><strong>${systemName}:</strong> ${action.replace(/_/g, ' ')}</li>`;
+                                }).join('')}
+                            </ul>
+                        </div>
+                        
+                        <div class="alert-systems-affected">
+                            <h4>SYSTEMS AFFECTED:</h4>
+                            <p>${procedure.systemsAffected.map(s => s.replace('_', ' ')).join(', ') || 'NONE SPECIFIED'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert the alert display at the top of the engineering screen, but below the header
+                const engineeringScreen = document.getElementById('engineering-screen');
+                if (engineeringScreen) {
+                    const header = engineeringScreen.querySelector('.screen-header');
+                    if (header) {
+                        header.insertAdjacentElement('afterend', alertContainer);
+                    } else {
+                        engineeringScreen.insertAdjacentElement('afterbegin', alertContainer);
+                    }
+                }
+                
+                // Also trigger an audible alert if audio manager is available
+                if (window.audioManager && typeof window.audioManager.playAlertSound === 'function') {
+                    window.audioManager.playAlertSound(urgency.toLowerCase());
+                }
+            }
+        }
     }
 }
 
