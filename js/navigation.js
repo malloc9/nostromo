@@ -1,23 +1,41 @@
 /**
- * Nostromo Navigation Screen
- * Navigation and positioning system with star map display and coordinate tracking
+ * Nostromo Navigation Screen - Redesigned
+ * Wireframe terrain map, motion tracker, and orbital visualization
+ * Inspired by the Alien movie navigation displays
  */
 
 class NostromoNavigation {
     constructor(dataSimulator) {
         this.dataSimulator = dataSimulator;
         this.refreshInterval = null;
-        this.refreshRate = 2000; // 2 seconds
+        this.refreshRate = 1500; // 1.5 seconds for more dynamic feel
         this.isActive = false;
-        this.starMap = null;
-
-        this.starMapSeed = Date.now(); // Seed for random star generation
+        this.terrainMap = null;
+        this.motionTracker = null;
+        this.orbitalPath = null;
+        
+        // Terrain simulation parameters
+        this.terrainSize = 100;
+        this.terrainScale = 10;
+        this.terrainSeed = Date.now();
+        
+        // Motion tracker
+        this.motionTrackerRange = 50; // units
+        this.motionTrackerBlips = [];
+        this.lastPingTime = 0;
+        this.pingInterval = 8000 + Math.random() * 4000; // 8-12 seconds
+        
+        // Orbital elements
+        this.orbitPoints = [];
+        this.orbitProgress = 0;
         
         this.init();
     }
 
     init() {
-        console.log('Navigation system initialized');
+        console.log('Nostromo Navigation system initialized');
+        this.generateTerrain();
+        this.generateOrbitalPath();
     }
 
     /**
@@ -52,12 +70,14 @@ class NostromoNavigation {
         this.refreshInterval = setInterval(() => {
             if (this.isActive) {
                 this.updateNavigationData();
+                this.updateMotionTracker();
+                this.updateOrbitalDisplay();
             }
         }, this.refreshRate);
     }
 
     /**
-     * Stop real-time data updates
+     * Stop real-time updates
      */
     stopRealTimeUpdates() {
         if (this.refreshInterval) {
@@ -67,15 +87,14 @@ class NostromoNavigation {
     }
 
     /**
-     * Setup window resize handler to regenerate star map
+     * Setup window resize handler
      */
     setupResizeHandler() {
         this.resizeHandler = () => {
             if (this.isActive) {
-                // Debounce resize events
                 clearTimeout(this.resizeTimeout);
                 this.resizeTimeout = setTimeout(() => {
-                    this.regenerateStarMap();
+                    this.regenerateDisplays();
                 }, 300);
             }
         };
@@ -113,12 +132,12 @@ class NostromoNavigation {
         }
 
         screenContent.innerHTML = this.generateNavigationHTML();
-        this.setupStarMapClickHandlers();
-        this.updateNavigationData();
+        this.setupEventListeners();
+        this.updateAllDisplays();
         
-        // Force regeneration after DOM is updated to get correct dimensions
+        // Force regeneration after DOM update
         setTimeout(() => {
-            this.regenerateStarMap();
+            this.regenerateDisplays();
         }, 100);
     }
 
@@ -128,86 +147,107 @@ class NostromoNavigation {
     generateNavigationHTML() {
         return `
             <div class="navigation-container">
-                <!-- Ship Position and Status Section -->
+                <!-- Ship Status and Orbital Info -->
                 <div class="nav-status-section">
-                    <div class="section-header">SHIP POSITION & STATUS</div>
-                    <div class="position-grid">
-                        <div class="position-data">
-                            <div class="data-group">
-                                <div class="group-header">CURRENT POSITION</div>
-                                <div class="coordinate-display">
-                                    <div class="coord-row">
-                                        <span class="coord-label">X:</span>
-                                        <span class="coord-value" id="pos-x">--.--</span>
-                                    </div>
-                                    <div class="coord-row">
-                                        <span class="coord-label">Y:</span>
-                                        <span class="coord-value" id="pos-y">--.--</span>
-                                    </div>
-                                    <div class="coord-row">
-                                        <span class="coord-label">Z:</span>
-                                        <span class="coord-value" id="pos-z">--.--</span>
-                                    </div>
+                    <div class="section-header">ORBITAL STATUS</div>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-label">ORBIT:</span>
+                            <span class="status-value" id="nav-orbit">STABLE</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">ALTITUDE:</span>
+                            <span class="status-value" id="nav-altitude">--.-- km</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">VELOCITY:</span>
+                            <span class="status-value" id="nav-velocity">-.--- C</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">HEADING:</span>
+                            <span class="status-value" id="nav-heading">---°</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Display: Terrain and Motion Tracker -->
+                <div class="main-display">
+                    <!-- Wireframe Terrain Map -->
+                    <div class="terrain-section">
+                        <div class="section-header">LV-426 TERRAIN SURVEY</div>
+                        <div class="terrain-container">
+                            <div class="terrain-grid" id="terrain-grid">
+                                ${this.generateTerrainHTML()}
+                            </div>
+                            <div class="terrain-coords">
+                                <span>X: <span id="terrain-x">----</span></span> |
+                                <span>Y: <span id="terrain-y">----</span></span> |
+                                <span>Z: <span id="terrain-z">----</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Motion Tracker Radar -->
+                    <div class="motion-tracker-section">
+                        <div class="section-header">MOTION TRACKER</div>
+                        <div class="motion-tracker-container">
+                            <div class="radar-display" id="radar-display">
+                                ${this.generateRadarHTML()}
+                            </div>
+                            <div class="radar-controls">
+                                <span class="range-label">RANGE: <span id="radar-range">${this.motionTrackerRange}</span>m</span>
+                                <span class="status-indicator" id="radar-status">SEARCHING</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Data and Coordinates -->
+                <div class="nav-data-section">
+                    <div class="section-header">NAVIGATION DATA</div>
+                    <div class="data-grid">
+                        <div class="data-column">
+                            <div class="data-item">
+                                <span class="data-label">POSITION:</span>
+                                <div class="coord-triplet">
+                                    <span class="coord-axis">X</span>: <span id="pos-x">----</span><br>
+                                    <span class="coord-axis">Y</span>: <span id="pos-y">----</span><br>
+                                    <span class="coord-axis">Z</span>: <span id="pos-z">----</span>
                                 </div>
                             </div>
-                            <div class="data-group">
-                                <div class="group-header">NAVIGATION DATA</div>
-                                <div class="nav-data-display">
-                                    <div class="nav-row">
-                                        <span class="nav-label">HEADING:</span>
-                                        <span class="nav-value" id="nav-heading">---°</span>
-                                    </div>
-                                    <div class="nav-row">
-                                        <span class="nav-label">VELOCITY:</span>
-                                        <span class="nav-value" id="nav-velocity">-.--- C</span>
-                                    </div>
-                                    <div class="nav-row">
-                                        <span class="nav-label">DESTINATION:</span>
-                                        <span class="nav-value" id="nav-destination">----</span>
-                                    </div>
-                                    <div class="nav-row">
-                                        <span class="nav-label">ETA:</span>
-                                        <span class="nav-value" id="nav-eta">-- HOURS</span>
-                                    </div>
+                            <div class="data-item">
+                                <span class="data-label">DESTINATION:</span>
+                                <span id="nav-destination">LV-426</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-label">ETA:</span>
+                                <span id="nav-eta">--:--</span>
+                            </div>
+                        </div>
+                        <div class="data-column">
+                            <div class="data-item">
+                                <span class="data-label">ORBITAL PATH:</span>
+                                <div id="orbital-path-preview">
+                                    ${this.generateOrbitalPreviewHTML()}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Star Map Section -->
-                <div class="star-map-section">
-                    <div class="section-header">STELLAR CARTOGRAPHY</div>
-                    <div class="star-map-container">
-                        <div class="star-map" id="star-map">
-                            ${this.generateStarMap()}
-                        </div>
-                        <div class="map-controls">
-                            <div class="control-group">
-                                <span class="control-label">SCALE:</span>
-                                <span class="control-value">1:10000</span>
-                            </div>
-                            <div class="control-group">
-                                <span class="control-label">GRID:</span>
-                                <span class="control-value">ENABLED</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Navigation Status Bar -->
+                <!-- Status Bar -->
                 <div class="nav-status-bar">
                     <div class="status-item">
                         <span class="status-label">NAV STATUS:</span>
                         <span class="status-value" id="nav-system-status">OPERATIONAL</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">LAST UPDATE:</span>
-                        <span class="status-value" id="nav-last-update">--:--:--</span>
+                        <span class="status-label">LAST PING:</span>
+                        <span class="status-value" id="nav-last-ping">--:--:--</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">DRIFT:</span>
-                        <span class="status-value" id="nav-drift">MINIMAL</span>
+                        <span class="status-label">CONTACTS:</span>
+                        <span class="status-value" id="nav-contacts">0</span>
                     </div>
                 </div>
             </div>
@@ -215,314 +255,389 @@ class NostromoNavigation {
     }
 
     /**
-     * Calculate optimal map width based on container size
+     * Generate wireframe terrain HTML
      */
-    calculateMapWidth() {
-        // Try to get the actual container width
-        const starMapElement = document.querySelector('.star-map');
-        if (starMapElement) {
-            const containerWidth = starMapElement.clientWidth;
-            // Account for padding and scrollbar, use monospace character width (~6px at 10px font)
-            const charWidth = 6;
-            const availableWidth = Math.floor((containerWidth - 20) / charWidth);
-            // Ensure minimum and maximum bounds, make it fill most of the space
-            return Math.max(100, Math.min(250, availableWidth));
-        }
-        // Fallback to a larger default that should fill most screens
-        return 180;
-    }
-
-    /**
-     * Calculate optimal map height based on container size
-     */
-    calculateMapHeight() {
-        // Try to get the actual container height
-        const starMapElement = document.querySelector('.star-map');
-        if (starMapElement) {
-            const containerHeight = starMapElement.clientHeight;
-            // Account for padding, use line height (~12px at 10px font with 1.2 line-height)
-            const lineHeight = 12;
-            const availableHeight = Math.floor((containerHeight - 20) / lineHeight);
-            // Ensure minimum and maximum bounds
-            return Math.max(25, Math.min(80, availableHeight));
-        }
-        // Fallback to a good default height
-        return 45;
-    }
-
-    /**
-     * Generate ASCII star map with coordinate grid and ship position
-     */
-    generateStarMap() {
-        // Calculate dynamic width based on container size
-        const mapWidth = this.calculateMapWidth();
-        const mapHeight = this.calculateMapHeight();
-        let mapHTML = '<pre class="star-field">';
+    generateTerrainHTML() {
+        const size = 20; // Grid size for display
+        let html = '<pre class="terrain-wireframe">';
         
-        // Generate coordinate grid header
-        mapHTML += '    ';
-        for (let x = 0; x < mapWidth; x += 10) {
-            mapHTML += `${String(x).padStart(10, ' ')}`;
-        }
-        mapHTML += '\n';
-        
-        mapHTML += '    ';
-        for (let x = 0; x < mapWidth; x++) {
-            mapHTML += (x % 10 === 0) ? '|' : (x % 5 === 0) ? '+' : '-';
-        }
-        mapHTML += '\n';
-
-        // Generate more random star positions using better randomization
-        const starPositions = this.generateRandomStarPositions(mapWidth, mapHeight, this.starMapSeed);
-
-        // Generate star field with grid
-        for (let y = 0; y < mapHeight; y++) {
-            // Y-axis labels
-            mapHTML += `${String(y * 10).padStart(3, ' ')} `;
-            
-            for (let x = 0; x < mapWidth; x++) {
+        // Generate contour lines
+        for (let y = 0; y < size; y++) {
+            let line = '';
+            for (let x = 0; x < size; x++) {
+                // Sample terrain height
+                const height = this.getTerrainHeight(x * 5 - size*2.5, y * 5 - size*2.5);
+                
+                // Convert height to display character
                 let char = ' ';
+                if (height > 20) char = '#'; // High ground
+                else if (height > 10) char = '+'; // Medium
+                else if (height > 0) char = '.'; // Low
+                else if (height > -10) char = ','; // Very low
+                else char = ' '; // Deep/minimum
                 
-                // Grid lines (lighter grid)
-                if (x % 10 === 0) {
-                    char = '│';
-                } else if (y % 5 === 0 && x % 5 === 0) {
-                    char = '┼';
-                } else if (y % 5 === 0) {
-                    char = '─';
-                }
-                
-                // Check if there's a star at this position
-                const starKey = `${x},${y}`;
-                if (starPositions.has(starKey) && char === ' ') {
-                    const starType = starPositions.get(starKey);
-                    char = starType;
-                }
-                
-                // Ship position (more prominent and centered)
-                const shipX = Math.floor(mapWidth / 2);
-                const shipY = Math.floor(mapHeight / 2);
-                if (x === shipX && y === shipY) {
-                    char = '<span class="ship-position" id="ship-marker">◆</span>';
-                } else if (char !== ' ' && char !== '│' && char !== '┼' && char !== '─') {
-                    char = `<span class="star-point">${char}</span>`;
-                }
-                
-                mapHTML += char;
+                line += char;
             }
-            mapHTML += '\n';
+            html += line + '\n';
         }
         
-        mapHTML += '</pre>';
-        return mapHTML;
+        html += '</pre>';
+        return html;
     }
 
     /**
-     * Generate random star positions with better distribution
+     * Generate radar display HTML
      */
-    generateRandomStarPositions(width, height, baseSeed = 12345) {
-        const starPositions = new Map();
-        const starTypes = ['·', '∘', '*', '✦', '✧', '⋆', '✱', '✯', '⊙', '☆', '✶', '✴', '◦', '●', '○', '◉'];
-        const starDensity = 0.15; // 15% chance of star per position - even more stars
-        const nebulaTypes = ['░', '▒', '▓']; // Nebula characters for background
+    generateRadarHTML() {
+        const size = 20;
+        let html = '<pre class="radar-scope">';
         
-        // Use a more sophisticated random number generator for better distribution
-        const seedRandom = (seed) => {
-            let x = Math.sin(seed + baseSeed) * 10000;
-            return x - Math.floor(x);
-        };
-        
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                // Create multiple seeds for better randomness
-                const seed1 = x * 73 + y * 137 + 42;
-                const seed2 = x * 97 + y * 163 + 17;
-                const seed3 = x * 113 + y * 179 + 89;
+        // Generate radar concentric circles and sweeps
+        for (let y = 0; y < size; y++) {
+            let line = '';
+            for (let x = 0; x < size; x++) {
+                const dx = x - size/2;
+                const dy = y - size/2;
+                const distance = Math.sqrt(dx*dx + dy*dy);
                 
-                const random1 = seedRandom(seed1);
-                const random2 = seedRandom(seed2);
-                const random3 = seedRandom(seed3);
+                // Radar sweep line (current angle)
+                const sweepAngle = (Date.now() % 10000) / 10000 * Math.PI * 2;
+                const angleToPoint = Math.atan2(dy, dx);
+                const angleDiff = Math.abs(((sweepAngle - angleToPoint + Math.PI) % (Math.PI*2)) - Math.PI);
                 
-                // Combine multiple random values for better distribution
-                const combinedRandom = (random1 + random2 + random3) / 3;
-                
-                if (combinedRandom < starDensity) {
-                    // Choose star type based on another random value
-                    const typeIndex = Math.floor(random2 * starTypes.length);
-                    const starType = starTypes[typeIndex];
-                    
-                    // Add some clustering by checking nearby positions
-                    const clusterBonus = this.getClusterBonus(x, y, starPositions);
-                    if (combinedRandom < starDensity + clusterBonus) {
-                        starPositions.set(`${x},${y}`, starType);
-                    }
-                } else if (combinedRandom < starDensity + 0.03) {
-                    // Add some nebula effects (3% chance)
-                    const nebulaIndex = Math.floor(random3 * nebulaTypes.length);
-                    const nebulaType = nebulaTypes[nebulaIndex];
-                    starPositions.set(`${x},${y}`, `<span class="nebula-point">${nebulaType}</span>`);
+                let char = ' ';
+                if (distance < 1) {
+                    char = '+'; // Center
+                } else if (Math.abs(distance - 3) < 0.5 || Math.abs(distance - 6) < 0.5 || 
+                          Math.abs(distance - 9) < 0.5 || Math.abs(distance - 12) < 0.5) {
+                    char = '○'; // Range rings
+                } else if (angleDiff < 0.1 && distance > 1 && distance < size/2 - 1) {
+                    char = '▋'; // Sweep line
+                } else if (this.isBlipAt(x, y)) {
+                    char = '●'; // Motion tracker blip
                 }
+                
+                line += char;
             }
+            html += line + '\n';
         }
         
-        return starPositions;
+        html += '</pre>';
+        return html;
     }
 
     /**
-     * Calculate clustering bonus for more realistic star distribution
+     * Generate orbital path preview HTML
      */
-    getClusterBonus(x, y, existingStars) {
-        let nearbyStars = 0;
-        const checkRadius = 3;
-        
-        for (let dy = -checkRadius; dy <= checkRadius; dy++) {
-            for (let dx = -checkRadius; dx <= checkRadius; dx++) {
-                if (dx === 0 && dy === 0) continue;
-                const key = `${x + dx},${y + dy}`;
-                if (existingStars.has(key)) {
-                    nearbyStars++;
-                }
-            }
-        }
-        
-        // Small bonus for clustering, but not too much
-        return nearbyStars * 0.01;
+    generateOrbitalPreviewHTML() {
+        return `
+            <div class="orbit-ascii">
+                <pre class="orbit-display">  ╭───────╮
+ ╱         ╲
+│   ● ● ●   │  ← Orbit Path
+ ╲         ╱
+  ╰───────╯
+LV-426</pre>
+                <div class="orbit-info">
+                    <span>INCLINATION: 28.5°</span><br>
+                    <span>ECCENTRICITY: 0.02</span><br>
+                    <span>PERIOD: 14.2 hrs</span>
+                </div>
+            </div>
+        `;
     }
 
     /**
-     * Update navigation data from data simulator
+     * Get terrain height at coordinates (procedural generation)
+     */
+    getTerrainHeight(x, y) {
+        // Simple procedural terrain using sine waves
+        const frequency1 = 0.1;
+        const frequency2 = 0.3;
+        const amplitude1 = 15;
+        const amplitude2 = 8;
+        
+        const height1 = Math.sin(x * frequency1 + this.terrainSeed * 0.001) * 
+                       Math.cos(y * frequency1 + this.terrainSeed * 0.001) * amplitude1;
+        const height2 = Math.sin(x * frequency2 + this.terrainSeed * 0.002) * 
+                       Math.cos(y * frequency2 + this.terrainSeed * 0.002) * amplitude2;
+        
+        return height1 + height2;
+    }
+
+    /**
+     * Check if there's a motion tracker blip at radar coordinates
+     */
+    isBlipAt(radarX, radarY) {
+        // Convert radar coordinates to actual positions
+        const center = 10; // Assuming 20x20 grid, center at 10,10
+        const scale = this.motionTrackerRange / 10; // pixels to world units
+        
+        const worldX = (radarX - center) * scale;
+        const worldY = (radarY - center) * scale;
+        
+        // Check against active blips
+        return this.motionTrackerBlips.some(blip => {
+            const dx = blip.x - worldX;
+            const dy = blip.y - worldY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            return distance < scale * 0.8; // Blip size
+        });
+    }
+
+    /**
+     * Update all navigation displays
+     */
+    updateAllDisplays() {
+        this.updatePositionDisplay();
+        this.updateNavigationInfo();
+        this.updateTerrainDisplay();
+        this.updateRadarDisplay();
+        this.updateStatusBar();
+        this.updateOrbitalDisplay();
+    }
+
+    /**
+     * Update navigation data from simulator
      */
     updateNavigationData() {
         if (!this.dataSimulator) {
             console.warn('Data simulator not available');
             return;
         }
-
+        
         const systemData = this.dataSimulator.generateSystemStatus();
         const navData = systemData.navigation;
         
         this.updatePositionDisplay(navData);
         this.updateNavigationInfo(navData);
-        this.updateShipPosition(navData);
-        this.updateStatusBar();
+        this.updateStatusBar(navData);
     }
 
     /**
      * Update position coordinate display
      */
     updatePositionDisplay(navData) {
+        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        
         const posX = document.getElementById('pos-x');
         const posY = document.getElementById('pos-y');
         const posZ = document.getElementById('pos-z');
         
-        if (posX) posX.textContent = navData.coordinates.x.toFixed(1);
-        if (posY) posY.textContent = navData.coordinates.y.toFixed(1);
-        if (posZ) posZ.textContent = navData.coordinates.z.toFixed(1);
+        if (posX) posX.textContent = navData.coordinates.x.toFixed(0);
+        if (posY) posY.textContent = navData.coordinates.y.toFixed(0);
+        if (posZ) posZ.textContent = navData.coordinates.z.toFixed(0);
     }
 
     /**
      * Update navigation information display
      */
     updateNavigationInfo(navData) {
+        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        
         const heading = document.getElementById('nav-heading');
         const velocity = document.getElementById('nav-velocity');
         const destination = document.getElementById('nav-destination');
         const eta = document.getElementById('nav-eta');
+        const altitude = document.getElementById('nav-altitude');
+        const orbit = document.getElementById('nav-orbit');
         
-        if (heading) heading.textContent = `${navData.heading.toFixed(1)}°`;
+        if (heading) heading.textContent = `${navData.heading.toFixed(0)}°`;
         if (velocity) velocity.textContent = `${navData.velocity.toFixed(3)} C`;
         if (destination) destination.textContent = navData.destination;
         
         if (eta && navData.eta) {
-            const hoursToETA = Math.round((navData.eta.getTime() - Date.now()) / (1000 * 60 * 60));
-            eta.textContent = `${hoursToETA} HOURS`;
+            const hoursToETA = Math.max(0, Math.round((navData.eta.getTime() - Date.now()) / (1000 * 60)));
+            const hours = String(hoursToETA).padStart(2, '0');
+            const mins = String(hoursToETA % 60).padStart(2, '0');
+            eta.textContent = `${hours}:${mins}`;
+        }
+        
+        if (altitude) {
+            // Calculate approximate altitude from Z coordinate
+            const alt = Math.max(0, navData.coordinates.z + 200); // Offset for display
+            altitude.textContent = `${alt.toFixed(0)} km`;
+        }
+        
+        if (orbit) {
+            // Determine orbit status based on velocity and altitude
+            const orbitStatus = navData.velocity > 0.1 ? 'DECAY' : 'STABLE';
+            orbit.textContent = orbitStatus;
+            orbit.className = `status-value ${orbitStatus === 'STABLE' ? 'status-ok' : 'status-warning'}`;
         }
     }
 
     /**
-     * Update ship position on star map
+     * Update terrain display with current position marker
      */
-    updateShipPosition(navData) {
-        const shipMarker = document.getElementById('ship-marker');
-        if (!shipMarker) return;
+    updateTerrainDisplay() {
+        if (!this.dataSimulator) return;
         
-        // Calculate map position based on coordinates (dynamic map size)
-        const mapWidth = this.calculateMapWidth();
-        const mapHeight = this.calculateMapHeight();
-        const mapCenterX = Math.floor(mapWidth / 2);
-        const mapCenterY = Math.floor(mapHeight / 2);
-        const mapX = Math.round(mapCenterX + (navData.coordinates.x / 400));
-        const mapY = Math.round(mapCenterY + (navData.coordinates.y / 400));
+        const navData = this.dataSimulator.generateSystemStatus().navigation;
+        const terrainX = document.getElementById('terrain-x');
+        const terrainY = document.getElementById('terrain-y');
+        const terrainZ = document.getElementById('terrain-z');
         
-        // Keep ship within map bounds
-        const clampedX = Math.max(0, Math.min(mapWidth - 1, mapX));
-        const clampedY = Math.max(0, Math.min(mapHeight - 1, mapY));
-        
-        // Update ship marker position attributes
-        shipMarker.dataset.x = clampedX.toString();
-        shipMarker.dataset.y = clampedY.toString();
-        
-        // Update tooltip with more detailed information
-        shipMarker.title = `NOSTROMO POSITION\nCoords: ${navData.coordinates.x.toFixed(1)}, ${navData.coordinates.y.toFixed(1)}, ${navData.coordinates.z.toFixed(1)}\nHeading: ${navData.heading.toFixed(1)}°\nVelocity: ${navData.velocity.toFixed(3)}c`;
+        if (terrainX) terrainX.textContent = Math.round(navData.coordinates.x);
+        if (terrainY) terrainY.textContent = Math.round(navData.coordinates.y);
+        if (terrainZ) terrainZ.textContent = Math.round(navData.coordinates.z);
     }
 
     /**
-     * Update navigation status bar
+     * Update motion tracker with new blips and pings
      */
-    updateStatusBar() {
+    updateMotionTracker() {
+        const now = Date.now();
+        
+        // Generate occasional blips
+        if (Math.random() < 0.3) { // 30% chance per update
+            // Generate random blip within range
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 0.2 + Math.random() * 0.8; // 20%-100% of range
+            const worldX = Math.cos(angle) * distance * this.motionTrackerRange;
+            const worldY = Math.sin(angle) * distance * this.motionTrackerRange;
+            
+            this.motionTrackerBlips.push({
+                x: worldX,
+                y: worldY,
+                time: now,
+                lifetime: 5000 + Math.random() * 3000 // 5-8 seconds
+            });
+        }
+        
+        // Remove expired blips
+        this.motionTrackerBlips = this.motionTrackerBlips.filter(blip => 
+            now - blip.time < blip.lifetime
+        );
+        
+        // Check for ping
+        if (now - this.lastPingTime > this.pingInterval) {
+            this.lastPingTime = now;
+            this.pingInterval = 8000 + Math.random() * 4000; // New random interval
+            
+            // Play ping sound via audio manager
+            if (window.audioManager) {
+                window.audioManager.playSound('navigation', 0.7);
+            }
+            
+            // Add a strong central blip for the ping
+            this.motionTrackerBlips.push({
+                x: 0,
+                y: 0,
+                time: now,
+                lifetime: 1000 // Short-lived ping indicator
+            });
+        }
+    }
+
+    /**
+     * Update orbital path display
+     */
+    updateOrbitalDisplay() {
+        // Slowly progress along orbital path for animation
+        this.orbitProgress = (this.orbitProgress + 0.5) % 360;
+    }
+
+    /**
+     * Update status bar information
+     */
+    updateStatusBar(navData) {
+        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        
         const systemStatus = document.getElementById('nav-system-status');
-        const lastUpdate = document.getElementById('nav-last-update');
-        const drift = document.getElementById('nav-drift');
+        const lastPing = document.getElementById('nav-last-ping');
+        const contacts = document.getElementById('nav-contacts');
         
         if (systemStatus) {
             systemStatus.textContent = 'OPERATIONAL';
             systemStatus.className = 'status-value status-ok';
         }
         
-        if (lastUpdate) {
-            const now = new Date();
-            lastUpdate.textContent = now.toTimeString().substring(0, 8);
+        if (lastPing) {
+            const time = new Date(this.lastPingTime);
+            lastPing.textContent = time.toTimeString().substring(0, 8);
         }
         
-        if (drift) {
-            // Calculate drift based on velocity variations (simplified)
-            const driftLevel = Math.random() < 0.1 ? 'MODERATE' : 'MINIMAL';
-            drift.textContent = driftLevel;
-            drift.className = `status-value ${driftLevel === 'MINIMAL' ? 'status-ok' : 'status-warning'}`;
+        if (contacts) {
+            contacts.textContent = this.motionTrackerBlips.length.toString();
+            contacts.className = `status-value ${this.motionTrackerBlips.length > 0 ? 'status-warning' : 'status-ok'}`;
         }
     }
 
     /**
-     * Set up click handlers for star map interactions
+     * Regenerate all procedural displays
      */
-    setupStarMapClickHandlers() {
-        // Click handlers removed - no coordinate details functionality
+    regenerateDisplays() {
+        this.regenerateTerrain();
+        this.regenerateRadar();
     }
 
-
-
+    /**
+     * Regenerate terrain wireframe
+     */
+    regenerateTerrain() {
+        const terrainGrid = document.getElementById('terrain-grid');
+        if (terrainGrid) {
+            terrainGrid.innerHTML = this.generateTerrainHTML();
+        }
+    }
 
     /**
-     * Calculate route to specified coordinates
+     * Regenerate radar display
      */
-    calculateRoute(targetX, targetY) {
-        if (!this.dataSimulator) return;
+    regenerateRadar() {
+        const radarDisplay = document.getElementById('radar-display');
+        if (radarDisplay) {
+            radarDisplay.innerHTML = this.generateRadarHTML();
+        }
+    }
+
+    /**
+     * Generate orbital path for animation
+     */
+    generateOrbitalPath() {
+        // Generate elliptical orbit points
+        this.orbitPoints = [];
+        const centerX = 0;
+        const centerY = 0;
+        const radiusX = 80; // X radius
+        const radiusY = 40; // Y radius (elliptical)
+        const points = 32;
         
-        const systemData = this.dataSimulator.generateSystemStatus();
-        const currentPos = systemData.navigation.coordinates;
+        for (let i = 0; i < points; i++) {
+            const angle = (i / points) * Math.PI * 2;
+            const x = centerX + Math.cos(angle) * radiusX;
+            const y = centerY + Math.sin(angle) * radiusY;
+            this.orbitPoints.push({x, y});
+        }
+    }
+
+    /**
+     * Setup event listeners for interactions
+     */
+    setupEventListeners() {
+        // Click handlers for terrain inspection
+        const terrainGrid = document.getElementById('terrain-grid');
+        if (terrainGrid) {
+            terrainGrid.addEventListener('click', (e) => {
+                // In a real implementation, this would show detailed terrain data
+                if (window.audioManager) {
+                    window.audioManager.playSound('beep', 0.3);
+                }
+            });
+        }
         
-        // Calculate distance and bearing
-        const deltaX = targetX - currentPos.x;
-        const deltaY = targetY - currentPos.y;
-        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        const bearing = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-        
-        // Estimate travel time (simplified)
-        const travelTime = distance / (systemData.navigation.velocity * 100); // hours
-        
-        // Route calculation completed (no UI display)
-        
-        console.log(`Route calculated to ${targetX}, ${targetY}: ${distance.toFixed(1)} units, ${bearing.toFixed(1)}°`);
+        // Radar display click
+        const radarDisplay = document.getElementById('radar-display');
+        if (radarDisplay) {
+            radarDisplay.addEventListener('click', (e) => {
+                // Ping the motion tracker manually
+                if (window.audioManager) {
+                    window.audioManager.playSound('navigation', 0.5);
+                }
+                this.lastPingTime = Date.now() - this.pingInterval - 1000; // Trigger immediate ping
+            });
+        }
     }
 
     /**
@@ -531,53 +646,6 @@ class NostromoNavigation {
     getCurrentNavigationData() {
         if (!this.dataSimulator) return null;
         return this.dataSimulator.generateSystemStatus().navigation;
-    }
-
-    /**
-     * Regenerate star map with new random seed
-     */
-    regenerateStarMap(seed = null) {
-        if (seed !== null) {
-            this.starMapSeed = seed;
-        } else {
-            this.starMapSeed = Date.now();
-        }
-        
-        const starMapElement = document.getElementById('star-map');
-        if (starMapElement) {
-            starMapElement.innerHTML = this.generateStarMap();
-            this.setupStarMapClickHandlers();
-        }
-    }
-
-    /**
-     * Validate navigation calculations
-     */
-    validateNavigationCalculations(navData) {
-        const errors = [];
-        
-        // Validate coordinates
-        if (!navData.coordinates || typeof navData.coordinates.x !== 'number') {
-            errors.push('Invalid X coordinate');
-        }
-        if (!navData.coordinates || typeof navData.coordinates.y !== 'number') {
-            errors.push('Invalid Y coordinate');
-        }
-        if (!navData.coordinates || typeof navData.coordinates.z !== 'number') {
-            errors.push('Invalid Z coordinate');
-        }
-        
-        // Validate heading (0-360 degrees)
-        if (typeof navData.heading !== 'number' || navData.heading < 0 || navData.heading >= 360) {
-            errors.push('Invalid heading value');
-        }
-        
-        // Validate velocity (should be positive)
-        if (typeof navData.velocity !== 'number' || navData.velocity < 0) {
-            errors.push('Invalid velocity value');
-        }
-        
-        return errors;
     }
 }
 

@@ -1,5 +1,6 @@
 // Nostromo Monitoring System - Audio Manager
 // Manages ambient sounds, interface effects, and audio controls
+// Enhanced with motion tracker ping and improved audio fidelity
 
 class NostromoAudioManager {
     constructor() {
@@ -110,6 +111,9 @@ class NostromoAudioManager {
             'warning': this.generateWarningSound(),
             'critical': this.generateCriticalSound(),
 
+            // Motion Tracker sound (NEW)
+            'motion-ping': this.generateMotionPingSound(),
+
             // Ambient sounds
             'ship-hum': this.generateShipHumSound(),
             'computer-processing': this.generateComputerProcessingSound(),
@@ -140,11 +144,11 @@ class NostromoAudioManager {
                 // Burst of noise + low sine thump
 
                 // 1. The "Click" (High frequency burst)
-                const bufferSize = context.sampleRate * 0.05; // 50ms
+                const bufferSize = context.sampleRate * 0.04; // 40ms for sharper click
                 const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
                 const data = buffer.getChannelData(0);
                 for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
+                    data[i] = (Math.random() * 2 - 1) * 0.8; // Slightly less noisy
                 }
 
                 const noise = context.createBufferSource();
@@ -153,11 +157,11 @@ class NostromoAudioManager {
                 const noiseFilter = context.createBiquadFilter();
 
                 noiseFilter.type = 'bandpass';
-                noiseFilter.frequency.value = 2500;
-                noiseFilter.Q.value = 1;
+                noiseFilter.frequency.value = 3000; // Higher frequency for sharper click
+                noiseFilter.Q.value = 1.2;
 
-                noiseGain.gain.setValueAtTime(0.4, context.currentTime);
-                noiseGain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.03);
+                noiseGain.gain.setValueAtTime(0.5, context.currentTime);
+                noiseGain.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.025);
 
                 noise.connect(noiseFilter);
                 noiseFilter.connect(noiseGain);
@@ -167,21 +171,21 @@ class NostromoAudioManager {
 
                 // 2. The "Thump" (Mechanical mechanism)
                 oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(150, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(40, context.currentTime + 0.05);
+                oscillator.frequency.setValueAtTime(120, context.currentTime); // Lower fundamental
+                oscillator.frequency.exponentialRampToValueAtTime(35, context.currentTime + 0.04);
 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(400, context.currentTime);
+                filter.frequency.setValueAtTime(350, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.3, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(0.35, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.04);
 
                 oscillator.connect(filter);
                 filter.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.05);
+                oscillator.stop(context.currentTime + 0.04);
 
                 return { oscillator, gainNode, filter };
             }
@@ -196,16 +200,16 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(1000, context.currentTime);
+                oscillator.frequency.setValueAtTime(900, context.currentTime); // Slightly lower pitch
 
-                gainNode.gain.setValueAtTime(0.2, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.25, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.18);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.2);
+                oscillator.stop(context.currentTime + 0.18);
 
                 return { oscillator, gainNode };
             }
@@ -221,15 +225,15 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator1.type = 'sawtooth';
-                oscillator1.frequency.setValueAtTime(440, context.currentTime);
-                oscillator1.frequency.setValueAtTime(880, context.currentTime + 0.1);
-                oscillator1.frequency.setValueAtTime(440, context.currentTime + 0.2);
+                oscillator1.frequency.setValueAtTime(400, context.currentTime);
+                oscillator1.frequency.setValueAtTime(800, context.currentTime + 0.08);
+                oscillator1.frequency.setValueAtTime(400, context.currentTime + 0.16);
 
                 oscillator2.type = 'sine';
-                oscillator2.frequency.setValueAtTime(220, context.currentTime);
+                oscillator2.frequency.setValueAtTime(200, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.3, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
+                gainNode.gain.setValueAtTime(0.35, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.4);
 
                 oscillator1.connect(gainNode);
                 oscillator2.connect(gainNode);
@@ -237,8 +241,8 @@ class NostromoAudioManager {
 
                 oscillator1.start(context.currentTime);
                 oscillator2.start(context.currentTime);
-                oscillator1.stop(context.currentTime + 0.5);
-                oscillator2.stop(context.currentTime + 0.5);
+                oscillator1.stop(context.currentTime + 0.4);
+                oscillator2.stop(context.currentTime + 0.4);
 
                 return { oscillator1, oscillator2, gainNode };
             }
@@ -253,17 +257,17 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sawtooth';
-                oscillator.frequency.setValueAtTime(200, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(100, context.currentTime + 0.3);
+                oscillator.frequency.setValueAtTime(180, context.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(90, context.currentTime + 0.25);
 
-                gainNode.gain.setValueAtTime(0.4, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.45, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.25);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.3);
+                oscillator.stop(context.currentTime + 0.25);
 
                 return { oscillator, gainNode };
             }
@@ -278,17 +282,17 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(600, context.currentTime);
-                oscillator.frequency.setValueAtTime(800, context.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(500, context.currentTime);
+                oscillator.frequency.setValueAtTime(700, context.currentTime + 0.08);
 
-                gainNode.gain.setValueAtTime(0.2, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.25, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.18);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.2);
+                oscillator.stop(context.currentTime + 0.18);
 
                 return { oscillator, gainNode };
             }
@@ -303,20 +307,61 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'triangle';
-                oscillator.frequency.setValueAtTime(400, context.currentTime);
-                oscillator.frequency.setValueAtTime(600, context.currentTime + 0.05);
-                oscillator.frequency.setValueAtTime(500, context.currentTime + 0.1);
+                oscillator.frequency.setValueAtTime(350, context.currentTime);
+                oscillator.frequency.setValueAtTime(500, context.currentTime + 0.04);
+                oscillator.frequency.setValueAtTime(400, context.currentTime + 0.08);
 
-                gainNode.gain.setValueAtTime(0.15, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.15);
+                gainNode.gain.setValueAtTime(0.18, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.12);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.15);
+                oscillator.stop(context.currentTime + 0.12);
 
                 return { oscillator, gainNode };
+            }
+        };
+    }
+
+    // NEW: Motion Tracker Ping Sound
+    generateMotionPingSound() {
+        return {
+            type: 'generated',
+            generator: (context, destination) => {
+                // Create a distinctive ping: rising tone with decay
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                const filter = context.createBiquadFilter();
+
+                // Rising chirp sound
+                oscillator.type = 'triangle';
+                
+                // Frequency sweep from 400Hz to 1200Hz over 150ms
+                const startTime = context.currentTime;
+                oscillator.frequency.setValueAtTime(400, startTime);
+                oscillator.frequency.exponentialRampToValueAtTime(1200, startTime + 0.15);
+
+                // Filter to shape the sound
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(2000, startTime);
+                filter.Q.value = 2;
+
+                // Envelope: quick attack, medium decay
+                gainNode.gain.setValueAtTime(0.0, startTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, startTime + 0.02); // Attack
+                gainNode.gain.exponentialRampToValueAtTime(0.05, startTime + 0.12); // Decay
+                gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.25); // Tail off
+
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(destination);
+
+                oscillator.start(context.currentTime);
+                oscillator.stop(context.currentTime + 0.25);
+
+                return { oscillator, gainNode, filter };
             }
         };
     }
@@ -329,18 +374,18 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(200, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(800, context.currentTime + 1.0);
+                oscillator.frequency.setValueAtTime(150, context.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(600, context.currentTime + 0.8);
 
-                gainNode.gain.setValueAtTime(0.1, context.currentTime);
-                gainNode.gain.setValueAtTime(0.3, context.currentTime + 0.5);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 1.0);
+                gainNode.gain.setValueAtTime(0.12, context.currentTime);
+                gainNode.gain.setValueAtTime(0.35, context.currentTime + 0.4);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.9);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 1.0);
+                oscillator.stop(context.currentTime + 0.9);
 
                 return { oscillator, gainNode };
             }
@@ -355,17 +400,17 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, context.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(200, context.currentTime + 1.0);
+                oscillator.frequency.setValueAtTime(600, context.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(150, context.currentTime + 0.8);
 
-                gainNode.gain.setValueAtTime(0.3, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 1.0);
+                gainNode.gain.setValueAtTime(0.35, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.9);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 1.0);
+                oscillator.stop(context.currentTime + 0.9);
 
                 return { oscillator, gainNode };
             }
@@ -380,17 +425,17 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'square';
-                oscillator.frequency.setValueAtTime(1200, context.currentTime);
-                oscillator.frequency.setValueAtTime(1000, context.currentTime + 0.02);
+                oscillator.frequency.setValueAtTime(1000, context.currentTime);
+                oscillator.frequency.setValueAtTime(800, context.currentTime + 0.04);
 
-                gainNode.gain.setValueAtTime(0.05, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(0.06, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.04);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.05);
+                oscillator.stop(context.currentTime + 0.04);
 
                 return { oscillator, gainNode };
             }
@@ -405,18 +450,18 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator.type = 'sawtooth';
-                oscillator.frequency.setValueAtTime(660, context.currentTime);
-                oscillator.frequency.setValueAtTime(440, context.currentTime + 0.2);
-                oscillator.frequency.setValueAtTime(660, context.currentTime + 0.4);
+                oscillator.frequency.setValueAtTime(600, context.currentTime);
+                oscillator.frequency.setValueAtTime(400, context.currentTime + 0.15);
+                oscillator.frequency.setValueAtTime(600, context.currentTime + 0.3);
 
-                gainNode.gain.setValueAtTime(0.25, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.6);
+                gainNode.gain.setValueAtTime(0.3, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5);
 
                 oscillator.connect(gainNode);
                 gainNode.connect(destination);
 
                 oscillator.start(context.currentTime);
-                oscillator.stop(context.currentTime + 0.6);
+                oscillator.stop(context.currentTime + 0.5);
 
                 return { oscillator, gainNode };
             }
@@ -432,13 +477,13 @@ class NostromoAudioManager {
                 const gainNode = context.createGain();
 
                 oscillator1.type = 'sawtooth';
-                oscillator1.frequency.setValueAtTime(330, context.currentTime);
+                oscillator1.frequency.setValueAtTime(300, context.currentTime);
 
                 oscillator2.type = 'square';
-                oscillator2.frequency.setValueAtTime(165, context.currentTime);
+                oscillator2.frequency.setValueAtTime(150, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.4, context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.8);
+                gainNode.gain.setValueAtTime(0.45, context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.7);
 
                 oscillator1.connect(gainNode);
                 oscillator2.connect(gainNode);
@@ -446,8 +491,8 @@ class NostromoAudioManager {
 
                 oscillator1.start(context.currentTime);
                 oscillator2.start(context.currentTime);
-                oscillator1.stop(context.currentTime + 0.8);
-                oscillator2.stop(context.currentTime + 0.8);
+                oscillator1.stop(context.currentTime + 0.7);
+                oscillator2.stop(context.currentTime + 0.7);
 
                 return { oscillator1, oscillator2, gainNode };
             }
@@ -465,19 +510,19 @@ class NostromoAudioManager {
                 const filter = context.createBiquadFilter();
 
                 oscillator1.type = 'sine';
-                oscillator1.frequency.setValueAtTime(60, context.currentTime);
+                oscillator1.frequency.setValueAtTime(55, context.currentTime);
 
                 oscillator2.type = 'sine';
-                oscillator2.frequency.setValueAtTime(120, context.currentTime);
+                oscillator2.frequency.setValueAtTime(110, context.currentTime);
 
                 oscillator3.type = 'sine';
-                oscillator3.frequency.setValueAtTime(180, context.currentTime);
+                oscillator3.frequency.setValueAtTime(165, context.currentTime);
 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(200, context.currentTime);
-                filter.Q.setValueAtTime(1, context.currentTime);
+                filter.frequency.setValueAtTime(180, context.currentTime);
+                filter.Q.setValueAtTime(1.2, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.1, context.currentTime);
+                gainNode.gain.setValueAtTime(0.12, context.currentTime);
 
                 oscillator1.connect(filter);
                 oscillator2.connect(filter);
@@ -507,7 +552,7 @@ class NostromoAudioManager {
         return {
             type: 'ambient',
             generator: (context, destination) => {
-                const noiseBuffer = this.createNoiseBuffer(context, 2);
+                const noiseBuffer = this.createNoiseBuffer(context, 1.5);
                 const noiseSource = context.createBufferSource();
                 const filter = context.createBiquadFilter();
                 const gainNode = context.createGain();
@@ -516,10 +561,10 @@ class NostromoAudioManager {
                 noiseSource.loop = true;
 
                 filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(2000, context.currentTime);
-                filter.Q.setValueAtTime(10, context.currentTime);
+                filter.frequency.setValueAtTime(1800, context.currentTime);
+                filter.Q.setValueAtTime(2.5, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.02, context.currentTime);
+                gainNode.gain.setValueAtTime(0.025, context.currentTime);
 
                 noiseSource.connect(filter);
                 filter.connect(gainNode);
@@ -541,7 +586,7 @@ class NostromoAudioManager {
         return {
             type: 'ambient',
             generator: (context, destination) => {
-                const noiseBuffer = this.createNoiseBuffer(context, 4);
+                const noiseBuffer = this.createNoiseBuffer(context, 3);
                 const noiseSource = context.createBufferSource();
                 const filter = context.createBiquadFilter();
                 const gainNode = context.createGain();
@@ -550,10 +595,10 @@ class NostromoAudioManager {
                 noiseSource.loop = true;
 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(800, context.currentTime);
-                filter.Q.setValueAtTime(0.5, context.currentTime);
+                filter.frequency.setValueAtTime(600, context.currentTime);
+                filter.Q.setValueAtTime(0.6, context.currentTime);
 
-                gainNode.gain.setValueAtTime(0.05, context.currentTime);
+                gainNode.gain.setValueAtTime(0.06, context.currentTime);
 
                 noiseSource.connect(filter);
                 filter.connect(gainNode);
@@ -576,16 +621,21 @@ class NostromoAudioManager {
             type: 'ambient',
             generator: (context, destination) => {
                 // Simulate random data access sounds (chattering)
-                const bufferSize = context.sampleRate * 2.0; // 2 seconds loop
+                const bufferSize = context.sampleRate * 1.8; // 1.8 seconds loop
                 const buffer = context.createBuffer(1, bufferSize, context.sampleRate);
                 const data = buffer.getChannelData(0);
 
-                // Create sparse random clicks
+                // Create sparse random clicks with varied intensities
                 for (let i = 0; i < bufferSize; i++) {
-                    if (Math.random() < 0.005) { // 0.5% chance of a click per sample
-                        data[i] = Math.random() * 0.5;
+                    const rand = Math.random();
+                    if (rand < 0.003) { // 0.3% chance of a strong click
+                        data[i] = (Math.random() * 0.6) + 0.4; // 0.4-1.0 range
+                    } else if (rand < 0.01) { // 0.7% chance of medium click
+                        data[i] = (Math.random() * 0.4) + 0.2; // 0.2-0.6 range
+                    } else if (rand < 0.025) { // 1.5% chance of weak click
+                        data[i] = (Math.random() * 0.3); // 0-0.3 range
                     } else {
-                        data[i] = 0;
+                        data[i] = 0; // Silence
                     }
                 }
 
@@ -595,18 +645,18 @@ class NostromoAudioManager {
 
                 const filter = context.createBiquadFilter();
                 filter.type = 'highpass';
-                filter.frequency.value = 2000;
+                filter.frequency.value = 1800;
 
                 const gainNode = context.createGain();
-                gainNode.gain.value = 0.15;
+                gainNode.gain.value = 0.12;
 
-                // Modulate gain to make it sound intermittent
+                // Modulate gain to make it sound intermittent with variation
                 const lfo = context.createOscillator();
-                lfo.type = 'square';
-                lfo.frequency.value = 2; // 2Hz on/off pattern
+                lfo.type = 'triangle';
+                lfo.frequency.value = 1.8; // ~1.8Hz on/off pattern
 
                 const lfoGain = context.createGain();
-                lfoGain.gain.value = 0.5;
+                lfoGain.gain.value = 0.4;
 
                 lfo.connect(lfoGain);
                 lfoGain.connect(gainNode.gain);
@@ -637,7 +687,7 @@ class NostromoAudioManager {
         const data = buffer.getChannelData(0);
 
         for (let i = 0; i < bufferSize; i++) {
-            data[i] = Math.random() * 2 - 1;
+            data[i] = (Math.random() * 2 - 1) * 0.8; // Slightly less noisy
         }
 
         return buffer;
@@ -718,17 +768,17 @@ class NostromoAudioManager {
         }
 
         const playRandomSound = () => {
-            if (Math.random() < 0.3) { // 30% chance
-                this.playSound('data-update', 0.3);
+            if (Math.random() < 0.25) { // 25% chance
+                this.playSound('data-update', 0.4);
             }
 
             // Schedule next random sound
-            const nextDelay = 3000 + Math.random() * 7000; // 3-10 seconds
+            const nextDelay = 2000 + Math.random() * 6000; // 2-8 seconds
             setTimeout(playRandomSound, nextDelay);
         };
 
         // Start the random sound cycle
-        setTimeout(playRandomSound, 5000);
+        setTimeout(playRandomSound, 4000);
     }
 
     // Audio control methods
@@ -834,6 +884,11 @@ class NostromoAudioManager {
 
     playCritical() {
         this.playSound('critical');
+    }
+
+    // NEW: Motion Tracker Ping
+    playMotionTrackerPing() {
+        this.playSound('motion-ping', 0.8);
     }
 
     // Boot sequence specific methods

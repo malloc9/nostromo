@@ -1,4 +1,5 @@
 /* Nostromo Monitoring System - Advanced CRT Effects */
+/* Enhanced with phosphor persistence, refined scanlines, and improved realism */
 
 /* Root Variables for CRT Effects */
 :root {
@@ -220,7 +221,7 @@ h2,
     0 0 20px var(--terminal-green);
 }
 
-/* Scanline Rolling Bar Effect */
+/* Refined Scanline Rolling Bar Effect */
 .scanline-bar {
   width: 100%;
   height: 10px;
@@ -242,7 +243,7 @@ h2,
   }
 }
 
-/* Cursor Animation */
+/* Cursor Animation - Enhanced */
 .cursor {
   display: inline-block;
   width: 10px;
@@ -285,7 +286,7 @@ h2,
   transform: scale(0.98);
 }
 
-/* CRT Turn On Animation */
+/* CRT Turn On Animation - More realistic */
 @keyframes turn-on {
   0% {
     transform: scale(1, 0.002);
@@ -313,7 +314,7 @@ h2,
   animation: turn-on 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
-/* Chromatic Aberration on Text (Subtle) */
+/* Enhanced Chromatic Aberration on Text */
 .glitch-text {
   position: relative;
 }
@@ -329,12 +330,14 @@ h2,
   opacity: 0.8;
 }
 
+/* Red channel offset */
 .glitch-text::before {
   color: #ff0000;
   z-index: -1;
   transform: translate(-1px, 0);
 }
 
+/* Blue channel offset */
 .glitch-text::after {
   color: #0000ff;
   z-index: -2;
