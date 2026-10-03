@@ -34,7 +34,7 @@ class NostromoNavigation {
 
     init() {
         console.log('Nostromo Navigation system initialized');
-        this.generateTerrain();
+        this.regenerateTerrain();
         this.generateOrbitalPath();
     }
 
