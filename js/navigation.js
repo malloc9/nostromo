@@ -81,6 +81,8 @@ class NostromoNavigation {
                 this.updateNavigationData();
                 this.updateMotionTracker();
                 this.updateOrbitalDisplay();
+                this.updateWaypointDisplay();
+                this.regenerateRadar();
             }
         }, this.refreshRate);
     }
@@ -204,6 +206,7 @@ class NostromoNavigation {
                             <div class="terrain-grid" id="terrain-grid">
                                 ${this.generateTerrainHTML()}
                             </div>
+                            <div class="terrain-scanlines"></div>
                             <div class="terrain-coords">
                                 <span>X: <span id="terrain-x">----</span></span> |
                                 <span>Y: <span id="terrain-y">----</span></span> |
@@ -221,9 +224,23 @@ class NostromoNavigation {
                             </div>
                             <div class="radar-controls">
                                 <span class="range-label">RANGE: <span id="radar-range">${this.motionTrackerRange}</span>m</span>
-                                <span class="status-indicator" id="radar-status">SEARCHING</span>
+                                <span class="status-indicator searching" id="radar-status">SEARCHING</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Waypoint Navigation -->
+                <div class="nav-waypoint-section">
+                    <div class="section-header">WAYPOINTS</div>
+                    <div class="wp-list" id="wp-list">
+                        ${this.waypoints.map((wp, i) => `
+                            <div class="wp-item ${i === this.currentWaypoint ? 'wp-active' : ''}" id="wp-item-${i}">
+                                <span class="wp-name">${wp.name}</span>
+                                <span class="wp-distance" id="wp-dist-${i}">DIST: ----</span>
+                                <span class="wp-status ${i === this.currentWaypoint ? 'status-ok' : ''}" id="wp-status-${i}">${i === this.currentWaypoint ? 'TRACKING' : 'QUEUED'}</span>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
 
@@ -235,8 +252,8 @@ class NostromoNavigation {
                             <div class="data-item">
                                 <span class="data-label">POSITION:</span>
                                 <div class="coord-triplet">
-                                    <span class="coord-axis">X</span>: <span id="pos-x">----</span><br>
-                                    <span class="coord-axis">Y</span>: <span id="pos-y">----</span><br>
+                                    <span class="coord-axis">X</span>: <span id="pos-x">----</span>
+                                    <span class="coord-axis">Y</span>: <span id="pos-y">----</span>
                                     <span class="coord-axis">Z</span>: <span id="pos-z">----</span>
                                 </div>
                             </div>
@@ -249,11 +266,11 @@ class NostromoNavigation {
                                 <span id="nav-eta">--:--</span>
                             </div>
                             <div class="data-item">
-                                <span class="data-label">COURSE:</span>
+                                <span class="data-label">COURSE DEV:</span>
                                 <span id="nav-course">---°</span>
                             </div>
                             <div class="data-item">
-                                <span class="data-label">WPT:</span>
+                                <span class="data-label">TARGET WPT:</span>
                                 <span id="nav-waypoint">-----</span>
                             </div>
                         </div>
@@ -268,11 +285,11 @@ class NostromoNavigation {
                     </div>
                 </div>
 
-                <!-- Status Bar -->
+                <!-- Expanded Status Bar -->
                 <div class="nav-status-bar">
                     <div class="status-item">
-                        <span class="status-label">NAV STATUS:</span>
-                        <span class="status-value" id="nav-system-status">OPERATIONAL</span>
+                        <span class="status-label">NAV SYS:</span>
+                        <span class="status-value status-ok" id="nav-system-status">OPERATIONAL</span>
                     </div>
                     <div class="status-item">
                         <span class="status-label">LAST PING:</span>
@@ -283,12 +300,20 @@ class NostromoNavigation {
                         <span class="status-value" id="nav-contacts">0</span>
                     </div>
                     <div class="status-item">
+                        <span class="status-label">SIGNAL:</span>
+                        <span class="status-value" id="nav-signal">---</span>
+                    </div>
+                    <div class="status-item">
                         <span class="status-label">SWEET:</span>
                         <span class="status-value" id="nav-sweet">0</span>
                     </div>
                     <div class="status-item">
                         <span class="status-label">ELAPSED:</span>
                         <span class="status-value" id="nav-elapsed">00:00:00</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">THREAT:</span>
+                        <span class="status-value status-ok" id="nav-threat">NONE</span>
                     </div>
                 </div>
             </div>
@@ -299,73 +324,59 @@ class NostromoNavigation {
      * Generate wireframe terrain HTML with 3D enhancements
      */
     generateTerrainHTML() {
-        const size = 20; // Grid size for display
+        const size = 24; // Grid size for display
         let html = '<pre class="terrain-wireframe">';
         
-        // Generate contour lines with 3D shading
+        // Pre-compute heights for slope calculation
+        const heights = [];
+        for (let y = 0; y < size; y++) {
+            heights[y] = [];
+            for (let x = 0; x < size; x++) {
+                heights[y][x] = this.getTerrainHeight(x * 4 - size * 2, y * 4 - size * 2);
+            }
+        }
+        
         for (let y = 0; y < size; y++) {
             let line = '';
             for (let x = 0; x < size; x++) {
-                // Sample terrain height
-                const height = this.getTerrainHeight(x * 5 - size*2.5, y * 5 - size*2.5);
+                const h = heights[y][x];
                 
-                // Calculate shading based on height and simulated lighting
-                const shadedHeight = height + Math.sin((x * 0.3) + (y * 0.2)) * 3;
+                // Slope-based shading (hillshading): compare with neighbor to the upper-left
+                const hUp = y > 0 ? heights[y - 1][x] : h;
+                const hLeft = x > 0 ? heights[y][x - 1] : h;
+                const slope = (h - hUp + h - hLeft) * 0.5;
                 
-                // Convert height to display character with enhanced 3D depth cues and texturing
+                // Combine height and slope for a more realistic 3D look
+                const shaded = h * 0.6 + slope * 2.5;
+                
+                // Map to character using contour levels
                 let char = ' ';
-                const heightAbs = Math.abs(shadedHeight);
+                if (shaded > 22) char = '█';
+                else if (shaded > 16) char = '▓';
+                else if (shaded > 11) char = '▒';
+                else if (shaded > 7) char = '░';
+                else if (shaded > 3) char = '▄';
+                else if (shaded > 0) char = '‗';
+                else if (shaded > -3) char = '▀';
+                else if (shaded > -7) char = '▐';
+                else if (shaded > -11) char = '▌';
+                else if (shaded > -15) char = '·';
+                else char = ' ';
                 
-                if (shadedHeight > 25) char = '█'; // Very high ground/cliffs
-                else if (shadedHeight > 20) char = '▓'; // High ground
-                else if (shadedHeight > 15) char = '▒'; // Medium-high
-                else if (shadedHeight > 10) char = '░'; // Medium
-                else if (shadedHeight > 5) char = '‗'; // Slightly elevated
-                else if (shadedHeight > 0) char = '▄'; // Low ground
-                else if (shadedHeight > -5) char = '▀'; // Very low
-                else if (shadedHeight > -10) char = '▐'; // Deep depression
-                else if (shadedHeight > -15) char = '▌'; // Very deep
-                else char = ' '; // Deepest/minimum
+                // Atmospheric perspective: fade distant cells (far from upper-left light)
+                const lightDist = Math.sqrt((x - size * 0.15) ** 2 + (y - size * 0.15) ** 2);
+                const fade = Math.max(0.4, 1 - lightDist / (size * 0.75));
                 
-                // Add texturing based on height variability for more natural look
-                const textureOffset = Math.sin(x * 0.3) * Math.cos(y * 0.3) * 0.5;
-                if (Math.abs(textureOffset) > 0.3) {
-                    // Add occasional texture variation
-                    if (char === '░') char = (Math.random() > 0.5) ? '▒' : '▓';
-                    else if (char === '▒') char = (Math.random() > 0.5) ? '░' : '█';
-                    else if (char === '▓') char = (Math.random() > 0.5) ? '▒' : '█';
+                if (fade < 0.55 && char !== ' ') {
+                    // Push dim cells one step down in density
+                    const dimMap = { '█': '▓', '▓': '▒', '▒': '░', '░': '▄', '▄': '‗', '‗': '▀', '▀': '▐', '▐': '·' };
+                    char = dimMap[char] || ' ';
                 }
                 
-                // Apply atmospheric perspective and lighting
-                const lightX = size * 0.2;  // Light from upper left
-                const lightY = size * 0.2;
-                const dx = x - lightX;
-                const dy = y - lightY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                const intensity = Math.max(0.2, 1 - dist / (size * 0.8));
-                
-                // Distance-based fading (atmospheric perspective)
-                const distanceFade = Math.max(0.5, 1 - (Math.sqrt(x*x + y*y) / (size * 0.9)));
-                const finalIntensity = intensity * distanceFade;
-                
-                // Apply lighting-based character enhancement
-                if (finalIntensity > 0.7) {
-                    // Bright areas - use brighter characters
-                    if (char === '▓') char = '█';
-                    else if (char === '▒') char = '▓';
-                    else if (char === '░') char = '▒';
-                    else if (char === '▄') char = '▀';
-                    else if (char === '▀') char = '▐';
-                } else if (finalIntensity < 0.3) {
-                    // Darker shades for shadowed areas
-                    if (char === '█') char = '▓';
-                    else if (char === '▓') char = '▒';
-                    else if (char === '▒') char = '░';
-                    else if (char === '░') char = '‗';
-                    else if (char === '‗') char = '▄';
-                    else if (char === '▄') char = '▀';
-                    else if (char === '▀') char = '▐';
-                    else if (char === '▐') char = ' ';
+                // Subtle texture noise on mid-range cells
+                const noise = Math.sin(x * 0.7 + y * 0.5) * Math.cos(x * 0.3 - y * 0.4);
+                if (Math.abs(shaded) < 8 && noise > 0.4 && char !== ' ') {
+                    char = Math.random() > 0.5 ? '·' : '‗';
                 }
                 
                 line += char;
@@ -381,61 +392,62 @@ class NostromoNavigation {
      * Generate radar display HTML with 3D enhancements
      */
     generateRadarHTML() {
-        const size = 20;
+        const size = 22;
+        const cx = size / 2;
+        const cy = size / 2;
+        const sweepAngle = (Date.now() % 10000) / 10000 * Math.PI * 2;
+        const ringRadii = [3, 5.5, 8, 10.5];
+        
         let html = '<pre class="radar-scope">';
         
-        // Generate radar concentric circles and sweeps with 3D effects
+        // Top row: bearing labels
+        html += '   N    NE     E\n';
+        
         for (let y = 0; y < size; y++) {
             let line = '';
             for (let x = 0; x < size; x++) {
-                const dx = x - size/2;
-                const dy = y - size/2;
-                const distance = Math.sqrt(dx*dx + dy*dy);
+                const dx = x - cx;
+                const dy = y - cy;
+                const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Enhanced radar sweep line with multiple effects
-                const sweepAngle = (Date.now() % 10000) / 10000 * Math.PI * 2;
+                // Polar coordinate check: outside outer ring -> blank
+                if (distance > size / 2 - 0.5) {
+                    line += ' ';
+                    continue;
+                }
+                
                 const angleToPoint = Math.atan2(dy, dx);
-                const angleDiff = Math.abs(((sweepAngle - angleToPoint + Math.PI) % (Math.PI*2)) - Math.PI);
-                
-                // Add 3D depth shading based on distance from center
-                const depthShading = Math.max(0, 1 - (distance / (size/2))) * 0.8;
-                
-                // Add range rings with varying intensity
-                const rangeIntensity = Math.max(0, 1 - Math.abs(Math.round(distance) - distance) * 2);
+                const angleDiff = Math.abs(((sweepAngle - angleToPoint + Math.PI) % (Math.PI * 2)) - Math.PI);
                 
                 let char = ' ';
+                
+                // Center marker
                 if (distance < 0.8) {
-                    char = '♦'; // Center (enhanced)
-                } else if (Math.abs(distance - 3) < 0.3 || Math.abs(distance - 6) < 0.3 || 
-                          Math.abs(distance - 9) < 0.3 || Math.abs(distance - 12) < 0.3 ||
-                          Math.abs(distance - 15) < 0.3) {
-                    // Enhanced range rings with intensity based on roundness
-                    char = rangeIntensity > 0.7 ? '◑' : rangeIntensity > 0.3 ? '◐' : '◒';
-                } else if (angleDiff < 0.08 && distance > 0.8 && distance < size/2 - 1) {
-                    // 3D sweep line with intensity based on depth and pulse
-                    const sweepIntensity = 0.3 + depthShading * 0.7;
-                    const pulseIntensity = Math.abs(Math.sin(Date.now() * 0.01)) * 0.3 + 0.7;
-                    const finalIntensity = sweepIntensity * pulseIntensity;
-                    char = finalIntensity > 0.8 ? '▋' : finalIntensity > 0.6 ? '▊' : finalIntensity > 0.4 ? '▉' : '▊';
-                } else if (this.isBlipAt(x, y)) {
-                    // Enhanced 3D blip with pulsing and depth shading
-                    const blipDepth = distance < size/2 * 0.6 ? '●' : 
-                                   distance < size/2 * 0.8 ? '○' : 
-                                   distance < size/2 * 0.9 ? '◦' : ' ';
-                    // Add pulsing effect to blips
-                    const pulseIntensity = Math.abs(Math.sin(Date.now() * 0.015 + distance)) * 0.3 + 0.7;
-                    if (pulseIntensity > 0.8 && blipDepth !== ' ') {
-                        char = blipDepth === '●' ? '◉' : blipDepth === '○' ? '◎' : '◈';
-                    } else {
-                        char = blipDepth;
+                    char = '◆'; // diamond
+                }
+                // Range rings
+                else {
+                    let onRing = false;
+                    for (const r of ringRadii) {
+                        if (Math.abs(distance - r) < 0.4) { onRing = true; break; }
                     }
-                } else {
-                    // Add subtle background texture for depth
-                    const texture = Math.sin(x * 0.2) * Math.cos(y * 0.2) * depthShading * 0.2;
-                    if (texture > 0.1) {
-                        char = '.';
-                    } else if (texture < -0.1) {
-                        char = ':';
+                    if (onRing) {
+                        char = '·'; // middle dot
+                    }
+                    // Sweep beam with trailing fade
+                    else if (angleDiff < 0.12 && distance > 1) {
+                        const trailIntensity = 1 - angleDiff / 0.12;
+                        char = trailIntensity > 0.7 ? '█' : trailIntensity > 0.4 ? '▒' : '░';
+                    }
+                    // Blips
+                    else if (this.isBlipAt(x, y)) {
+                        const pulse = Math.abs(Math.sin(Date.now() * 0.015 + distance));
+                        char = pulse > 0.5 ? '●' : '○';
+                    }
+                    // Subtle phosphor afterglow texture
+                    else {
+                        const glow = Math.sin(x * 0.3 + y * 0.2) * Math.cos(x * 0.1 - y * 0.3);
+                        char = glow > 0.55 ? '·' : ' ';
                     }
                 }
                 
@@ -443,6 +455,9 @@ class NostromoNavigation {
             }
             html += line + '\n';
         }
+        
+        // Bottom row: bearing labels
+        html += '   S    SW     W\n';
         
         html += '</pre>';
         return html;
@@ -452,25 +467,22 @@ class NostromoNavigation {
      * Generate orbital path preview HTML
      */
     generateOrbitalPreviewHTML() {
-        // Add slight animation to orbital preview
         const orbitPhase = (Date.now() % 20000) / 20000;
-        const orbitOffset = Math.sin(orbitPhase * Math.PI * 2) * 0.3;
+        const phasePct = Math.round(orbitPhase * 100);
         
         return `
             <div class="orbit-ascii">
-                <pre class="orbit-display">   ╭─────────╮
+                <pre class="orbit-display">    ╭───────────╮
   ╱               ╲
- ╱        ● ● ●    ╲ ← Orbit Path
-│         ●   ●      │
- ╲        ● ● ●    ╱
+ ╱    ●  ●  ●     ╲
+│     ●     ●      │
+ ╲    ●  ●  ●     ╱
   ╲               ╱
-   ╰─────────╯
-LV-426</pre>
+   ╰───────────╯
+   LV-426</pre>
                 <div class="orbit-info">
-                    <span>INCLINATION: <span id="orbit-inclination">28.5°</span></span><br>
-                    <span>ECCENTRICITY: <span id="orbit-eccentricity">0.02</span></span><br>
-                    <span>PERIOD: <span id="orbit-period">14.2 hrs</span></span><br>
-                    <span>PHASE: <span id="orbit-phase">${((orbitPhase * 100).toFixed(0))}%</span></span>
+                    <div>INCL: <span id="orbit-inclination">28.5°</span> &nbsp; ECC: <span id="orbit-eccentricity">0.02</span> &nbsp; T: <span id="orbit-period">14.2h</span></div>
+                    <div>PHASE: <span class="orbit-phase-bar"><span class="orbit-phase-fill" id="orbit-phase-fill" style="width:${phasePct}%"></span></span> <span id="orbit-phase">${phasePct}%</span></div>
                 </div>
             </div>
         `;
@@ -532,6 +544,7 @@ LV-426</pre>
         this.updateRadarDisplay();
         this.updateStatusBar();
         this.updateOrbitalDisplay();
+        this.updateWaypointDisplay();
     }
 
     /**
@@ -764,12 +777,69 @@ LV-426</pre>
      * Update orbital path display
      */
     updateOrbitalDisplay() {
-        // Slowly progress along orbital path for animation
         this.orbitProgress = (this.orbitProgress + 0.5) % 360;
+        
+        // Update orbital phase bar
+        const phaseFill = document.getElementById('orbit-phase-fill');
+        const phaseText = document.getElementById('orbit-phase');
+        if (phaseFill && phaseText) {
+            const pct = Math.round((this.orbitProgress / 360) * 100);
+            phaseFill.style.width = `${pct}%`;
+            phaseText.textContent = `${pct}%`;
+        }
     }
 
     /**
-     * Update status bar information
+     * Update waypoint display with distances and tracking status
+     */
+    updateWaypointDisplay() {
+        const navData = this.dataSimulator ? this.dataSimulator.generateSystemStatus().navigation : null;
+        if (!navData) return;
+        
+        for (let i = 0; i < this.waypoints.length; i++) {
+            const wp = this.waypoints[i];
+            const itemEl = document.getElementById(`wp-item-${i}`);
+            const distEl = document.getElementById(`wp-dist-${i}`);
+            const statusEl = document.getElementById(`wp-status-${i}`);
+            
+            if (!itemEl) continue;
+            
+            // Calculate distance to waypoint
+            const dx = wp.x - navData.coordinates.x;
+            const dy = wp.y - navData.coordinates.y;
+            const dz = wp.z - (navData.coordinates.z || 0);
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            
+            if (distEl) {
+                distEl.textContent = `DIST: ${dist.toFixed(1)}`;
+            }
+            
+            // Update item class based on state
+            let cls = 'wp-item';
+            let statusText = 'QUEUED';
+            let statusCls = '';
+            
+            if (i === this.currentWaypoint && wp.active) {
+                cls += ' wp-active';
+                statusText = 'TRACKING';
+                statusCls = 'status-ok';
+            } else if (!wp.active && i < this.currentWaypoint) {
+                cls += ' wp-complete';
+                statusText = 'COMPLETE';
+                statusCls = '';
+            }
+            
+            itemEl.className = cls;
+            
+            if (statusEl) {
+                statusEl.textContent = statusText;
+                statusEl.className = `wp-status ${statusCls}`;
+            }
+        }
+    }
+
+    /**
+     * Update status bar information with multiple telemetry streams
      */
     updateStatusBar(navData) {
         if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
@@ -793,23 +863,31 @@ LV-426</pre>
             contacts.className = `status-value ${this.motionTrackerBlips.length > 0 ? 'status-warning' : 'status-ok'}`;
         }
         
-        // Update sweet (signal strength/efficiency) telemetry
+        // Signal strength telemetry
+        const signal = document.getElementById('nav-signal');
+        if (signal) {
+            const base = 85 + Math.sin(Date.now() * 0.0008) * 8;
+            const distFactor = Math.max(0, 1 - Math.abs(this.courseDeviation) / 90) * 10;
+            const signalVal = Math.min(99, Math.round(base + distFactor));
+            signal.textContent = `${signalVal}%`;
+            signal.className = `status-value ${signalVal > 80 ? 'status-ok' : signalVal > 60 ? 'status-warning' : 'status-critical'}`;
+        }
+        
+        // Sweet (efficiency) telemetry
         const sweet = document.getElementById('nav-sweet');
         if (sweet) {
-            // Simulate signal strength based on various factors
-            const baseSweet = 75 + Math.sin(Date.now() * 0.001) * 10; // Base oscillation
-            const pingBonus = this.motionTrackerBlips.length > 0 ? 15 : 0; // Bonus for contacts
-            const navBonus = Math.abs(this.courseDeviation) < 5 ? 10 : Math.abs(this.courseDeviation) < 15 ? 5 : 0; // Bonus for good navigation
+            const baseSweet = 75 + Math.sin(Date.now() * 0.001) * 10;
+            const pingBonus = this.motionTrackerBlips.length > 0 ? 15 : 0;
+            const navBonus = Math.abs(this.courseDeviation) < 5 ? 10 : Math.abs(this.courseDeviation) < 15 ? 5 : 0;
             const sweetValue = Math.min(95, baseSweet + pingBonus + navBonus);
             sweet.textContent = `${sweetValue.toFixed(0)}`;
             sweet.className = `status-value ${sweetValue > 80 ? 'status-ok' : sweetValue > 60 ? 'status-warning' : 'status-critical'}`;
         }
         
-        // Update elapsed mission time
+        // Elapsed mission time
         const elapsed = document.getElementById('nav-elapsed');
         if (elapsed) {
-            // Simulate mission elapsed time (starting from some arbitrary point)
-            const missionStart = Date.now() - (3 * 24 * 60 * 60 * 1000); // 3 days ago
+            const missionStart = Date.now() - (3 * 24 * 60 * 60 * 1000);
             const elapsedMs = Date.now() - missionStart;
             const totalSeconds = Math.floor(elapsedMs / 1000);
             const hours = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
@@ -817,6 +895,34 @@ LV-426</pre>
             const seconds = (totalSeconds % 60).toString().padStart(2, '0');
             elapsed.textContent = `${hours}:${minutes}:${seconds}`;
             elapsed.className = 'status-value status-ok';
+        }
+        
+        // Threat assessment
+        const threat = document.getElementById('nav-threat');
+        if (threat) {
+            const blipCount = this.motionTrackerBlips.length;
+            if (blipCount >= 3) {
+                threat.textContent = 'ELEVATED';
+                threat.className = 'status-value status-critical';
+            } else if (blipCount > 0) {
+                threat.textContent = 'MODERATE';
+                threat.className = 'status-value status-warning';
+            } else {
+                threat.textContent = 'NONE';
+                threat.className = 'status-value status-ok';
+            }
+        }
+        
+        // Update radar status indicator
+        const radarStatus = document.getElementById('radar-status');
+        if (radarStatus) {
+            if (this.motionTrackerBlips.length > 0) {
+                radarStatus.textContent = 'DETECTED';
+                radarStatus.className = 'status-indicator detected';
+            } else {
+                radarStatus.textContent = 'SEARCHING';
+                radarStatus.className = 'status-indicator searching';
+            }
         }
     }
 
