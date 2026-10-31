@@ -321,69 +321,58 @@ class NostromoNavigation {
     }
 
     /**
-     * Generate wireframe terrain HTML with 3D enhancements
+     * Generate a topographic contour map of the surface below.
+     * Contour lines are drawn along equal-height edges using line characters
+     * that follow the local slope; high ground is stippled.
      */
     generateTerrainHTML() {
-        const size = 24; // Grid size for display
+        const cols = 100;
+        const rows = 24;
+        const levels = 5;
+
+        // Smooth terrain in 0..1 map coordinates, slowly different per session
+        const phase = (this.terrainSeed % 6283) / 1000;
+        const heightAt = (x, y) => {
+            const u = x / cols;
+            const v = y / rows;
+            return 0.65 * Math.sin(u * 4.2 + phase) * Math.cos(v * 3.1 + phase * 0.7)
+                 + 0.35 * Math.sin(u * 7.5 + v * 4.5 + phase * 1.3);
+        };
+        const band = (x, y) => Math.floor(heightAt(x, y) * levels);
+
+        const cx = Math.floor(cols / 2);
+        const cy = Math.floor(rows / 2);
         let html = '<pre class="terrain-wireframe">';
-        
-        // Pre-compute heights for slope calculation
-        const heights = [];
-        for (let y = 0; y < size; y++) {
-            heights[y] = [];
-            for (let x = 0; x < size; x++) {
-                heights[y][x] = this.getTerrainHeight(x * 4 - size * 2, y * 4 - size * 2);
-            }
-        }
-        
-        for (let y = 0; y < size; y++) {
+
+        for (let y = 0; y < rows; y++) {
             let line = '';
-            for (let x = 0; x < size; x++) {
-                const h = heights[y][x];
-                
-                // Slope-based shading (hillshading): compare with neighbor to the upper-left
-                const hUp = y > 0 ? heights[y - 1][x] : h;
-                const hLeft = x > 0 ? heights[y][x - 1] : h;
-                const slope = (h - hUp + h - hLeft) * 0.5;
-                
-                // Combine height and slope for a more realistic 3D look
-                const shaded = h * 0.6 + slope * 2.5;
-                
-                // Map to character using contour levels
+            for (let x = 0; x < cols; x++) {
+                const b = band(x, y);
+                const onContour = b !== band(x + 1, y) || b !== band(x, y + 1);
                 let char = ' ';
-                if (shaded > 22) char = '█';
-                else if (shaded > 16) char = '▓';
-                else if (shaded > 11) char = '▒';
-                else if (shaded > 7) char = '░';
-                else if (shaded > 3) char = '▄';
-                else if (shaded > 0) char = '‗';
-                else if (shaded > -3) char = '▀';
-                else if (shaded > -7) char = '▐';
-                else if (shaded > -11) char = '▌';
-                else if (shaded > -15) char = '·';
-                else char = ' ';
-                
-                // Atmospheric perspective: fade distant cells (far from upper-left light)
-                const lightDist = Math.sqrt((x - size * 0.15) ** 2 + (y - size * 0.15) ** 2);
-                const fade = Math.max(0.4, 1 - lightDist / (size * 0.75));
-                
-                if (fade < 0.55 && char !== ' ') {
-                    // Push dim cells one step down in density
-                    const dimMap = { '█': '▓', '▓': '▒', '▒': '░', '░': '▄', '▄': '‗', '‗': '▀', '▀': '▐', '▐': '·' };
-                    char = dimMap[char] || ' ';
+
+                if (onContour) {
+                    // Draw the line along the contour: perpendicular to the height gradient
+                    const gx = heightAt(x + 1, y) - heightAt(x - 1, y);
+                    const gy = (heightAt(x, y + 1) - heightAt(x, y - 1)) * (cols / rows) * 0.5;
+                    if (Math.abs(gx) > Math.abs(gy) * 2) char = '|';
+                    else if (Math.abs(gy) > Math.abs(gx) * 2) char = '-';
+                    else char = gx * gy > 0 ? '\\' : '/';
+                } else if (b >= 2 && (x + y * 2) % 4 === 0) {
+                    char = '.';
                 }
-                
-                // Subtle texture noise on mid-range cells
-                const noise = Math.sin(x * 0.7 + y * 0.5) * Math.cos(x * 0.3 - y * 0.4);
-                if (Math.abs(shaded) < 8 && noise > 0.4 && char !== ' ') {
-                    char = Math.random() > 0.5 ? '·' : '‗';
+
+                // Position reticle at the centre of the map
+                const dx = x - cx;
+                if (y === cy && Math.abs(dx) <= 2) {
+                    char = dx === 0 ? '+' : Math.abs(dx) === 1 ? ' ' : (dx < 0 ? '[' : ']');
                 }
-                
+
                 line += char;
             }
             html += line + '\n';
         }
-        
+
         html += '</pre>';
         return html;
     }
