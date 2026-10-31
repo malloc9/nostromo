@@ -158,7 +158,7 @@
                             member(5, { name: 'PARKER', position: 'CHIEF ENGINEER', location: 'ENGINEERING', status: 'active', heartRate: 77, temperature: 37.0, oxygenSat: 97,
                                 profile: { department: 'ENGINEERING' } }),
                             member(6, { name: 'ASH', position: 'SCIENCE OFFICER', location: 'SCIENCE', status: 'active', heartRate: 65, temperature: 36.5, oxygenSat: 99,
-                                profile: { department: 'SCIENCE', securityClearance: 'LEVEL 4' } }),
+                                profile: { department: 'SCIENCE', securityClearance: 'LEVEL 4', synthetic: true } }),
                             member(7, { name: 'JONES', type: 'animal', position: 'SHIP CAT', location: 'QUARTERS', status: 'active', heartRate: 110, temperature: 38.4, oxygenSat: 98,
                                 tempMin: 37.5, tempMax: 39.5,
                                 profile: { department: 'PERSONNEL', medicalStatus: 'FIT' } })

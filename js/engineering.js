@@ -610,13 +610,31 @@ class NostromoEngineering {
             lastUpdateElement.textContent = now.toTimeString().substring(0, 8);
         }
         
-        // Update alert count
-        const alertCountElement = document.getElementById('power-alert-count');
-        if (alertCountElement) {
-            const alerts = this.calculatePowerAlerts(powerData);
-            alertCountElement.textContent = alerts.toString();
-            alertCountElement.className = `summary-value ${alerts > 0 ? 'status-warning' : 'status-ok'}`;
+        // Engineering status and fault count come from the engineering model, the same
+        // source ENGINEERING and STATUS read, so the panel cannot disagree with them.
+        const model = this.engineeringModel();
+        if (model) {
+            const gridElement = document.getElementById('grid-status');
+            if (gridElement && model.overall !== 'NOMINAL') {
+                gridElement.textContent = model.overall;
+                gridElement.className = `summary-value ${model.overall === 'CRITICAL' ? 'status-critical' : 'status-warning'}`;
+            }
+            const alertCountElement = document.getElementById('power-alert-count');
+            if (alertCountElement) {
+                alertCountElement.textContent = model.faults.length.toString();
+                alertCountElement.className = `summary-value ${model.faults.length > 0 ? 'status-warning' : 'status-ok'}`;
+            }
         }
+    }
+
+    /**
+     * The engineering model as the ship computer reports it, or null without a store
+     * @returns {Object|null}
+     */
+    engineeringModel() {
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        if (!store) return null;
+        return window.NostromoShipComputer.engineeringModel.build(store.snapshot('engineering'));
     }
 
     /**

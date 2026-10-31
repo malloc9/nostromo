@@ -209,7 +209,10 @@ class NostromoDashboard {
      * @param {Object} powerData - Power system data
      */
     updatePowerQuadrant(powerData) {
-        this.powerQuadrant.update(powerData);
+        // The engineering model adds reactor and component faults to the power readings
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        const model = store ? window.NostromoShipComputer.engineeringModel.build(store.snapshot('engineering')) : null;
+        this.powerQuadrant.update(powerData, model);
     }
 
     /**

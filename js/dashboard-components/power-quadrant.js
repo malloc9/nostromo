@@ -11,8 +11,9 @@ class PowerQuadrant extends QuadrantComponent {
     /**
      * Update the power quadrant with new power data
      * @param {Object} powerData - Power system data
+     * @param {Object|null} [model] - Engineering model; adds component faults
      */
-    update(powerData) {
+    update(powerData, model) {
         this.data = powerData;
 
         // Determine power status
@@ -20,8 +21,18 @@ class PowerQuadrant extends QuadrantComponent {
         let statusClass = 'status-ok';
         if (powerLevel < 10) statusClass = 'status-warning';
         if (powerLevel < 0) statusClass = 'status-critical';
+        if (model && model.overall === 'WARNING' && statusClass === 'status-ok') statusClass = 'status-warning';
+        if (model && model.overall === 'CRITICAL') statusClass = 'status-critical';
 
         this.updateStatus(statusClass);
+
+        // Components that are not nominal, named as the ENGINEERING report names them
+        const faulted = model ? model.components.filter((c) => c.status !== 'NOMINAL') : [];
+        const faultRows = faulted.map((c) => `
+            <div class="data-row">
+                <span class="data-label">${c.label}:</span>
+                <span class="data-value">${c.status}</span>
+            </div>`).join('');
 
         // Generate content HTML
         const contentHTML = `
@@ -45,6 +56,7 @@ class PowerQuadrant extends QuadrantComponent {
                 <span class="data-label">FUEL LEVEL:</span>
                 <span class="data-value">${powerData.fuel.toFixed(1)}%</span>
             </div>
+            ${faultRows}
         `;
 
         this.updateContent(contentHTML);

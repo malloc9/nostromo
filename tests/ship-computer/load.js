@@ -18,6 +18,9 @@ const MODULES = [
     'engine',
     'system-commands',
     'log-commands',
+    'engineering-model',
+    'engineering-commands',
+    'status-commands',
     'legacy-responses',
     'terminal-view'
 ];

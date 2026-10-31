@@ -203,6 +203,8 @@ function getMotherEngine() {
         ns.systemCommands.register(registry);
         if (dataSimulator) {
             ns.logCommands.register(registry, dataSimulator.store);
+            ns.engineeringCommands.register(registry, dataSimulator.store);
+            ns.statusCommands.register(registry, dataSimulator.store);
         }
         motherEngine = ns.engine.createEngine({
             registry,

@@ -98,7 +98,9 @@
             if (state.faults.some((f) => f.code === code)) throw new Error(`fault already active: ${code}`);
             const severity = args.severity === 'CRITICAL' ? 'CRITICAL' : 'WARNING';
             const message = String(args.message || code);
-            state.faults.push({ code, message, severity, since: now });
+            // component names the part of the subsystem the fault is on (for example mainReactor).
+            const component = args.component ? String(args.component) : null;
+            state.faults.push({ code, message, severity, component, since: now });
             return {
                 type: severity === 'CRITICAL' ? 'error' : 'warning',
                 severity,
@@ -249,9 +251,12 @@
             const state = privates[name];
             if (!state) throw new Error(`unknown subsystem: ${name}`);
             const faults = state.faults.map((f) => ({ ...f }));
+            // The worst active fault sets the status; with no faults it is the base status.
+            const worst = faults.some((f) => f.severity === 'CRITICAL') ? 'CRITICAL'
+                : (faults.length ? 'WARNING' : state.status);
             return deepFreeze({
                 name,
-                status: faults.length ? 'WARNING' : state.status,
+                status: worst,
                 state: readValue(state.fields, elapsed()),
                 measurements: readValue(state.measurements, elapsed()),
                 faults,
@@ -280,6 +285,12 @@
             }
             const op = OPERATIONS[operation];
             if (!op) throw new Error(`unknown operation: ${operation}`);
+            // Engineering component names belong to the engineering model; a typo must not
+            // record a fault that no panel will ever show.
+            if (name === 'engineering' && args && args.component) {
+                const known = ns.engineeringModel.COMPONENTS.some((c) => c.key === args.component);
+                if (!known) throw new Error(`unknown engineering component: ${args.component}`);
+            }
 
             const now = clock.now();
             // Judge threshold readings up to now against the state before this change.
