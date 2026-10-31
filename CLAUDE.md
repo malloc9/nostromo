@@ -4,76 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Commands
 
-### Build Process
-- `npm run build` - Creates optimized production build in `/dist` directory
-- `npm run dev` - Starts development server
-- `npm run clean` - Removes the `dist` directory
-- `npm run deploy` - Runs build process (for deployment)
+- `npm run dev` - Node dev server (`scripts/dev-server.js`) on `http://localhost:3000` (override with `PORT=...`)
+- `npm run build` - Minifies into `/dist` (HTML, CSS, JS) and validates required files
+- `npm run clean` - Removes `/dist`
+- `npm run deploy` - Alias for build
 
 ### Testing
-- `npm test` - Currently outputs "No tests specified" (test suite not implemented)
-- Individual test files exist in the `/test` directory for manual verification:
-  - `test-boot-and-nav.html` - Boot sequence and navigation testing
-  - `test-engineering.html` - Engineering systems testing
-  - `test-navigation.html` - Navigation interface testing
-  - Other test files for specific subsystems
+There is no automated test suite: `package.json` has no `test` script, and jest/jest-environment-jsdom are installed but unconfigured and unused. Verification is manual and lives at the **repo root** (there is no `/test` directory):
+- `test-*.html` (e.g. `test-boot-and-nav.html`, `test-engineering.html`, `test-navigation.html`, `test-router.html`) - open via `npm run dev` and view in a browser
+- `verify-*.js` and `test-crew-basic.js` - ad-hoc scripts; run with `node <file>` (`test-crew-basic.js` works because `crew.js`/`data-simulator.js` export via `module.exports`; the `verify-*.js` scripts expect a DOM)
+- The root also holds many screenshot PNGs, plan docs, and deployment notes from past iterations; they are not part of the app.
 
-### Code Structure
-- `/js` - Core application logic:
-  - `app.js` - Main application entry point
-  - `router.js` - Handles navigation between views
-  - `data-simulator.js` - Generates realistic system data
-  - `console.js` - Interactive terminal interface
-  - `crew.js`, `dashboard.js`, `engineering.js`, `life-support.js`, `navigation.js` - Subsystem modules
-  - `audio-manager.js`, `boot-sequence.js` - Specialized functionality
-- `/css` - Styling:
-  - `main.css` - Primary styles
-  - `terminal.css` - Terminal-specific retro styling
-- `/assets` - Static assets (favicon, etc.)
+## Architecture
 
-### Architecture Overview
-The Nostromo Monitoring System is a static web application designed to replicate the MU-TH-UR 6000 interface from the film *Alien*. Key architectural patterns:
+A static, build-light vanilla JS app (no framework, no bundler) that replicates the MU-TH-UR 6000 terminal from *Alien*. Understanding it takes several files:
 
-1. **Modular JavaScript** - Each subsystem (engineering, life-support, navigation, etc.) is encapsulated in its own module
-2. **Router-based Navigation** - `router.js` manages view transitions and state
-3. **Data Simulation** - `data-simulator.js` provides realistic, evolving system metrics
-4. **Retro Terminal Styling** - CSS creates CRT monitor effects with scanlines, curvature, and phosphor persistence
-5. **Asset Pipeline** - Build process (`scripts/build.js`) minifies HTML/CSS/JS and optimizes for GitHub Pages
+- **No module system.** `index.html` loads every script with a plain `<script>` tag in dependency order: `data-simulator` → `audio-manager` → `boot-sequence` → `router` → `dashboard-components/*` (base → quadrant → specific) → `dashboard`, `life-support`, `navigation`, `engineering`, `crew`, `console` → `app.js` last. A new JS file does nothing until it is added to `index.html` in the right position. Classes are globals (e.g. `NostromoRouter`, `NostromoCrew`); several also end with `if (typeof module !== 'undefined') module.exports = ...` so Node scripts can `require` them.
+- **`app.js` is the composition root.** On `DOMContentLoaded` it instantiates each subsystem and publishes it on `window` (`window.router`, `window.dashboard`, `window.crew`, ...). Subsystems find each other through these globals, not imports.
+- **Hash router** (`router.js`): routes (`dashboard`, life support, navigation, engineering, crew, mother console) are registered in `registerDefaultRoutes()` with a screen element id, F-key hotkey, and `onEnter`/`onExit` hooks that call `window.<subsystem>.activate()`/`deactivate()`. Hash routing is what keeps it working on GitHub Pages. Adding a screen means a new route, a `<section>` in `index.html`, and an init in `app.js`.
+- **`data-simulator.js`** is the shared data source: all subsystems read evolving simulated metrics from the single `dataSimulator` instance passed in from `app.js`.
+- **Dashboard** is composed from `js/dashboard-components/` (`base-component` → `quadrant-component` → power/life-support/navigation/crew quadrants, plus the ship schematic).
 
-### Development Guidelines
-- When modifying JavaScript, maintain compatibility with the build process (avoid features that break minification)
-- CSS modifications should preserve the retro aesthetic (scanlines, terminal green color scheme, CRT effects)
-- HTML structure follows semantic patterns for accessibility while maintaining the terminal appearance
-- New features should align with the immersive Alien-inspired interface (see NOSTROMO_IMPROVEMENT_PLAN.md for vision)
+### Versioning
+`/VERSION` (a bare integer, currently bumped in nearly every commit) is the source of truth. `index.html` contains the placeholder `MU/TH-UR FW 6000.__VERSION__`, which both `scripts/build.js` and `scripts/dev-server.js` substitute at serve/build time. Never hardcode the number in HTML; bump `VERSION` instead.
 
-### Deployment
-The system is configured for GitHub Pages deployment:
-- Build outputs to `/dist` directory
-- GitHub Actions workflow (`.github/workflows/deploy.yml`) automates deployment on pushes to main
-- Includes 404.html for SPA routing and .nojekyll to prevent Jekyll processing
-- Build process generates build-info.json with timestamp and version data
+### Build specifics
+- `scripts/build.js` only processes `index.html`, `css/*.css`, and top-level `js/*.js` (terser with `mangle: false`, console calls kept). `assets/` and `js/dashboard-components/` are copied **unminified**.
+- Any new top-level HTML page, or new JS subdirectory, must be added to `build.js` or it will not be in `dist`. Missing required files fail the build via `validateBuild()`.
+- It also generates `404.html` (redirects to `/`), `.nojekyll`, and `build-info.json`. `.github/workflows/deploy.yml` builds and deploys to GitHub Pages on push to `main`.
 
-### Common Troubleshooting
-- If build fails, check Node.js version (requires >=16.0.0)
-- For styling issues, verify CSS minification didn't break retro effects
-- Navigation problems often relate to router.js state management
-- Audio issues may require checking audio-manager.js and audio file paths
+### Styling
+Three stylesheets load in this order: `main.css` (layout and components, the largest and most-edited), `terminal.css` (CRT effects: scanlines, curvature, phosphor), then `nostromo-1979.css`, which loads last and overrides the earlier two. Keep the green-phosphor retro look when changing CSS.
 
+### Layout model
+The UI is a fixed 1366×768 stage (`#terminal-container` at the end of `nostromo-1979.css`) that `fitStageToWindow()` in `app.js` scales to the window, so every screen is laid out for exactly that size with no scrolling. Check overflow with `.screen-content` `scrollHeight` vs `clientHeight`. `.screen-content` resets `white-space: normal` because `.terminal-content` is `pre-wrap` and would render template indentation as blank lines. The CSS has many duplicate rules across the three files; recent layout fixes are appended as override blocks at the end of `main.css` and `nostromo-1979.css`.
 
-## Skill routing
-
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-The skill has specialized workflows that produce better results than ad-hoc answers.
-
-Key routing rules:
-- Product ideas, "is this worth building", brainstorming → invoke office-hours
-- Bugs, errors, "why is this broken", 500 errors → invoke investigate
-- Ship, deploy, push, create PR → invoke ship
-- QA, test the site, find bugs → invoke qa
-- Code review, check my diff → invoke review
-- Update docs after shipping → invoke document-release
-- Weekly retro → invoke retro
-- Design system, brand → invoke design-consultation
-- Visual audit, design polish → invoke design-review
-- Architecture review → invoke plan-eng-review
+## Guidelines
+- Keep JS compatible with terser (no syntax newer than its parser handles).
+- Audio problems usually trace to `audio-manager.js` (Web Audio, 920 lines) and browser autoplay restrictions rather than file paths.
+- Navigation/view bugs usually trace to route state in `router.js` (`isTransitioning`, `onEnter`/`onExit`) or to a subsystem's `activate()`/`deactivate()`.
+- Requires Node >=16. `NOSTROMO_IMPROVEMENT_PLAN.md` describes the intended design vision.

@@ -1537,3 +1537,54 @@ html, body {
   .ls-zone-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
 }
 
+
+/* ---------- Life Support: fit inside the viewport without scroll ---------- */
+.ls-1979 {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 6px;
+  overflow: hidden;
+}
+.ls-row-metrics { height: 140px; }
+.ls-row-alerts  { height: 96px; }
+.ls-row-body    { overflow: hidden; min-height: 0; }
+.ls-row-body .enhanced-trend-display { overflow: hidden; min-height: 0; }
+.ls-row-body .parameter-chart-card:not(:first-child) { display: none; }
+.ls-row-body .parameter-chart-card .chart-sparkline { max-height: 40px; overflow: hidden; }
+.ls-row-body .predictive-analysis { display: none; }
+
+/* ---------- MOTHER: output scrolls, input line stays pinned ---------- */
+.mother-interface {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 10px 22px !important;
+}
+.mother-interface .mother-session-info { flex-shrink: 0; margin-bottom: 8px; }
+.mother-interface .mother-output {
+  flex: 1 1 0;
+  min-height: 0;
+  margin-bottom: 6px;
+  font-size: 16px !important;
+  line-height: 1.35;
+}
+.mother-interface .mother-input-line { flex-shrink: 0; }
+.mother-interface { align-items: stretch; }
+.mother-interface > .mother-session-info,
+.mother-interface > .mother-input-line { width: 100%; }
+.mother-interface .mother-session-info { white-space: normal; }
+
+/* ===================================================================
+   STAGE: fixed 1366x768 logical screen, scaled to fit the window.
+   --stage-scale is set from app.js on load and resize. The ID selector
+   outranks the earlier .app-container sizing in terminal.css.
+   =================================================================== */
+#terminal-container.app-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1366px;
+  height: 768px;
+  margin: 0;
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+  transform-origin: center center;
+}

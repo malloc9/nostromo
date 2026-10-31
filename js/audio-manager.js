@@ -5,10 +5,12 @@
 class NostromoAudioManager {
     constructor() {
         this.isEnabled = true;
-        this.isMuted = false;
-        this.masterVolume = 0.7;
-        this.ambientVolume = 0.3;
-        this.effectsVolume = 0.5;
+        // Sound is opt-in: off until the user presses F8 (choice is remembered)
+        this.isMuted = true;
+        this.masterVolume = 0.35;
+        this.ambientVolume = 0.15;
+        this.effectsVolume = 0.4;
+        this.loadPreferences();
 
         // Audio context and nodes
         this.audioContext = null;
@@ -79,7 +81,7 @@ class NostromoAudioManager {
 
         // Create master gain node
         this.masterGainNode = this.audioContext.createGain();
-        this.masterGainNode.gain.value = this.masterVolume;
+        this.masterGainNode.gain.value = this.isMuted ? 0 : this.masterVolume;
         this.masterGainNode.connect(this.audioContext.destination);
 
         // Create ambient audio gain node
@@ -724,16 +726,37 @@ class NostromoAudioManager {
             return;
         }
 
-        // Start ship hum
+        // Just the low ship hum: no random blips or hissing ventilation
         this.startAmbientTrack('ship-hum');
+    }
 
-        // Start computer processing sounds with random intervals
-        this.scheduleRandomComputerSounds();
+    stopAmbientAudio() {
+        for (const trackName of [...this.ambientSources.keys()]) {
+            this.stopAmbientTrack(trackName);
+        }
+    }
 
-        // Start ventilation sounds
-        setTimeout(() => {
-            this.startAmbientTrack('ventilation');
-        }, 2000);
+    loadPreferences() {
+        try {
+            const saved = JSON.parse(localStorage.getItem('nostromo.audio') || '{}');
+            if (typeof saved.muted === 'boolean') this.isMuted = saved.muted;
+            if (typeof saved.volume === 'number') {
+                this.masterVolume = Math.max(0, Math.min(1, saved.volume));
+            }
+        } catch (error) {
+            // Storage unavailable: keep defaults
+        }
+    }
+
+    savePreferences() {
+        try {
+            localStorage.setItem('nostromo.audio', JSON.stringify({
+                muted: this.isMuted,
+                volume: this.masterVolume
+            }));
+        } catch (error) {
+            // Storage unavailable: preference lasts for this session only
+        }
     }
 
     startAmbientTrack(trackName) {
@@ -792,10 +815,26 @@ class NostromoAudioManager {
             );
         }
 
+        if (this.isMuted) {
+            this.stopAmbientAudio();
+        } else {
+            // The keypress is the user gesture browsers require before audio may start
+            this.resumeAudioContext();
+            this.startAmbientAudio();
+            this.playSound('confirm');
+        }
+
+        this.savePreferences();
         this.updateAudioControls();
-        this.playSound('confirm');
 
         return this.isMuted;
+    }
+
+    adjustVolume(delta) {
+        this.setMasterVolume(Math.round((this.masterVolume + delta) * 100) / 100);
+        this.savePreferences();
+        this.updateAudioControls();
+        this.playSound('beep', 0.5);
     }
 
     setMasterVolume(volume) {
@@ -847,7 +886,7 @@ class NostromoAudioManager {
     updateAudioControls() {
         const audioToggle = document.getElementById('audio-toggle');
         if (audioToggle) {
-            const statusText = this.isMuted ? 'MUTED' : 'ON';
+            const statusText = this.isMuted ? 'OFF' : `ON ${Math.round(this.masterVolume * 100)}%`;
             audioToggle.textContent = `[F8] AUDIO: ${statusText}`;
             audioToggle.classList.toggle('muted', this.isMuted);
         }

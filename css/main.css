@@ -898,7 +898,7 @@ body {
 .dashboard-container {
     display: grid;
     grid-template-columns: 40% 60%;
-    grid-template-rows: 1fr 250px;
+    grid-template-rows: minmax(0, 1fr) 140px;
     height: 100%;
     gap: 10px;
     padding: 10px;
@@ -1882,7 +1882,7 @@ overflow: hidden;
 
 /* Status Grid - 2x2 Quadrants */
 .status-grid {
-    grid-area: status;
+    grid-area: status-grid;
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
@@ -2129,14 +2129,14 @@ overflow: hidden;
 .nav-status-section,
 .nav-data-section,
 .nav-waypoint-section {
-    flex-shrink: 0;
+    flex-shrink: 1;
 }
 
 .main-display {
     flex: 1;
+    min-height: 0;
     display: flex;
     gap: 8px;
-    min-height: 0;
 }
 
 .terrain-section,
@@ -2157,21 +2157,56 @@ overflow: hidden;
 
 .terrain-grid {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.terrain-wireframe {
+    display: block;
+    white-space: pre;
+    font-size: 9px;
+    line-height: 1.1;
+    color: var(--terminal-green-dim);
+    margin: 0;
+    overflow: hidden;
+    min-height: 0;
 }
 
 .radar-display {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.radar-scope {
+    display: block;
+    white-space: pre;
+    font-size: 9px;
+    line-height: 1.1;
+    color: var(--terminal-green-dim);
+    margin: 0;
+    overflow: hidden;
 }
 
 /* ── Orbital Status Grid (8 items) ────────────────────────────────── */
+.navigation-container .section-header {
+    font-size: 11px;
+    margin-bottom: 2px;
+    padding-bottom: 1px;
+}
+
 .nav-status-section .status-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 4px 12px;
-    font-size: 11px;
+    gap: 2px 10px;
+    font-size: 10px;
 }
 
 .nav-status-section .status-item {
@@ -2227,25 +2262,25 @@ overflow: hidden;
 .nav-data-section .data-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    font-size: 11px;
+    gap: 4px 12px;
+    font-size: 10px;
 }
 
 .nav-data-section .data-column {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .nav-data-section .data-item {
     display: flex;
     align-items: baseline;
-    gap: 6px;
+    gap: 5px;
 }
 
 .nav-data-section .data-label {
     color: var(--terminal-green-dim);
-    min-width: 90px;
+    min-width: 80px;
 }
 
 .nav-data-section .coord-triplet {
@@ -2257,21 +2292,37 @@ overflow: hidden;
     color: var(--terminal-green-dim);
 }
 
+/* Keep the data section from being crushed when space is tight */
+.nav-data-section {
+    min-height: 70px;
+    overflow: hidden;
+}
+
+/* Terrain coordinate readout */
+.terrain-coords {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--terminal-green-dim);
+    white-space: nowrap;
+    overflow: hidden;
+}
+
 /* ── Waypoint Section ─────────────────────────────────────────────── */
 .nav-waypoint-section .wp-list {
     display: flex;
-    gap: 16px;
-    font-size: 11px;
+    gap: 12px;
+    font-size: 10px;
 }
 
 .nav-waypoint-section .wp-item {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 4px 8px;
+    gap: 1px;
+    padding: 3px 6px;
     border: 1px solid var(--terminal-border);
-    border-radius: 3px;
-    min-width: 120px;
+    border-radius: 2px;
+    min-width: 110px;
 }
 
 .nav-waypoint-section .wp-item.wp-active {
@@ -2304,11 +2355,12 @@ overflow: hidden;
 /* ── Expanded Status Bar ──────────────────────────────────────────── */
 .nav-status-bar {
     display: flex;
-    flex-wrap: wrap;
-    gap: 2px 16px;
-    padding: 4px 0;
+    flex-wrap: nowrap;
+    gap: 2px 14px;
+    padding: 3px 0;
     border-top: 1px solid var(--terminal-border);
     font-size: 10px;
+    overflow: hidden;
 }
 
 .nav-status-bar .status-item {
@@ -2463,4 +2515,367 @@ overflow: hidden;
     0% { box-shadow: 0 0 5px rgba(255, 170, 0, 0.3); }
     50% { box-shadow: 0 0 15px rgba(255, 170, 0, 0.6); }
     100% { box-shadow: 0 0 5px rgba(255, 170, 0, 0.3); }
+}
+/* ── Dashboard fit fixes ──────────────────────────────────────────── */
+.console-interface {
+    min-height: 0;
+    padding: 6px 10px;
+}
+
+.console-interface .console-header {
+    margin-bottom: 4px;
+    padding-bottom: 2px;
+}
+
+.console-interface .console-output {
+    min-height: 0;
+    margin-bottom: 4px;
+}
+
+.ship-schematic-section .system-summary {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    max-height: none;
+    justify-content: space-around;
+    gap: 2px 12px;
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.ship-schematic-section .summary-item {
+    flex-direction: row;
+    white-space: nowrap;
+}
+
+.ship-schematic-section .ship-schematic {
+    min-height: 150px;
+}
+
+.ship-schematic-section .alert-details {
+    max-height: 70px;
+    overflow-y: auto;
+    flex-shrink: 1;
+    font-size: 10px;
+}
+
+.ship-schematic-section .ascii-ship {
+    font-size: 8px;
+    line-height: 1.05;
+}
+
+.ship-schematic-section .ship-schematic { min-height: 225px; }
+.ship-schematic-section .alert-details { max-height: 36px; }
+
+/* ── Navigation: explicit rows so nothing is squeezed to zero ─────── */
+.navigation-container {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto 112px auto;
+    gap: 6px;
+}
+
+.navigation-container > * {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.nav-data-section .data-grid {
+    height: calc(100% - 20px);
+    overflow: hidden;
+}
+
+/* The orbital-path ASCII preview is too tall for the data row */
+.nav-data-section #orbital-path-preview {
+    display: none;
+}
+
+/* Template indentation must not render as blank lines */
+.navigation-container {
+    white-space: normal;
+}
+.navigation-container pre {
+    white-space: pre;
+}
+
+.nav-data-section .data-grid {
+    grid-template-columns: 1fr;
+}
+.nav-data-section .data-column:nth-child(2) {
+    display: none;
+}
+.nav-data-section .data-column:first-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 16px;
+}
+.terrain-wireframe {
+    margin: 0 auto;
+}
+
+/* ── Engineering: fixed grid that fits the viewport ───────────────── */
+.engineering-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "overview overview"
+        "diagram  consumption"
+        "summary  summary";
+    gap: 6px;
+    height: 100%;
+    padding: 4px 2px;
+    white-space: normal;
+}
+
+.engineering-container > * {
+    min-height: 0;
+    overflow: hidden;
+    padding: 6px 8px;
+}
+
+.engineering-container .power-overview-section     { grid-area: overview; }
+.engineering-container .power-diagram-section      { grid-area: diagram; }
+.engineering-container .system-consumption-section { grid-area: consumption; }
+.engineering-container .power-summary-section      { grid-area: summary; }
+
+/* Four headline metrics in one row */
+.power-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.power-metric .metric-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+}
+
+.power-metric .metric-display {
+    align-items: stretch;
+    gap: 2px;
+}
+
+.power-metric .metric-value {
+    font-size: 22px;
+    line-height: 1.1;
+    text-align: left;
+}
+
+.power-metric .ascii-bar {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Power distribution diagram, shrunk to fit its panel */
+.power-diagram {
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.power-grid-ascii {
+    margin: 0;
+    white-space: pre;
+    font-size: 9px;
+    line-height: 1.02;
+}
+
+/* Consumption list: one compact row per system */
+.consumption-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.consumption-grid .consumption-item {
+    display: grid;
+    grid-template-columns: 1.1fr 1.6fr 0.8fr;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 6px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.consumption-item .system-info,
+.consumption-item .consumption-display,
+.consumption-item .system-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.consumption-item .system-info { justify-content: space-between; }
+.consumption-item .consumption-bar { overflow: hidden; }
+.consumption-item .ascii-bar { font-size: 10px; }
+
+/* Summary becomes a single status strip */
+.power-summary-section .section-header {
+    display: none;
+}
+.power-summary-section .summary-display {
+    display: flex;
+    justify-content: space-around;
+    gap: 16px;
+    font-size: 12px;
+}
+
+/* Template indentation must never render as blank lines on any screen */
+.screen-content {
+    white-space: normal;
+}
+.screen-content pre {
+    white-space: pre;
+}
+
+/* ASCII bars: bar and percentage on one line */
+.consumption-item .ascii-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    line-height: 1.1;
+}
+.consumption-item .consumption-bar { height: auto; }
+.consumption-item .ascii-bar {
+    flex-direction: row;
+    gap: 0;
+}
+.consumption-item .bar-percentage {
+    margin-left: 6px;
+}
+.consumption-item .system-info,
+.consumption-item .consumption-display,
+.consumption-item .system-status {
+    margin: 0;
+}
+.power-grid-ascii { font-size: 8px; }
+
+/* ── Crew: 3-column grid that fits the viewport ───────────────────── */
+.crew-container {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr 1.2fr;
+    grid-template-rows: minmax(0, 1fr) 150px;
+    grid-template-areas:
+        "personnel location vitals"
+        "quarters  quarters alerts";
+    gap: 6px;
+    height: 100%;
+    padding: 4px 2px;
+}
+
+.crew-container > * {
+    min-height: 0;
+    overflow: hidden;
+    padding: 6px 8px;
+}
+
+.crew-container .personnel-section   { grid-area: personnel; }
+.crew-container .location-section    { grid-area: location; }
+.crew-container .vitals-section      { grid-area: vitals; }
+.crew-container .quarters-section    { grid-area: quarters; }
+.crew-container .crew-alerts-section { grid-area: alerts; }
+
+/* Roster: two compact lines per crew member */
+.crew-roster {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.crew-roster .crew-member {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0 8px;
+    padding: 3px 8px;
+    font-size: 11px;
+}
+.crew-member .crew-header {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+}
+.crew-member .crew-details {
+    grid-column: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 10px;
+    color: var(--terminal-green-dim);
+}
+.crew-member .crew-location,
+.crew-member .crew-vitals-summary { display: flex; gap: 4px; }
+.crew-member .crew-vitals-summary { gap: 8px; }
+.crew-member .crew-indicator { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+
+/* Location map: ASCII layout plus a one-line legend */
+.location-section { display: flex; flex-direction: column; }
+.location-section .ship-schematic {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+.location-section .ship-layout {
+    margin: 0;
+    white-space: pre;
+    font-size: 9px;
+    line-height: 1.05;
+}
+.location-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 10px;
+    font-size: 9px;
+    color: var(--terminal-green-dim);
+}
+
+/* Vitals: table on top, detail below, both clipped to the panel */
+.vitals-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+}
+.vitals-section { overflow: hidden; }
+
+/* Quarters: one card per quarters in a single row */
+.quarters-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 6px;
+}
+.quarters-item {
+    padding: 4px 6px;
+    font-size: 10px;
+    overflow: hidden;
+}
+.quarters-item .quarters-header {
+    display: flex;
+    flex-direction: column;
+}
+.quarters-item .quarters-env { display: flex; flex-direction: column; }
+.quarters-item .env-metric { display: flex; justify-content: space-between; gap: 4px; }
+
+.crew-alert-panel { font-size: 11px; overflow: hidden; }
+
+.crew-vitals-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+.crew-vitals-table th,
+.crew-vitals-table td {
+    padding: 2px 8px 2px 0;
+    text-align: left;
+    white-space: nowrap;
+}
+.crew-vitals-table th {
+    font-size: 9px;
+    font-weight: normal;
+    letter-spacing: 0.1em;
+    color: var(--terminal-green-dim);
+    border-bottom: 1px solid var(--terminal-green-dim);
 }

@@ -12,6 +12,18 @@ let engineering;
 let crew;
 let bootSequence;
 
+// The UI is laid out on a fixed 1366x768 stage; scale it to fit the window.
+const STAGE_WIDTH = 1366;
+const STAGE_HEIGHT = 768;
+
+function fitStageToWindow() {
+    const scale = Math.min(window.innerWidth / STAGE_WIDTH, window.innerHeight / STAGE_HEIGHT);
+    document.documentElement.style.setProperty('--stage-scale', scale.toFixed(4));
+}
+
+fitStageToWindow();
+window.addEventListener('resize', fitStageToWindow);
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize core systems
     initializeDataSimulator();
@@ -308,6 +320,12 @@ function initializeKeyboardControls() {
         if (event.key === 'F8') {
             event.preventDefault();
             toggleAudio();
+        }
+
+        // [ and ] lower/raise volume (not while typing in an input)
+        if ((event.key === '[' || event.key === ']') && audioManager &&
+            !/^(INPUT|TEXTAREA)$/.test(event.target.tagName)) {
+            audioManager.adjustVolume(event.key === ']' ? 0.05 : -0.05);
         }
     });
 }
