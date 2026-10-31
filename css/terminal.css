@@ -22,7 +22,6 @@ body {
   margin: 0;
   height: 100vh;
   width: 100vw;
-  perspective: 1000px;
 }
 
 /* The Screen Surface - Curved and Distorted */
@@ -31,11 +30,7 @@ body {
   height: 96vh;
   margin: 2vh 1vw;
   background-color: #001100;
-   /* Inner shadow */
   overflow: hidden;
-  transform-style: preserve-3d;
-  /* Enhanced curvature transform */
-  transform: scale(1) perspective(600px) rotateX(0deg);
 }
 
 /* Enhanced CRT curvature with bezel */
@@ -152,13 +147,6 @@ body {
   100% {
     opacity: 0.96;
   }
-}
-
-/* Text Glow and Phosphor Persistence */
-.terminal-content,
-.terminal-header,
-.nav-bar {
-  filter: contrast(1.2) brightness(1.1);
 }
 
 /* High Intensity Elements (Headers, Alerts) */

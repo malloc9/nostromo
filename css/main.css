@@ -2310,7 +2310,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 0 10px;
-    font-size: 9px;
+    font-size: 10px;
     color: var(--terminal-green-dim);
 }
 
@@ -2331,7 +2331,7 @@ body {
 }
 .quarters-item {
     padding: 4px 6px;
-    font-size: 10px;
+    font-size: 11px;
     overflow: hidden;
 }
 .quarters-item .quarters-header {
@@ -2355,7 +2355,7 @@ body {
     white-space: nowrap;
 }
 .crew-vitals-table th {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: normal;
     letter-spacing: 0.1em;
     color: var(--terminal-green-dim);
@@ -2364,7 +2364,7 @@ body {
 
 .crew-member .crew-role {
     color: var(--terminal-green-dim);
-    font-size: 9px;
+    font-size: 10px;
     letter-spacing: 0.1em;
 }
 

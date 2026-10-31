@@ -148,8 +148,7 @@ html, body {
     inset 0 0 90px rgba(0, 0, 0, 0.95),
     inset 0 0 0 1px #0a0f0a,
     inset 0 0 30px rgba(47, 191, 58, 0.05);
-  transform: perspective(2400px) rotateX(0.4deg);
-  transform-origin: center 60%;
+  /* No 3D tilt here: any rotation makes the browser resample every glyph, blurring small text */
 }
 
 /* Subtle glass reflection — top-left highlight on the curved face */
@@ -201,15 +200,15 @@ html, body {
       to bottom,
       rgba(0, 0, 0, 0) 0px,
       rgba(0, 0, 0, 0) 1px,
-      rgba(0, 0, 0, 0.45) 1px,
-      rgba(0, 0, 0, 0.45) 2px),
+      rgba(0, 0, 0, 0.18) 1px,
+      rgba(0, 0, 0, 0.18) 2px),
     /* (c) vertical aperture grill */
     repeating-linear-gradient(
       to right,
       rgba(0, 0, 0, 0) 0px,
       rgba(0, 0, 0, 0) 2px,
-      rgba(0, 0, 0, 0.10) 2px,
-      rgba(0, 0, 0, 0.10) 3px),
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 3px),
     /* (d) vignette */
     radial-gradient(ellipse at center,
       transparent 30%,
@@ -259,16 +258,15 @@ html, body {
 
 .terminal-content, .terminal-header, .nav-bar, .terminal-footer,
 .console-interface, .screen-header, .ascii-ship, .chart-display {
+  /* tight glow: wide halos smear small glyphs into each other */
   text-shadow:
     0 0 1px var(--phosphor-core),
-    0 0 3px var(--phosphor-bright),
-    0 0 6px var(--phosphor-glow),
-    0 0 10px var(--phosphor-glow);
+    0 0 4px var(--phosphor-glow);
 }
 
 .system-title, h1, h2, .ascii-art, .boot-title,
 .section-header, .ship-name, .boot-prompt, .boot-line.diagnostic-header,
-.terminal-header .system-title, .data-value {
+.terminal-header .system-title {
   text-shadow:
     0 0 1px var(--phosphor-core),
     0 0 4px var(--phosphor-bright),
@@ -280,8 +278,7 @@ html, body {
 .terminal-content,
 .console-output,
 .boot-messages {
-  /* very subtle global contrast/brightness boost to deepen blacks */
-  filter: contrast(1.05) saturate(0.95) brightness(1.02);
+  /* (no filter here: it forces a separate layer that resamples small text) */
 }
 
 /* ===================================================================
