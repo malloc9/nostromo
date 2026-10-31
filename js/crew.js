@@ -214,6 +214,7 @@ class NostromoCrew {
             <div class="crew-member" id="crew-${member.id}" data-crew-id="${member.id}">
                 <div class="crew-header">
                     <span class="crew-name">${member.name}</span>
+                    <span class="crew-role">${member.role || ''}</span>
                     <span class="crew-status status-${member.status}">${member.status.toUpperCase()}</span>
                 </div>
                 <div class="crew-details">
@@ -412,6 +413,7 @@ class NostromoCrew {
                 <div class="crew-member" id="crew-${member.id}" data-crew-id="${member.id}">
                     <div class="crew-header">
                         <span class="crew-name">${member.name}</span>
+                    <span class="crew-role">${member.role || ''}</span>
                         <span class="crew-status status-${member.status}">${member.status.toUpperCase()}</span>
                     </div>
                     <div class="crew-details">

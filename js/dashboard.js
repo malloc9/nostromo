@@ -258,37 +258,37 @@ class NostromoDashboard {
         if (powerLevel < 0) {
             alerts++;
             overallHealth = 'CRITICAL';
-            alertMessages.push('POWER DEFICIT: Consumption exceeds generation');
+            alertMessages.push('POWER DEFICIT: CONSUMPTION EXCEEDS GENERATION');
         } else if (powerLevel < 10) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
-            alertMessages.push('LOW POWER MARGIN: Monitor consumption');
+            alertMessages.push('LOW POWER MARGIN: REDUCE CONSUMPTION');
         }
 
         // Check life support
         if (systemData.lifeSupport.oxygen < 80 || systemData.lifeSupport.co2 > 30) {
             alerts++;
             overallHealth = 'CRITICAL';
-            alertMessages.push('LIFE SUPPORT CRITICAL: O2 low or CO2 high');
+            alertMessages.push('LIFE SUPPORT CRITICAL: O2 LOW OR CO2 HIGH');
         } else if (systemData.lifeSupport.oxygen < 90 || systemData.lifeSupport.co2 > 20) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
-            alertMessages.push('LIFE SUPPORT WARNING: O2 marginal or CO2 elevated');
+            alertMessages.push('LIFE SUPPORT WARNING: O2 MARGINAL OR CO2 ELEVATED');
         }
 
         // Check navigation
         if (systemData.navigation.velocity < 0.1) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
-            alertMessages.push('NAVIGATION WARNING: Sub-optimal velocity');
+            alertMessages.push('NAVIGATION WARNING: VELOCITY BELOW NOMINAL');
         }
 
         // Check crew status
-        const activeCrew = systemData.crew.filter(c => c.status === 'ACTIVE').length;
+        const activeCrew = systemData.crew.filter(c => String(c.status).toUpperCase() === 'ACTIVE').length;
         if (activeCrew < 5) {
             alerts++;
             if (overallHealth === 'OPERATIONAL') overallHealth = 'WARNING';
-            alertMessages.push('CREW STATUS: Below optimal active personnel');
+            alertMessages.push('CREW STATUS: FEWER THAN 5 CREW ACTIVE');
         }
 
         // Add predictive alerts based on trends

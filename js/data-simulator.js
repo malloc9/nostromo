@@ -79,6 +79,7 @@ class DataSimulator {
             {
                 id: "CREW001",
                 name: "DALLAS",
+                role: "CAPTAIN",
                 location: "BRIDGE",
                 status: "active",
                 vitals: {
@@ -90,6 +91,7 @@ class DataSimulator {
             {
                 id: "CREW002", 
                 name: "RIPLEY",
+                role: "WARRANT OFFICER",
                 location: "ENGINEERING",
                 status: "active",
                 vitals: {
@@ -101,6 +103,7 @@ class DataSimulator {
             {
                 id: "CREW003",
                 name: "KANE",
+                role: "EXEC OFFICER",
                 location: "QUARTERS",
                 status: "resting",
                 vitals: {
@@ -112,6 +115,7 @@ class DataSimulator {
             {
                 id: "CREW004",
                 name: "LAMBERT",
+                role: "NAVIGATOR",
                 location: "NAVIGATION",
                 status: "active",
                 vitals: {
@@ -123,6 +127,7 @@ class DataSimulator {
             {
                 id: "CREW005",
                 name: "BRETT",
+                role: "ENG TECH",
                 location: "MAINTENANCE",
                 status: "active",
                 vitals: {
@@ -134,6 +139,7 @@ class DataSimulator {
             {
                 id: "CREW006",
                 name: "PARKER",
+                role: "CHIEF ENGINEER",
                 location: "ENGINEERING",
                 status: "active",
                 vitals: {
@@ -145,6 +151,7 @@ class DataSimulator {
             {
                 id: "CREW007",
                 name: "ASH",
+                role: "SCIENCE OFFICER",
                 location: "SCIENCE",
                 status: "active",
                 vitals: {

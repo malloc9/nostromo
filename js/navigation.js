@@ -163,12 +163,12 @@ class NostromoNavigation {
                     <div class="section-header">ORBITAL STATUS</div>
                     <div class="status-grid">
                         <div class="status-item">
-                            <span class="status-label">ORBIT:</span>
-                            <span class="status-value" id="nav-orbit">STABLE</span>
+                            <span class="status-label">MODE:</span>
+                            <span class="status-value" id="nav-orbit">TRANSIT</span>
                         </div>
                         <div class="status-item">
-                            <span class="status-label">ALTITUDE:</span>
-                            <span class="status-value" id="nav-altitude">--.-- km</span>
+                            <span class="status-label">RANGE:</span>
+                            <span class="status-value" id="nav-altitude">-.-- AU</span>
                         </div>
                         <div class="status-item">
                             <span class="status-label">VELOCITY:</span>
@@ -604,16 +604,16 @@ class NostromoNavigation {
         }
         
         if (altitude) {
-            // Calculate approximate altitude from Z coordinate
-            const alt = Math.max(0, navData.coordinates.z + 200); // Offset for display
-            altitude.textContent = `${alt.toFixed(0)} km`;
+            // Distance from the origin of the coordinate grid, in AU (grid units / 1000)
+            const c = navData.coordinates;
+            altitude.textContent = `${(Math.hypot(c.x, c.y, c.z) / 1000).toFixed(2)} AU`;
         }
         
         if (orbit) {
-            // Determine orbit status based on velocity and altitude
-            const orbitStatus = navData.velocity > 0.1 ? 'DECAY' : 'STABLE';
-            orbit.textContent = orbitStatus;
-            orbit.className = `status-value ${orbitStatus === 'STABLE' ? 'status-ok' : 'status-warning'}`;
+            // Under way, the ship is in transit; at zero velocity it is holding
+            const mode = navData.velocity > 0 ? 'TRANSIT' : 'HOLD';
+            orbit.textContent = mode;
+            orbit.className = `status-value ${mode === 'TRANSIT' ? 'status-ok' : 'status-warning'}`;
         }
         
         // Update additional orbital parameters

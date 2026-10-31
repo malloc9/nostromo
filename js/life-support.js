@@ -243,7 +243,6 @@ class NostromoLifeSupport {
             <div class="ls-zone-item" id="zone-${zone.id.toLowerCase()}">
                 <div class="ls-zone-head">
                     <span class="ls-zone-name">${zone.name}</span>
-                    <span class="ls-zone-priority priority-${zone.priority.toLowerCase()}">${zone.priority}</span>
                 </div>
                 <div class="ls-zone-body">
                     <div class="ls-zone-cell">

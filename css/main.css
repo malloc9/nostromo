@@ -2879,3 +2879,9 @@ overflow: hidden;
     color: var(--terminal-green-dim);
     border-bottom: 1px solid var(--terminal-green-dim);
 }
+
+.crew-member .crew-role {
+    color: var(--terminal-green-dim);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+}
