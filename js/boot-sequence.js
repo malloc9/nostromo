@@ -19,8 +19,9 @@ class NostromoBootSequence {
         
         this.isBooting = false;
         this.bootComplete = false;
-        this.typingSpeed = 15; // milliseconds per character
-        this.messageDelay = 400; // delay between messages
+        this.typingSpeed = 6; // milliseconds per character
+        this.messageDelay = 150; // delay between messages
+        this.skipRequested = false;
         this.currentMessageIndex = 0;
         
         this.init();
@@ -130,10 +131,10 @@ class NostromoBootSequence {
             diagElement.className = 'boot-line diagnostic-line';
             diagElement.textContent = diagnostic;
             messagesContainer.appendChild(diagElement);
-            await this.wait(120);
+            await this.wait(80);
         }
         
-        await this.wait(300);
+        await this.wait(200);
         
         // Clear diagnostics
         messagesContainer.innerHTML = '';
@@ -166,17 +167,26 @@ class NostromoBootSequence {
             cursor.style.opacity = cursor.style.opacity === '0' ? '1' : '0';
         }, 500);
 
-        // Auto-dismiss after 800ms — keyboard press still works to skip immediately
+        // Auto-dismiss shortly after the ready prompt; any key or click skips sooner
         setTimeout(() => {
             this.completeBootSequence();
-        }, 800);
+        }, this.skipRequested ? 0 : 500);
     }
     
     // Type a message with animation
     async typeMessage(element, message) {
         element.textContent = '';
         
+        if (this.skipRequested) {
+            element.textContent = message;
+            return;
+        }
+        
         for (let i = 0; i < message.length; i++) {
+            if (this.skipRequested) {
+                element.textContent = message;
+                return;
+            }
             element.textContent += message[i];
             
             // Typing sound removed - silent typing
@@ -269,7 +279,16 @@ class NostromoBootSequence {
     
     // Utility method for delays
     wait(ms) {
+        if (this.skipRequested) return Promise.resolve();
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Jump to the end: remaining delays and typing are skipped, then the boot completes
+    skip() {
+        this.skipRequested = true;
+        if (this.bootComplete) {
+            this.completeBootSequence();
+        }
     }
     
     // Reset boot sequence for testing

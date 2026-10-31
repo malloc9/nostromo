@@ -50,6 +50,14 @@ document.addEventListener('DOMContentLoaded', function () {
     // Listen for route changes
     window.addEventListener('routechange', handleRouteChange);
 
+    // A click anywhere on the boot screen skips it, like a key press
+    const bootScreenEl = document.getElementById('boot-screen');
+    if (bootScreenEl) {
+        bootScreenEl.addEventListener('click', () => {
+            if (bootSequence) bootSequence.skip();
+        });
+    }
+
     // Start boot sequence if needed
     startApplicationBootSequence();
 });
@@ -299,8 +307,8 @@ function initializeKeyboardControls() {
         const bootScreen = document.getElementById('boot-screen');
         if (bootScreen && bootScreen.classList.contains('active')) {
             event.preventDefault();
-            if (bootSequence && bootSequence.bootComplete) {
-                bootSequence.completeBootSequence();
+            if (bootSequence) {
+                bootSequence.skip();
             } else if (router) {
                 router.completeBootSequence();
             }
