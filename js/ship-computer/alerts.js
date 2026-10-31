@@ -27,15 +27,14 @@
     const ns = root.NostromoShipComputer = root.NostromoShipComputer || {};
 
     /**
-     * @param {AlertInput} input
-     * @param {number} now simulation time, used for threshold alerts
+     * Alerts for faults recorded on subsystems. These change only when an operation runs.
+     * @param {Object<string, Array<Object>>} faultsBySubsystem
      * @returns {Alert[]}
      */
-    function derive(input, now) {
+    function faultAlerts(faultsBySubsystem) {
         const alerts = [];
-
-        Object.keys(input.faultsBySubsystem).forEach((subsystem) => {
-            input.faultsBySubsystem[subsystem].forEach((fault) => {
+        Object.keys(faultsBySubsystem).forEach((subsystem) => {
+            faultsBySubsystem[subsystem].forEach((fault) => {
                 alerts.push({
                     id: `${subsystem}:${fault.code}`,
                     subsystem,
@@ -46,7 +45,18 @@
                 });
             });
         });
+        return alerts;
+    }
 
+    /**
+     * Alerts for thresholds on the readings. A pure function of the readings at `now`,
+     * so the store can sample it at any simulation time.
+     * @param {Omit<AlertInput, 'faultsBySubsystem'>} input
+     * @param {number} now
+     * @returns {Alert[]}
+     */
+    function thresholdAlerts(input, now) {
+        const alerts = [];
         const threshold = (subsystem, id, severity, message) => {
             alerts.push({ id, subsystem, severity, message, since: now });
         };
@@ -76,7 +86,17 @@
         return alerts;
     }
 
-    ns.alerts = { derive };
+    /**
+     * All alerts as they stand for one input.
+     * @param {AlertInput} input
+     * @param {number} now
+     * @returns {Alert[]}
+     */
+    function derive(input, now) {
+        return faultAlerts(input.faultsBySubsystem).concat(thresholdAlerts(input, now));
+    }
+
+    ns.alerts = { derive, faultAlerts, thresholdAlerts };
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = ns.alerts;

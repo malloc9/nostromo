@@ -119,7 +119,7 @@ describe('alerts: transitions are logged', () => {
         expect(raised).toHaveLength(1);
     });
 
-    test('a threshold alert is raised by tick when the reading crosses the line', () => {
+    test('a threshold that is already crossed at start is logged at the start time', () => {
         // Two active humans become resting, leaving four active: below the crew threshold.
         const scenario = ns.scenario.standardScenario();
         scenario.subsystems.crew.fields.members.forEach((m) => {
@@ -139,6 +139,68 @@ describe('alerts: transitions are logged', () => {
         store.tick();
         store.tick();
         expect(store.events()).toHaveLength(before);
+    });
+});
+
+describe('alerts: threshold timing does not depend on who asks', () => {
+    // Power margin = 10 + 1.5 * sin(...): it dips under the 10 line half of every 30 s,
+    // so there are many real crossings in ten minutes.
+    function togglingScenario() {
+        const scenario = ns.scenario.standardScenario();
+        scenario.subsystems.engineering.measurements.powerConsumption = ns.scenario.measure(76);
+        return scenario;
+    }
+
+    test('a store ticked every second and one ticked once at the end log identical events', () => {
+        const TEN_MIN = 10 * 60 * 1000;
+        const fastClock = createManualClock(START);
+        const fast = createShipStore({ clock: fastClock, scenario: togglingScenario() });
+        for (let t = 0; t < TEN_MIN; t += 1000) {
+            fastClock.advance(1000);
+            fast.tick();
+        }
+
+        const slowClock = createManualClock(START);
+        const slow = createShipStore({ clock: slowClock, scenario: togglingScenario() });
+        slowClock.advance(TEN_MIN);
+        slow.tick();
+
+        expect(fast.events().length).toBeGreaterThan(4);
+        expect(slow.events()).toEqual(fast.events());
+    });
+
+    test('threshold events are stamped on the one-second grid anchored at the start', () => {
+        const clock = createManualClock(START);
+        const store = createShipStore({ clock, scenario: togglingScenario() });
+        clock.advance(2 * 60 * 1000);
+        store.tick();
+        const thresholdEvents = store.events().filter((e) => e.message.includes('LOW POWER MARGIN'));
+        expect(thresholdEvents.length).toBeGreaterThan(0);
+        thresholdEvents.forEach((e) => {
+            expect((e.time - START) % 1000).toBe(0);
+            expect(e.time).toBeLessThanOrEqual(START + 2 * 60 * 1000);
+        });
+    });
+
+    test('the alert board never shows a threshold that the log has not recorded', () => {
+        const clock = createManualClock(START);
+        const store = createShipStore({ clock, scenario: togglingScenario() });
+        for (let step = 0; step < 240; step++) {
+            clock.advance(250);
+            const onBoard = store.alerts().list.some((a) => a.id === 'LOW_POWER_MARGIN');
+            const raised = store.events().filter((e) => e.message.startsWith('ALERT RAISED: LOW POWER MARGIN')).length;
+            const cleared = store.events().filter((e) => e.message.startsWith('ALERT CLEARED: LOW POWER MARGIN')).length;
+            expect(onBoard).toBe(raised > cleared);
+        }
+    });
+
+    test('a fault raised between grid points is ordered after the thresholds that came before it', () => {
+        const clock = createManualClock(START);
+        const store = createShipStore({ clock, scenario: togglingScenario() });
+        clock.advance(40 * 1000 + 500);
+        store.operate('crew', 'addFault', { code: 'MED-1', message: 'CHECK' }, 'crew');
+        const times = store.events().map((e) => e.time);
+        expect(times).toEqual([...times].sort((a, b) => a - b));
     });
 });
 

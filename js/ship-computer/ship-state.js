@@ -141,8 +141,12 @@
 
         const listeners = [];
         let version = 0;
-        // Alerts already raised, keyed by id. Transitions are logged against this.
-        let activeAlerts = new Map();
+        // Threshold alerts are sampled on a one-second grid anchored at the start, so the
+        // log is the same however often anything asks. sampledUpTo is the last grid point done.
+        const SAMPLE_MS = 1000;
+        let sampledUpTo = startedAt;
+        let thresholdAlertsNow = new Map();
+        let faultAlertsNow = new Map();
 
         function elapsed() {
             return clock.now() - startedAt;
@@ -161,37 +165,46 @@
             });
         }
 
-        /** Alerts as they stand now, from faults and readings. Reads nothing mutable. */
-        function currentAlerts() {
-            const now = clock.now();
+        /** The readings the threshold rules use, at any simulation time. */
+        function thresholdInputAt(time) {
+            // Read only the five values the rules use. Sampling runs once a simulated second,
+            // so it must not resolve whole subsystems each time.
+            const at = time - startedAt;
+            const read = (subsystem, key) => readMeasurement(privates[subsystem].measurements[key], at);
+            const activeHumans = privates.crew.fields.members
+                .filter((m) => m.type === 'human' && m.status === 'active').length;
+            return {
+                power: { generation: read('engineering', 'powerGeneration'), consumption: read('engineering', 'powerConsumption') },
+                lifeSupport: { oxygen: read('lifeSupport', 'oxygen'), co2: read('lifeSupport', 'co2') },
+                navigation: { velocity: read('navigation', 'velocity') },
+                activeCrew: activeHumans
+            };
+        }
+
+        function thresholdAlertsAt(time) {
+            return new Map(ns.alerts.thresholdAlerts(thresholdInputAt(time), time).map((a) => [a.id, a]));
+        }
+
+        function faultsByName() {
             const faultsBySubsystem = {};
             Object.keys(privates).forEach((name) => {
                 faultsBySubsystem[name] = privates[name].faults;
             });
-            const eng = snapshot('engineering').measurements;
-            const ls = snapshot('lifeSupport').measurements;
-            const nav = snapshot('navigation').measurements;
-            const humans = snapshot('crew').state.members
-                .filter((m) => m.type === 'human' && m.status === 'active');
-
-            return ns.alerts.derive({
-                faultsBySubsystem,
-                power: { generation: eng.powerGeneration, consumption: eng.powerConsumption },
-                lifeSupport: { oxygen: ls.oxygen, co2: ls.co2 },
-                navigation: { velocity: nav.velocity },
-                activeCrew: humans.length
-            }, now);
+            return faultsBySubsystem;
         }
 
-        /**
-         * Bring the log in step with the alerts: one "raised" event per new alert,
-         * one "cleared" event per alert whose cause has gone.
-         */
-        function syncAlerts(now) {
-            const current = new Map(currentAlerts().map((a) => [a.id, a]));
+        /** Alerts as they stand now, from faults and readings. Reads nothing mutable. */
+        function currentAlerts() {
+            // Thresholds come from the last grid sample, the same state the log has recorded.
+            return ns.alerts.faultAlerts(faultsByName())
+                .concat(Array.from(thresholdAlertsNow.values()));
+        }
+
+        /** One "raised" event per alert that appeared, one "cleared" per alert that went. */
+        function logTransitions(previous, current, time) {
             current.forEach((alert, id) => {
-                if (!activeAlerts.has(id)) {
-                    appendEvent(now, {
+                if (!previous.has(id)) {
+                    appendEvent(time, {
                         type: alert.severity === 'CRITICAL' ? 'error' : 'warning',
                         subsystem: alert.subsystem,
                         severity: alert.severity,
@@ -199,9 +212,9 @@
                     });
                 }
             });
-            activeAlerts.forEach((alert, id) => {
+            previous.forEach((alert, id) => {
                 if (!current.has(id)) {
-                    appendEvent(now, {
+                    appendEvent(time, {
                         type: 'status',
                         subsystem: alert.subsystem,
                         severity: 'INFO',
@@ -209,7 +222,27 @@
                     });
                 }
             });
-            activeAlerts = current;
+        }
+
+        /**
+         * Evaluate threshold alerts at every grid point up to `until`, logging each
+         * transition at its grid time. Calling this earlier or later changes nothing:
+         * the same grid points are always evaluated in order.
+         */
+        function sampleThresholdsUntil(until) {
+            while (sampledUpTo + SAMPLE_MS <= until) {
+                sampledUpTo += SAMPLE_MS;
+                const current = thresholdAlertsAt(sampledUpTo);
+                logTransitions(thresholdAlertsNow, current, sampledUpTo);
+                thresholdAlertsNow = current;
+            }
+        }
+
+        /** Log fault alerts that appeared or cleared, at the time of the change. */
+        function syncFaultAlerts(now) {
+            const current = new Map(ns.alerts.faultAlerts(faultsByName()).map((a) => [a.id, a]));
+            logTransitions(faultAlertsNow, current, now);
+            faultAlertsNow = current;
         }
 
         function snapshot(name) {
@@ -249,6 +282,8 @@
             if (!op) throw new Error(`unknown operation: ${operation}`);
 
             const now = clock.now();
+            // Judge threshold readings up to now against the state before this change.
+            sampleThresholdsUntil(now);
             const next = clone(privates[name]);
             const described = op(next, args || {}, now);
             next.lastUpdated = now;
@@ -258,7 +293,7 @@
             if (described) {
                 appendEvent(now, { ...described, subsystem: name });
             }
-            syncAlerts(now);
+            syncFaultAlerts(now);
             const event = { subsystem: name, operation, version, time: now };
             // The change is already committed, so one bad subscriber must not
             // hide it from the others or make this write look failed.
@@ -286,6 +321,8 @@
 
         /** The alert board every screen reads: overall status and the active alerts. */
         function alertBoard() {
+            // Sample first, so the board never shows a threshold the log has not yet recorded.
+            sampleThresholdsUntil(clock.now());
             const list = currentAlerts();
             const overall = list.some((a) => a.severity === 'CRITICAL') ? 'CRITICAL'
                 : (list.length ? 'WARNING' : 'OPERATIONAL');
@@ -297,12 +334,13 @@
          * so the UI calls this on each refresh; calling it twice at the same time logs nothing new.
          */
         function tick() {
-            syncAlerts(clock.now());
+            sampleThresholdsUntil(clock.now());
             return alertBoard();
         }
 
         // Anything already active when the store starts is logged at the start time.
-        syncAlerts(startedAt);
+        thresholdAlertsNow = thresholdAlertsAt(startedAt);
+        logTransitions(new Map(), thresholdAlertsNow, startedAt);
 
         return {
             dataVersion: scenario.dataVersion,
