@@ -157,7 +157,7 @@ class NostromoCrew {
                 <!-- Ship Layout with Crew Positions -->
                 <div class="location-section">
                     <div class="section-header">CREW LOCATION TRACKING</div>
-                    <div class="ship-schematic" id="ship-schematic">
+                    <div class="ship-schematic" id="crew-ship-schematic">
                         ${this.generateShipSchematicHTML()}
                     </div>
                     <div class="location-legend">

@@ -225,7 +225,7 @@ class NostromoLifeSupport {
                 <section class="ls-row ls-row-alerts">
                     <div class="ls-section-header">
                         <span>SYSTEM ALERTS</span>
-                        <span class="ls-alert-count" id="alert-count">0 ACTIVE</span>
+                        <span class="ls-alert-count" id="ls-alert-count">0 ACTIVE</span>
                     </div>
                     <div class="ls-alert-panel" id="alert-panel">
                         <div class="no-alerts">NO ACTIVE ALERTS</div>
@@ -877,12 +877,12 @@ class NostromoLifeSupport {
     updateAlerts(data) {
         const alerts = this.generateAlerts(data);
         const alertPanel = document.getElementById('alert-panel');
-        const alertCount = document.getElementById('alert-count');
+        const alertCount = document.getElementById('ls-alert-count');
 
         if (!alertPanel || !alertCount) return;
 
-        alertCount.textContent = alerts.length.toString();
-        alertCount.className = `alert-count ${alerts.length > 0 ? 'has-alerts' : ''}`;
+        alertCount.textContent = `${alerts.length} ACTIVE`;
+        alertCount.className = `ls-alert-count ${alerts.length > 0 ? 'has-alerts' : ''}`;
 
         if (alerts.length === 0) {
             alertPanel.innerHTML = '<div class="no-alerts">NO ACTIVE ALERTS</div>';
