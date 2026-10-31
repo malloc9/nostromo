@@ -220,9 +220,9 @@ class NostromoBootSequence {
                 bootScreen.classList.remove('active');
                 bootScreen.style.opacity = '1';
                 
-                // Navigate to dashboard
+                // Land on the route in the URL (dashboard when there is none)
                 if (window.router) {
-                    window.router.navigateTo('dashboard', true);
+                    window.router.navigateTo(window.router.getInitialRoute(), true);
                 }
             }, 250);
             

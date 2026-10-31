@@ -141,6 +141,12 @@ class NostromoRouter {
         return window.location.hash.slice(1) || this.defaultRoute;
     }
 
+    // Route named by the URL hash, or the default when it is missing or unknown
+    getInitialRoute() {
+        const hash = this.getCurrentHash();
+        return this.routes.has(hash) ? hash : this.defaultRoute;
+    }
+
     setHash(path) {
         if (path !== this.getCurrentHash()) {
             window.location.hash = path;
@@ -212,6 +218,9 @@ class NostromoRouter {
 
             // Update navigation state
             this.updateNavigation(path);
+
+            // Keep the URL hash in step with the screen shown
+            this.setHash(path);
 
             // Call onEnter for new route
             if (route.onEnter) {

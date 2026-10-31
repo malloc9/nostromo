@@ -266,7 +266,7 @@ async function startApplicationBootSequence() {
     } else {
         // Skip boot sequence and go directly to dashboard
         if (router) {
-            router.navigateTo('dashboard', false);
+            router.navigateTo(router.getInitialRoute(), false);
         }
     }
 }
