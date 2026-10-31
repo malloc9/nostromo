@@ -548,10 +548,10 @@ class NostromoLifeSupport {
         const temperatureTrend = this.calculateParameterTrend('temperature');
 
         let summary = '<div class="trend-grid">';
-        summary += `<div class="trend-item"><span class="trend-label">O2:</span> <span class="trend-value ${oxygenTrend.direction}">${oxygenTrend.symbol} ${Math.abs(oxygenTrend.change).toFixed(2)}%/hr</span></div>`;
-        summary += `<div class="trend-item"><span class="trend-label">CO2:</span> <span class="trend-value ${co2Trend.direction}">${co2Trend.symbol} ${Math.abs(co2Trend.change).toFixed(2)} PPM/hr</span></div>`;
-        summary += `<div class="trend-item"><span class="trend-label">PRES:</span> <span class="trend-value ${pressureTrend.direction}">${pressureTrend.symbol} ${Math.abs(pressureTrend.change).toFixed(3)} ATM/hr</span></div>`;
-        summary += `<div class="trend-item"><span class="trend-label">TEMP:</span> <span class="trend-value ${temperatureTrend.direction}">${temperatureTrend.symbol} ${Math.abs(temperatureTrend.change).toFixed(2)}°C/hr</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">O2:</span> <span class="trend-value ${oxygenTrend.direction}">${this.formatTrend(oxygenTrend, 2, '%')}</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">CO2:</span> <span class="trend-value ${co2Trend.direction}">${this.formatTrend(co2Trend, 2, ' PPM')}</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">PRES:</span> <span class="trend-value ${pressureTrend.direction}">${this.formatTrend(pressureTrend, 3, ' ATM')}</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">TEMP:</span> <span class="trend-value ${temperatureTrend.direction}">${this.formatTrend(temperatureTrend, 2, '°C')}</span></div>`;
         summary += '</div>';
 
         return summary;
@@ -563,8 +563,14 @@ class NostromoLifeSupport {
     calculateParameterTrend(param) {
         const data = this.historicalData.map(d => d[param]);
         if (data.length < 3) {
-            return { direction: 'stable', symbol: '→', change: 0 };
+            return { direction: 'stable', symbol: '→', change: 0, windowSec: 0 };
         }
+
+        // Smallest net change over the window that counts as a real trend, per parameter
+        const thresholds = { oxygen: 0.15, co2: 0.4, pressure: 0.003, temperature: 0.1 };
+        const windowSec = Math.round(
+            (this.historicalData[data.length - 1].timestamp - this.historicalData[0].timestamp) / 1000
+        );
 
         // Calculate linear regression slope for more accurate trend
         const n = data.length;
@@ -579,19 +585,30 @@ class NostromoLifeSupport {
         });
 
         const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-        
+        // Net change across the whole window (slope is per sample)
+        const change = slope * (n - 1);
+        const threshold = thresholds[param] !== undefined ? thresholds[param] : 0.05;
+
         let direction = 'stable';
         let symbol = '→';
-        
-        if (slope > 0.05) {
+
+        if (change > threshold) {
             direction = 'improving';
             symbol = '↗';
-        } else if (slope < -0.05) {
+        } else if (change < -threshold) {
             direction = 'declining';
             symbol = '↘';
         }
 
-        return { direction: direction, symbol: symbol, change: slope };
+        return { direction: direction, symbol: symbol, change: change, windowSec: windowSec };
+    }
+
+    /**
+     * Format a trend as signed net change over its window, e.g. "↗ +0.24% /24S"
+     */
+    formatTrend(trend, decimals, unit) {
+        const sign = trend.change < 0 ? '-' : '+';
+        return `${trend.symbol} ${sign}${Math.abs(trend.change).toFixed(decimals)}${unit} /${trend.windowSec}S`;
     }
 
     /**

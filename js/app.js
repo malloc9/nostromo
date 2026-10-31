@@ -245,11 +245,6 @@ function handleMotherCommand(cmd) {
     resp.textContent = response;
     out.appendChild(resp);
 
-    // add a blank spacer
-    const sp = document.createElement('div');
-    sp.innerHTML = '&nbsp;';
-    out.appendChild(sp);
-
     out.scrollTop = out.scrollHeight;
 }
 
