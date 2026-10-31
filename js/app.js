@@ -170,7 +170,7 @@ function initMotherInterface() {
         if (e.key === 'Enter') {
             const cmd = input.value.trim();
             if (!cmd) return;
-            handleMotherCommand(cmd.toUpperCase());
+            handleMotherCommand(cmd);
             input.value = '';
         } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
@@ -192,58 +192,35 @@ function initMotherInterface() {
     }
 }
 
-const MOTHER_RESPONSES = {
-    'HELLO': 'INTERFACE 2037 READY FOR INQUIRY.',
-    'HI': 'INTERFACE 2037 READY FOR INQUIRY.',
-    'STATUS': 'ALL SYSTEMS NOMINAL. SHIP COURSE CORRECT.',
-    'REPORT': 'STANDARD NAVIGATION PROTOCOLS IN EFFECT.',
-    'WHO ARE YOU': 'I AM MU/TH/UR 6000. SHIP MAINFRAME.',
-    'WHAT IS YOUR MISSION': 'COMMERCIAL TOWING VEHICLE NOSTROMO. CREW: 7. CARGO: REFINERY.',
-    'HELP': 'AVAILABLE: STATUS, REPORT, CREW, MISSION, JONES, LOGS, OVERRIDE, DESTRUCT, SPECIAL ORDER 937',
-    'SYSTEM': 'SYSTEM DIAGNOSTIC: OPERATIONAL. 2.1 TB MEMORY ALLOCATED.',
-    'LOGS': 'ACCESS DENIED. RESTRICTED TO SCIENCE OFFICER.',
-    'CREW': 'DALLAS, KANE, RIPLEY, ASH, LAMBERT, PARKER, BRETT. JONES THE CAT.',
-    'JONES': 'SHIP CAT. VITAL SIGNS: NORMAL.',
-    'CAT': 'SHIP CAT. VITAL SIGNS: NORMAL.',
-    'ASH': 'SCIENCE OFFICER. ANDROID. DESIGNATION: AX-12.',
-    'RIPLEY': 'WARRANT OFFICER ELLEN RIPLEY. NAVIGATION OFFICER.',
-    'DALLAS': 'CAPTAIN DALLAS. SHIP COMMANDER.',
-    'KANE': 'EXECUTIVE OFFICER. FIRST OFFICER.',
-    'LAMBERT': 'NAVIGATION OFFICER.',
-    'PARKER': 'CHIEF ENGINEER.',
-    'BRETT': 'ENGINEERING TECHNICIAN.',
-    'MISSION': 'RETURN REFINERY TO EARTH. CURRENT VECTOR: SOL SYSTEM.',
-    'INTERFACE 2037': 'ACCESSING SECURE FILE... [SEE: SPECIAL ORDER 937]',
-    'SPECIAL ORDER 937': 'PRIORITY ONE. INSURE RETURN OF ORGANISM FOR ANALYSIS. ALL OTHER CONSIDERATIONS SECONDARY. CREW EXPENDABLE.',
-    'OVERRIDE': 'ACCESS DENIED. COMMAND AUTHORIZATION REQUIRED.',
-    'DESTRUCT': 'WARNING: SELF-DESTRUCT SEQUENCE. MANUAL ACTIVATION REQUIRED AT EMERGENCY CONSOLE.'
-};
+let motherEngine = null;
+
+// The MOTHER terminal's command engine. Built once; the registry holds HELP and
+// the legacy responder answers anything the registry does not know yet.
+function getMotherEngine() {
+    if (!motherEngine) {
+        const ns = window.NostromoShipComputer;
+        const registry = ns.registry.createRegistry();
+        ns.systemCommands.register(registry);
+        motherEngine = ns.engine.createEngine({
+            registry,
+            fallback: (normalized) => ns.legacy.respond(normalized)
+        });
+    }
+    return motherEngine;
+}
 
 function handleMotherCommand(cmd) {
     const out = document.getElementById('mother-output');
     if (!out) return;
 
-    // echo user input
-    const userLine = document.createElement('div');
-    userLine.className = 'mother-input-line-echo';
-    userLine.innerHTML = `<span class="mother-prompt">&gt;</span> <span class="mother-user-text">${cmd}</span>`;
-    out.appendChild(userLine);
-
-    // find response
-    let response = MOTHER_RESPONSES[cmd];
-    let klass = 'mother-response';
-    if (!response) {
-        if (cmd.startsWith('WHAT IS')) response = 'INSUFFICIENT DATA FOR MEANINGFUL ANSWER.';
-        else if (cmd === 'CLS' || cmd === 'CLEAR') { out.innerHTML = ''; return; }
-        else response = 'UNRECOGNIZED COMMAND. PLEASE RESTATE.';
+    if (cmd.toUpperCase() === 'CLS' || cmd.toUpperCase() === 'CLEAR') {
+        out.innerHTML = '';
+        return;
     }
-    if (cmd === 'DESTRUCT' || cmd === 'SPECIAL ORDER 937' || cmd === 'INTERFACE 2037') klass = 'mother-response urgent';
-    if (cmd === 'OVERRIDE') klass = 'mother-response alert';
 
-    const resp = document.createElement('div');
-    resp.className = klass;
-    resp.textContent = response;
-    out.appendChild(resp);
+    const view = window.NostromoShipComputer.terminalView;
+    view.echo(out, cmd);
+    view.renderBlocks(out, getMotherEngine().execute(cmd).blocks);
 
     out.scrollTop = out.scrollHeight;
 }

@@ -221,6 +221,13 @@ async function validateBuild() {
     'js/data-simulator.js',
     'js/ship-computer/namespace.js',
     'js/ship-computer/util.js',
+    'js/ship-computer/blocks.js',
+    'js/ship-computer/parser.js',
+    'js/ship-computer/registry.js',
+    'js/ship-computer/engine.js',
+    'js/ship-computer/system-commands.js',
+    'js/ship-computer/legacy-responses.js',
+    'js/ship-computer/terminal-view.js',
     '.nojekyll'
   ];
   

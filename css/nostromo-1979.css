@@ -1596,3 +1596,56 @@ html, body {
   transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
   transform-origin: center center;
 }
+
+/* MOTHER command output blocks (ship-computer terminal-view.js) */
+.mother-interface .mother-response.error {
+  color: var(--alert-red);
+  font-weight: 700;
+}
+
+.mother-interface .mother-response.mother-heading {
+  color: var(--phosphor-bright);
+  letter-spacing: 0.12em;
+  margin-top: 6px;
+}
+
+.mother-interface .mother-table {
+  margin: 4px 0 8px 0;
+}
+
+.mother-interface .mother-table-title {
+  color: var(--phosphor-bright);
+  margin-bottom: 2px;
+}
+
+.mother-interface .mother-table-row {
+  display: flex;
+  gap: 24px;
+}
+
+.mother-interface .mother-table-cell {
+  flex: 0 0 220px;
+}
+
+.mother-interface .mother-table-cell:last-child {
+  flex: 1 1 auto;
+}
+
+.mother-interface .mother-table-head .mother-table-cell {
+  color: var(--phosphor-dim);
+  letter-spacing: 0.12em;
+}
+
+.mother-interface .mother-status-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mother-interface .mother-status-alert .mother-status-value {
+  color: var(--alert-red);
+}
+
+.mother-interface .mother-status-warning .mother-status-value {
+  color: var(--alert-amber);
+}
