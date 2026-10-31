@@ -221,6 +221,8 @@ async function validateBuild() {
     'js/data-simulator.js',
     'js/ship-computer/namespace.js',
     'js/ship-computer/util.js',
+    'js/ship-computer/ship-scenario.js',
+    'js/ship-computer/ship-state.js',
     'js/ship-computer/blocks.js',
     'js/ship-computer/parser.js',
     'js/ship-computer/registry.js',

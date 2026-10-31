@@ -1,0 +1,203 @@
+/**
+ * The "standard" scenario: the initial ship state the store starts from.
+ *
+ * UNITS (used everywhere in the ship computer):
+ *   - oxygen, carbon dioxide, humidity, fuel, efficiency, generation,
+ *     consumption, oxygen saturation: percent (0-100)
+ *   - pressure: kPa (the screens convert to ATM at the adapter)
+ *   - temperature: degrees Celsius
+ *   - heart rate: beats per minute
+ *   - heading: degrees; coordinates: ship-relative units; velocity: units per second
+ *   - time: milliseconds since the epoch, from the injected simulation clock
+ *
+ * DRIFT POLICY (how values move without randomness):
+ *   A measurement's value at time t is a pure function of t and its definition:
+ *     value(t) = base + offset + amplitude * sin(2*pi*t / period + phase)
+ *   minus decayPerHour * elapsed hours (fuel only), then clamped to [min, max]
+ *   and rounded to `precision` decimals. Two readers asking at the same simulated
+ *   time therefore get the same number, and the same clock always gives the same
+ *   history. Nothing is stored per read.
+ *
+ * ROLES: the `members` list below is the only place that says who holds which
+ * position. Every screen reads positions from the store, never from its own list.
+ *
+ * Each measurement is written as `measure(base, options)` so the drift
+ * parameters sit next to the value they describe.
+ */
+(function (root) {
+    const ns = root.NostromoShipComputer = root.NostromoShipComputer || {};
+
+    const HOUR_MS = 60 * 60 * 1000;
+    const SCENARIO_ETA_HOURS = 72;
+
+    /**
+     * @param {number} base
+     * @param {{offset?: number, amplitude?: number, period?: number, phase?: number,
+     *          min?: number, max?: number, precision?: number, decayPerHour?: number}} [options]
+     */
+    function measure(base, options) {
+        const o = options || {};
+        return {
+            kind: 'measurement',
+            base,
+            offset: o.offset || 0,
+            amplitude: o.amplitude || 0,
+            period: o.period || 60,
+            phase: o.phase || 0,
+            min: o.min === undefined ? -Infinity : o.min,
+            max: o.max === undefined ? Infinity : o.max,
+            precision: o.precision === undefined ? 1 : o.precision,
+            decayPerHour: o.decayPerHour || 0
+        };
+    }
+
+    /**
+     * Crew entry. `type` is 'human' or 'animal'; the screens list humans only.
+     * `vitals` are measurements, so each member drifts on its own phase.
+     */
+    function member(index, data) {
+        const phase = index * 0.9;
+        const entry = {
+            id: `CREW00${index + 1}`,
+            name: data.name,
+            type: data.type || 'human',
+            position: data.position,
+            location: data.location,
+            status: data.status,
+            department: 'COMMAND',
+            cryosleep: false,
+            medicalStatus: 'FIT',
+            securityClearance: 'LEVEL 3',
+            vitals: {
+                heartRate: measure(data.heartRate, { offset: 1.5, amplitude: 6.5, period: 90, phase, min: 50, max: 120, precision: 0 }),
+                temperature: measure(data.temperature, { offset: 0.1, amplitude: 0.4, period: 120, phase, min: data.tempMin || 35, max: data.tempMax || 38.5, precision: 1 }),
+                oxygenSat: measure(data.oxygenSat, { offset: -0.5, amplitude: 1.5, period: 150, phase, min: 90, max: 100, precision: 0 })
+            }
+        };
+        return Object.assign(entry, data.profile);
+    }
+
+    /**
+     * @returns {{subsystems: Object<string, Object>}} a fresh, independent copy of the standard scenario
+     */
+    function standardScenario() {
+        return {
+            scenarioId: 'standard',
+            dataVersion: 1,
+            subsystems: {
+                identity: {
+                    status: 'NOMINAL',
+                    fields: {
+                        vessel: 'USCSS NOSTROMO',
+                        registration: '1809246(09)',
+                        vesselClass: 'COMMERCIAL TOWING VEHICLE',
+                        homePort: 'THOMAS EDISON'
+                    },
+                    measurements: {}
+                },
+                mission: {
+                    status: 'NOMINAL',
+                    fields: {
+                        objective: 'RETURN REFINERY TO EARTH',
+                        cargo: 'REFINERY',
+                        crewComplement: 7
+                    },
+                    measurements: {}
+                },
+                navigation: {
+                    status: 'NOMINAL',
+                    fields: {
+                        destination: 'LV-426',
+                        etaOffsetHours: SCENARIO_ETA_HOURS,
+                        coordinates: {
+                            x: measure(-2847.3, { amplitude: 0.1, period: 240, phase: 0, precision: 1 }),
+                            y: measure(1592.7, { amplitude: 0.1, period: 300, phase: 1.1, precision: 1 }),
+                            z: measure(-834.2, { amplitude: 0.1, period: 360, phase: 2.2, precision: 1 })
+                        }
+                    },
+                    measurements: {
+                        heading: measure(127.4, { amplitude: 0.5, period: 200, precision: 1 }),
+                        velocity: measure(0.15, { amplitude: 0.01, period: 180, precision: 3, min: 0 })
+                    }
+                },
+                engineering: {
+                    status: 'NOMINAL',
+                    fields: {},
+                    measurements: {
+                        powerGeneration: measure(85, { offset: -1, amplitude: 4, period: 30, min: 0, max: 100 }),
+                        powerConsumption: measure(72, { offset: 2, amplitude: 10, period: 60, min: 0, max: 100 }),
+                        powerEfficiency: measure(88, { offset: -0.5, amplitude: 2.5, period: 45, min: 0, max: 100 }),
+                        fuelReserve: measure(67, { decayPerHour: 0.01, min: 0, max: 100, precision: 2 })
+                    }
+                },
+                lifeSupport: {
+                    status: 'NOMINAL',
+                    fields: {},
+                    measurements: {
+                        oxygen: measure(95, { offset: -0.5, amplitude: 1.5, period: 90, min: 0, max: 100 }),
+                        co2: measure(12, { offset: 1, amplitude: 2, period: 120, min: 0, max: 50 }),
+                        pressure: measure(103.4, { offset: -1, amplitude: 3, period: 150, min: 81.06, max: 121.59, precision: 1 }),
+                        temperature: measure(21.5, { offset: 0.25, amplitude: 1.75, period: 180, min: 18, max: 24 }),
+                        humidity: measure(45, { offset: 0, amplitude: 3, period: 210, min: 30, max: 60, precision: 0 })
+                    }
+                },
+                crew: {
+                    status: 'NOMINAL',
+                    fields: {
+                        members: [
+                            member(0, { name: 'DALLAS', position: 'CAPTAIN', location: 'BRIDGE', status: 'active', heartRate: 72, temperature: 36.8, oxygenSat: 98,
+                                profile: { department: 'COMMAND' } }),
+                            member(1, { name: 'RIPLEY', position: 'WARRANT OFFICER', location: 'ENGINEERING', status: 'active', heartRate: 68, temperature: 36.6, oxygenSat: 99,
+                                profile: { department: 'COMMAND' } }),
+                            member(2, { name: 'KANE', position: 'EXEC OFFICER', location: 'QUARTERS', status: 'resting', heartRate: 58, temperature: 36.4, oxygenSat: 97,
+                                profile: { department: 'COMMAND' } }),
+                            member(3, { name: 'LAMBERT', position: 'NAVIGATOR', location: 'NAVIGATION', status: 'active', heartRate: 75, temperature: 36.9, oxygenSat: 98,
+                                profile: { department: 'NAVIGATION' } }),
+                            member(4, { name: 'BRETT', position: 'ENG TECH', location: 'MAINTENANCE', status: 'active', heartRate: 80, temperature: 37.1, oxygenSat: 96,
+                                profile: { department: 'ENGINEERING' } }),
+                            member(5, { name: 'PARKER', position: 'CHIEF ENGINEER', location: 'ENGINEERING', status: 'active', heartRate: 77, temperature: 37.0, oxygenSat: 97,
+                                profile: { department: 'ENGINEERING' } }),
+                            member(6, { name: 'ASH', position: 'SCIENCE OFFICER', location: 'SCIENCE', status: 'active', heartRate: 65, temperature: 36.5, oxygenSat: 99,
+                                profile: { department: 'SCIENCE', securityClearance: 'LEVEL 4' } }),
+                            member(7, { name: 'JONES', type: 'animal', position: 'SHIP CAT', location: 'QUARTERS', status: 'active', heartRate: 110, temperature: 38.4, oxygenSat: 98,
+                                tempMin: 37.5, tempMax: 39.5,
+                                profile: { department: 'PERSONNEL', medicalStatus: 'FIT' } })
+                        ]
+                    },
+                    measurements: {}
+                },
+                cargo: {
+                    status: 'NOMINAL',
+                    fields: { manifest: 'REFINERY', massTonnes: 0 },
+                    measurements: {}
+                },
+                communications: {
+                    status: 'NOMINAL',
+                    fields: { channel: 'MOTHER-LINK', relayStatus: 'NOMINAL' },
+                    measurements: {}
+                },
+                security: {
+                    status: 'NOMINAL',
+                    fields: { level: 'STANDARD', accessRequests: 0 },
+                    measurements: {}
+                },
+                alerts: {
+                    status: 'NOMINAL',
+                    fields: {},
+                    measurements: {}
+                },
+                eventLog: {
+                    status: 'NOMINAL',
+                    fields: { entries: [] },
+                    measurements: {}
+                }
+            }
+        };
+    }
+
+    ns.scenario = { standardScenario, measure, HOUR_MS };
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = ns.scenario;
+    }
+})(typeof window !== 'undefined' ? window : globalThis);

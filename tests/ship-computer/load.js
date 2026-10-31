@@ -9,6 +9,8 @@ const path = require('path');
 const MODULES = [
     'namespace',
     'util',
+    'ship-scenario',
+    'ship-state',
     'blocks',
     'parser',
     'registry',
