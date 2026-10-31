@@ -57,4 +57,12 @@ describe('terminal view: renderBlocks', () => {
         expect(out.textContent).toContain('LINE ONE');
         expect(out.textContent).toContain('PROCEED? Y/N');
     });
+
+    test('an authorization block shows the required and current levels', () => {
+        ns.terminalView.renderBlocks(out, [{ type: 'authorization', required: 'CORPORATE', current: 'COMMANDER' }]);
+        expect(out.textContent).toContain('ACCESS RESTRICTED.');
+        expect(out.textContent).toContain('REQUIRED PRIVILEGE: CORPORATE');
+        expect(out.textContent).toContain('CURRENT PRIVILEGE: COMMANDER');
+        expect(out.textContent).toContain('AUTHORIZATION REQUIRED.');
+    });
 });

@@ -12,7 +12,7 @@
  * @property {string} [description]
  * @property {string} [usage]
  * @property {string} [category]      Grouping for HELP; defaults to GENERAL
- * @property {string} [privilege]     Required privilege level; defaults to OPEN
+ * @property {string} [privilege]     Required privilege level; defaults to CREW
  * @property {CommandArg[]} [args]
  * @property {(ctx: Object) => import('./blocks.js').Block[]|import('./blocks.js').Block|null} handler
  */
@@ -43,6 +43,8 @@
             if (!def || typeof def.name !== 'string' || !def.name.trim()) {
                 throw new Error('command needs a name');
             }
+            // Fail at registration, not when a user types the command.
+            if (def.privilege && ns.privilege) ns.privilege.rank(def.privilege);
             if (typeof def.handler !== 'function') {
                 throw new Error(`command ${def.name} needs a handler`);
             }
@@ -53,7 +55,7 @@
                 description: def.description || '',
                 usage: def.usage || keyOf(def.name),
                 category: keyOf(def.category || 'GENERAL'),
-                privilege: def.privilege || 'OPEN',
+                privilege: def.privilege || 'CREW',
                 args: def.args || [],
                 handler: def.handler
             });

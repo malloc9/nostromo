@@ -6,7 +6,7 @@
  * result, and notify the event hook. It has no DOM dependency: the terminal
  * and tests call it the same way.
  *
- * @typedef {'empty'|'ok'|'error'|'unknown'|'fallback'} EngineStatus
+ * @typedef {'empty'|'ok'|'error'|'unknown'|'fallback'|'denied'} EngineStatus
  *
  * @typedef {Object} EngineResult
  * @property {string} input         The raw text as submitted
@@ -19,8 +19,9 @@
  * @property {ReturnType<import('./registry.js').createRegistry>} registry
  * @property {(normalized: string) => import('./blocks.js').Block[]|null} [fallback]
  *     Legacy responder, asked only when the registry does not know the input
- * @property {(privilege: string, command: Object) => boolean} [isPermitted]
- *     Placeholder that allows everything until the privilege ticket
+ * @property {(required: string) => ({required: string, current: string}|null)} [authorize]
+ *     Asked before any handler runs; returns a denial, or null when permitted.
+ *     Defaults to permitting everything (tests and the bare engine).
  * @property {{refreshState?: () => void, recordEvent?: (result: EngineResult) => void}} [hooks]
  */
 (function (root) {
@@ -34,7 +35,8 @@
     function createEngine(options) {
         const registry = options.registry;
         const fallback = options.fallback || (() => null);
-        const isPermitted = options.isPermitted || (() => true);
+        // The one authorization decision lives in privilege.js; the engine only asks it.
+        const authorize = options.authorize || (() => null);
         const hooks = Object.assign({ refreshState() {}, recordEvent() {} }, options.hooks);
         /** @type {EngineResult[]} */
         const history = [];
@@ -89,13 +91,28 @@
             const def = match.command;
             const args = values.slice(match.length);
 
+            // The privilege gate comes before anything else a handler would reveal:
+            // a denied command is refused without checking its arguments or running.
+            let denial;
+            try {
+                denial = authorize(def.privilege);
+            } catch (err) {
+                console.error(err);
+                return errorResult(input, normalized, GENERIC_FAILURE);
+            }
+            if (denial) {
+                return finish({
+                    input,
+                    normalized,
+                    status: 'denied',
+                    command: def.name,
+                    blocks: [{ type: 'authorization', required: denial.required, current: denial.current }]
+                });
+            }
+
             const missing = def.args.find((arg, i) => arg.required && args[i] === undefined);
             if (missing) {
                 return errorResult(input, normalized, `MISSING ARGUMENT: ${missing.name}. USAGE: ${def.usage}`);
-            }
-
-            if (!isPermitted(def.privilege, def)) {
-                return errorResult(input, normalized, `ACCESS DENIED. PRIVILEGE LEVEL ${def.privilege} REQUIRED.`);
             }
 
             hooks.refreshState();

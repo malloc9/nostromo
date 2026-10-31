@@ -60,4 +60,9 @@ describe('registry', () => {
         registry.register({ name: 'A', handler: noop });
         expect(registry.list().map((c) => c.name)).toEqual(['B', 'A']);
     });
+
+    test('a command with an unknown privilege level is refused at registration', () => {
+        const registry = ns.registry.createRegistry();
+        expect(() => registry.register({ name: 'X', privilege: 'COMMANDR', handler: noop })).toThrow(/unknown privilege level/);
+    });
 });

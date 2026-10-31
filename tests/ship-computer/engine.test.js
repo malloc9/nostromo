@@ -130,13 +130,14 @@ describe('engine: lifecycle', () => {
         const handler = jest.fn(() => []);
         const registry = ns.registry.createRegistry();
         registry.register({ name: 'LOCKED', privilege: 'COMMANDER', handler });
-        const engine = ns.engine.createEngine({ registry, isPermitted: () => false });
+        const engine = ns.engine.createEngine({ registry, authorize: () => ({ required: 'COMMANDER', current: 'CREW' }) });
         const result = engine.execute('LOCKED');
         expect(handler).not.toHaveBeenCalled();
-        expect(result.status).toBe('error');
+        expect(result.status).toBe('denied');
+        expect(result.blocks[0]).toEqual({ type: 'authorization', required: 'COMMANDER', current: 'CREW' });
     });
 
-    test('by default every privilege is permitted (placeholder until the privilege ticket)', () => {
+    test('by default every privilege is permitted when no authorize is given', () => {
         const engine = makeEngine();
         expect(engine.execute('PING').status).toBe('ok');
     });

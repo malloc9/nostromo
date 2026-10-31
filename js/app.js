@@ -166,6 +166,7 @@ function initializeConsole() {
 function initMotherInterface() {
     const input = document.getElementById('mother-input');
     if (!input) return;
+    updateSessionHeader();
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             const cmd = input.value.trim();
@@ -193,14 +194,36 @@ function initMotherInterface() {
 }
 
 let motherEngine = null;
+let motherSession = null;
 
-// The MOTHER terminal's command engine. Built once; the registry holds HELP and
-// the legacy responder answers anything the registry does not know yet.
+// The terminal session. It starts at commander, and the header reads it from here.
+function getMotherSession() {
+    if (!motherSession) {
+        motherSession = window.NostromoShipComputer.privilege.createSession();
+    }
+    return motherSession;
+}
+
+// Header session fields read from the session, so they cannot disagree with the gate.
+function updateSessionHeader() {
+    const session = getMotherSession();
+    const idElement = document.getElementById('mother-session-id');
+    const privElement = document.getElementById('mother-priv-level');
+    if (idElement) idElement.textContent = session.id;
+    if (privElement) privElement.textContent = session.level;
+}
+
+// The MOTHER terminal's command engine. Built once; the registry holds the commands and
+// the legacy responder answers anything the registry does not know yet. Every command
+// is gated by the one privilege decision, through the engine's authorize option.
 function getMotherEngine() {
     if (!motherEngine) {
         const ns = window.NostromoShipComputer;
+        const session = getMotherSession();
         const registry = ns.registry.createRegistry();
         ns.systemCommands.register(registry);
+        ns.accessCommands.register(registry, session);
+        ns.restrictedCommands.register(registry);
         if (dataSimulator) {
             ns.logCommands.register(registry, dataSimulator.store);
             ns.engineeringCommands.register(registry, dataSimulator.store);
@@ -208,6 +231,7 @@ function getMotherEngine() {
         }
         motherEngine = ns.engine.createEngine({
             registry,
+            authorize: (required) => ns.privilege.authorize(session, required),
             fallback: (normalized) => ns.legacy.respond(normalized)
         });
     }

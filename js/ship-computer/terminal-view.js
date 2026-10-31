@@ -36,6 +36,16 @@
         return wrap;
     }
 
+    /** The refusal: required and current levels only, never the restricted content. */
+    function renderAuthorization(doc, block) {
+        const wrap = make(doc, 'div', 'mother-authorization');
+        wrap.appendChild(make(doc, 'div', 'mother-response urgent', 'ACCESS RESTRICTED.'));
+        wrap.appendChild(make(doc, 'div', 'mother-response', `REQUIRED PRIVILEGE: ${block.required}`));
+        wrap.appendChild(make(doc, 'div', 'mother-response', `CURRENT PRIVILEGE: ${block.current}`));
+        wrap.appendChild(make(doc, 'div', 'mother-response', 'AUTHORIZATION REQUIRED.'));
+        return wrap;
+    }
+
     function renderStatus(doc, block) {
         const list = make(doc, 'div', 'mother-status');
         block.items.forEach((item) => {
@@ -63,6 +73,8 @@
                 return make(doc, 'div', 'mother-response alert', block.text);
             case 'error':
                 return make(doc, 'div', 'mother-response error', block.text);
+            case 'authorization':
+                return renderAuthorization(doc, block);
             case 'table':
                 return renderTable(doc, block);
             case 'status':
