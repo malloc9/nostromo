@@ -28,23 +28,52 @@
     }
 
     /**
+     * Which report row each subsystem's status and alerts belong to. Subsystems
+     * not listed here are reported on OTHER SYSTEMS, which appears only when one is
+     * not nominal, so every non-nominal state appears on a row above the overall line.
+     */
+    const ROW_FOR_SUBSYSTEM = {
+        lifeSupport: 'LIFE SUPPORT',
+        navigation: 'NAVIGATION',
+        engineering: 'ENGINEERING',
+        crew: 'CREW MONITORING',
+        communications: 'COMMUNICATIONS'
+    };
+    const OTHER_SYSTEMS = 'OTHER SYSTEMS';
+
+    /**
      * @param {ReturnType<import('./ship-state.js').createShipStore>} store
      * @returns {import('./blocks.js').Block[]}
      */
     function buildStatus(store) {
         const identity = store.snapshot('identity').state;
-        const model = ns.engineeringModel.build(store.snapshot('engineering'));
-        const powerRow = model.components.find((c) => c.key === 'powerDistribution').status;
-        const rows = [
-            ['LIFE SUPPORT', store.snapshot('lifeSupport').status],
-            ['NAVIGATION', store.snapshot('navigation').status],
-            ['ENGINEERING', model.overall],
-            ['POWER DISTRIBUTION', powerRow],
-            ['CREW MONITORING', store.snapshot('crew').status],
-            ['COMMUNICATIONS', store.snapshot('communications').status]
-        ];
         const board = store.alerts();
-        const overall = worst([board.overall, ...rows.map((r) => r[1])]);
+        const model = ns.engineeringModel.build(store.snapshot('engineering'));
+
+        // Each subsystem's level: its own status, and the worst alert that names it.
+        const alertLevel = {};
+        board.list.forEach((a) => {
+            alertLevel[a.subsystem] = worst([alertLevel[a.subsystem] || 'NOMINAL', a.severity]);
+        });
+        const levelOf = (subsystem, own) => worst([own, alertLevel[subsystem] || 'NOMINAL']);
+
+        const levels = {
+            'LIFE SUPPORT': levelOf('lifeSupport', store.snapshot('lifeSupport').status),
+            'NAVIGATION': levelOf('navigation', store.snapshot('navigation').status),
+            // The engineering row takes the model's overall, which already includes the
+            // subsystem's own faults and the reactor, engine, cooling and power components.
+            'ENGINEERING': levelOf('engineering', model.overall),
+            'POWER DISTRIBUTION': model.components.find((c) => c.key === 'powerDistribution').status,
+            'CREW MONITORING': levelOf('crew', store.snapshot('crew').status),
+            'COMMUNICATIONS': levelOf('communications', store.snapshot('communications').status)
+        };
+        const otherSubsystems = store.subsystemNames().filter((s) => !ROW_FOR_SUBSYSTEM[s]);
+        const otherLevel = worst(otherSubsystems.map((s) => levelOf(s, store.snapshot(s).status)));
+        const rows = Object.keys(levels).map((label) => [label, levels[label]]);
+        if (otherLevel !== 'NOMINAL') rows.push([OTHER_SYSTEMS, otherLevel]);
+
+        // Built from the rows, so the overall line is never milder than the rows above it.
+        const overall = worst(rows.map((r) => r[1]));
         const crew = crewCounts(store);
 
         const blocks = [

@@ -85,3 +85,62 @@ describe('STATUS', () => {
         expect(lines(engine.execute('STATUS'))).toContain('OVERALL STATUS: CRITICAL');
     });
 });
+
+describe('STATUS: every non-nominal state is on a row above the overall line', () => {
+    const rowsOf = (result) => lines(result)
+        .filter((l) => l.includes(' .'))
+        .map((l) => l.slice(l.lastIndexOf(' ') + 1));
+    const RANK = { NOMINAL: 0, WARNING: 1, CRITICAL: 2 };
+    const worstOf = (levels) => levels.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), 'NOMINAL');
+
+    function statusWith(store) {
+        const registry = ns.registry.createRegistry();
+        ns.statusCommands.register(registry, store);
+        return ns.engine.createEngine({ registry }).execute('STATUS');
+    }
+
+    function assertOverallMatchesRows(result) {
+        const overall = lines(result).find((l) => l.startsWith('OVERALL STATUS:')).split(': ')[1];
+        const expected = worstOf(rowsOf(result)) === 'NOMINAL' ? 'OPERATIONAL' : worstOf(rowsOf(result));
+        expect(overall).toBe(expected);
+    }
+
+    test('nominal ship: overall matches the rows', () => {
+        assertOverallMatchesRows(statusWith(createShipStore({ clock: createManualClock(START) })));
+    });
+
+    test('a threshold-only warning (low power margin) shows on the ENGINEERING row', () => {
+        // Power margin dips under 10 when the generation wave is low (about 23 s in).
+        const scenario = ns.scenario.standardScenario();
+        scenario.subsystems.engineering.measurements.powerConsumption = ns.scenario.measure(76);
+        const clock = createManualClock(START);
+        const store = createShipStore({ clock, scenario });
+        clock.advance(23 * 1000);
+        const result = statusWith(store);
+        expect(lines(result).find((l) => l.startsWith('ENGINEERING'))).toMatch(/WARNING$/);
+        expect(lines(result)).toContain('OVERALL STATUS: WARNING');
+        assertOverallMatchesRows(result);
+    });
+
+    test('a fault on a subsystem with no primary row appears on OTHER SYSTEMS', () => {
+        const store = createShipStore({ clock: createManualClock(START) });
+        store.operate('security', 'addFault', { code: 'SEC-1', message: 'ACCESS REQUEST' }, 'security');
+        const result = statusWith(store);
+        expect(lines(result).find((l) => l.startsWith('OTHER SYSTEMS'))).toMatch(/WARNING$/);
+        expect(lines(result)).toContain('OVERALL STATUS: WARNING');
+        assertOverallMatchesRows(result);
+    });
+
+    test('OTHER SYSTEMS is absent while everything outside the rows is nominal', () => {
+        const result = statusWith(createShipStore({ clock: createManualClock(START) }));
+        expect(lines(result).find((l) => l.startsWith('OTHER SYSTEMS'))).toBeUndefined();
+    });
+
+    test('a critical reactor fault: overall is critical and matches the rows', () => {
+        const store = createShipStore({ clock: createManualClock(START) });
+        store.operate('engineering', 'addFault', { code: 'R-7', component: 'mainReactor', severity: 'CRITICAL' }, 'engineering');
+        const result = statusWith(store);
+        expect(lines(result)).toContain('OVERALL STATUS: CRITICAL');
+        assertOverallMatchesRows(result);
+    });
+});
