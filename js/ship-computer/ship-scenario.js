@@ -122,8 +122,13 @@
                 },
                 engineering: {
                     status: 'NOMINAL',
-                    fields: {},
+                    // Cooling warning threshold, in degrees Celsius. The scripted-events ticket
+                    // raises a cooling warning when the temperature reaches it.
+                    fields: { coolingWarningAt: 80 },
                     measurements: {
+                        primaryEngineLoad: measure(35, { amplitude: 4, period: 75, min: 0, max: 100 }),
+                        secondaryEngineLoad: measure(0, { min: 0, max: 100 }),
+                        coolingTemperature: measure(58, { amplitude: 3, period: 240, min: 40, max: 100 }),
                         powerGeneration: measure(86, { amplitude: 1.5, period: 30, min: 0, max: 100 }),
                         powerConsumption: measure(70, { amplitude: 2, period: 60, min: 0, max: 100 }),
                         powerEfficiency: measure(88, { offset: -0.5, amplitude: 2.5, period: 45, min: 0, max: 100 }),

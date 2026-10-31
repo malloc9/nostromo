@@ -50,7 +50,7 @@ describe('ENGINEERING', () => {
 
     test('arguments are refused with usage text until the sub-reports exist', () => {
         const { engine } = makeEngine();
-        const result = engine.execute('ENGINEERING REACTOR');
+        const result = engine.execute('ENGINEERING GALLEY');
         expect(result.status).toBe('error');
         expect(result.blocks[0].text).toContain('USAGE: ENGINEERING');
     });
