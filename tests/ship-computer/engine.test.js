@@ -112,6 +112,13 @@ describe('engine: lifecycle', () => {
         expect(engine.execute('zzz').status).toBe('unknown');
     });
 
+    test('a handler that reports its own error block gives an error status, not ok', () => {
+        const registry = ns.registry.createRegistry();
+        registry.register({ name: 'PICKY', handler: () => [{ type: 'error', text: 'BAD COUNT' }] });
+        const result = ns.engine.createEngine({ registry }).execute('PICKY');
+        expect(result.status).toBe('error');
+    });
+
     test('a missing required argument returns an error that shows the usage', () => {
         const engine = makeEngine();
         const result = engine.execute('NEEDS');

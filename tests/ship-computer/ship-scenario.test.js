@@ -43,6 +43,18 @@ describe('standard scenario: crew roster', () => {
     });
 });
 
+describe('standard scenario: a stable ship', () => {
+    test('no alert is active at any hour over ten simulated days', () => {
+        const HOUR = 60 * 60 * 1000;
+        const clock = createManualClock(0);
+        const store = createShipStore({ clock });
+        for (let h = 0; h < 24 * 10; h++) {
+            clock.advance(HOUR);
+            expect(store.alerts().list).toEqual([]);
+        }
+    });
+});
+
 describe('standard scenario: identity and units', () => {
     test('the ship identity matches the boot screen registration', () => {
         const identity = createShipStore({ clock: createManualClock(0) }).snapshot('identity').state;

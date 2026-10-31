@@ -89,21 +89,32 @@
      * Operations every subsystem supports. Each receives only the owner's own
      * private state, so it cannot reach into another subsystem.
      */
+    // Each operation may return an event description { type, severity, message }.
+    // The store writes exactly one event for every successful operation that returns one.
     const OPERATIONS = {
         addFault(state, args, now) {
             const code = String(args.code || '');
             if (!code) throw new Error('fault needs a code');
             if (state.faults.some((f) => f.code === code)) throw new Error(`fault already active: ${code}`);
-            state.faults.push({ code, message: String(args.message || ''), since: now });
+            const severity = args.severity === 'CRITICAL' ? 'CRITICAL' : 'WARNING';
+            const message = String(args.message || code);
+            state.faults.push({ code, message, severity, since: now });
+            return {
+                type: severity === 'CRITICAL' ? 'error' : 'warning',
+                severity,
+                message: `FAULT RAISED: ${message}`
+            };
         },
         clearFault(state, args) {
             const index = state.faults.findIndex((f) => f.code === args.code);
             if (index === -1) throw new Error(`no active fault: ${args.code}`);
-            state.faults.splice(index, 1);
+            const [cleared] = state.faults.splice(index, 1);
+            return { type: 'status', severity: 'INFO', message: `FAULT CLEARED: ${cleared.message}` };
         },
         setStatus(state, args) {
             if (!args.status) throw new Error('status needs a value');
             state.status = String(args.status);
+            return { type: 'status', severity: 'INFO', message: `STATUS SET: ${state.status}` };
         }
     };
 
@@ -130,9 +141,75 @@
 
         const listeners = [];
         let version = 0;
+        // Alerts already raised, keyed by id. Transitions are logged against this.
+        let activeAlerts = new Map();
 
         function elapsed() {
             return clock.now() - startedAt;
+        }
+
+        /** Append one event to the log. The log has no removal or edit path. */
+        function appendEvent(time, event) {
+            const entries = privates.eventLog.fields.entries;
+            entries.push({
+                id: entries.length + 1,
+                time,
+                type: event.type,
+                subsystem: event.subsystem,
+                severity: event.severity,
+                message: event.message
+            });
+        }
+
+        /** Alerts as they stand now, from faults and readings. Reads nothing mutable. */
+        function currentAlerts() {
+            const now = clock.now();
+            const faultsBySubsystem = {};
+            Object.keys(privates).forEach((name) => {
+                faultsBySubsystem[name] = privates[name].faults;
+            });
+            const eng = snapshot('engineering').measurements;
+            const ls = snapshot('lifeSupport').measurements;
+            const nav = snapshot('navigation').measurements;
+            const humans = snapshot('crew').state.members
+                .filter((m) => m.type === 'human' && m.status === 'active');
+
+            return ns.alerts.derive({
+                faultsBySubsystem,
+                power: { generation: eng.powerGeneration, consumption: eng.powerConsumption },
+                lifeSupport: { oxygen: ls.oxygen, co2: ls.co2 },
+                navigation: { velocity: nav.velocity },
+                activeCrew: humans.length
+            }, now);
+        }
+
+        /**
+         * Bring the log in step with the alerts: one "raised" event per new alert,
+         * one "cleared" event per alert whose cause has gone.
+         */
+        function syncAlerts(now) {
+            const current = new Map(currentAlerts().map((a) => [a.id, a]));
+            current.forEach((alert, id) => {
+                if (!activeAlerts.has(id)) {
+                    appendEvent(now, {
+                        type: alert.severity === 'CRITICAL' ? 'error' : 'warning',
+                        subsystem: alert.subsystem,
+                        severity: alert.severity,
+                        message: `ALERT RAISED: ${alert.message}`
+                    });
+                }
+            });
+            activeAlerts.forEach((alert, id) => {
+                if (!current.has(id)) {
+                    appendEvent(now, {
+                        type: 'status',
+                        subsystem: alert.subsystem,
+                        severity: 'INFO',
+                        message: `ALERT CLEARED: ${alert.message}`
+                    });
+                }
+            });
+            activeAlerts = current;
         }
 
         function snapshot(name) {
@@ -173,11 +250,15 @@
 
             const now = clock.now();
             const next = clone(privates[name]);
-            op(next, args || {}, now);
+            const described = op(next, args || {}, now);
             next.lastUpdated = now;
 
             privates[name] = next;
             version += 1;
+            if (described) {
+                appendEvent(now, { ...described, subsystem: name });
+            }
+            syncAlerts(now);
             const event = { subsystem: name, operation, version, time: now };
             // The change is already committed, so one bad subscriber must not
             // hide it from the others or make this write look failed.
@@ -203,16 +284,40 @@
             };
         }
 
+        /** The alert board every screen reads: overall status and the active alerts. */
+        function alertBoard() {
+            const list = currentAlerts();
+            const overall = list.some((a) => a.severity === 'CRITICAL') ? 'CRITICAL'
+                : (list.length ? 'WARNING' : 'OPERATIONAL');
+            return deepFreeze({ overall, list: list.map((a) => ({ ...a })) });
+        }
+
+        /**
+         * Log threshold transitions as of now. Threshold readings drift with the clock,
+         * so the UI calls this on each refresh; calling it twice at the same time logs nothing new.
+         */
+        function tick() {
+            syncAlerts(clock.now());
+            return alertBoard();
+        }
+
+        // Anything already active when the store starts is logged at the start time.
+        syncAlerts(startedAt);
+
         return {
             dataVersion: scenario.dataVersion,
             startedAt,
             now: () => clock.now(),
             operations: Object.keys(OPERATIONS),
+            subsystemNames: () => Object.keys(privates),
             snapshot,
             snapshotAll,
             operate,
             subscribe,
-            version: () => version
+            version: () => version,
+            events: () => snapshot('eventLog').state.entries,
+            alerts: alertBoard,
+            tick
         };
     }
 

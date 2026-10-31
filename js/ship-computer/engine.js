@@ -109,7 +109,9 @@
                 return errorResult(input, normalized, GENERIC_FAILURE);
             }
 
-            return finish({ input, normalized, status: 'ok', command: def.name, blocks });
+            // A handler that reports a problem as an error block still failed.
+            const failed = blocks.some((b) => b.type === 'error');
+            return finish({ input, normalized, status: failed ? 'error' : 'ok', command: def.name, blocks });
         }
 
         return { execute, history };

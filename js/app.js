@@ -201,6 +201,9 @@ function getMotherEngine() {
         const ns = window.NostromoShipComputer;
         const registry = ns.registry.createRegistry();
         ns.systemCommands.register(registry);
+        if (dataSimulator) {
+            ns.logCommands.register(registry, dataSimulator.store);
+        }
         motherEngine = ns.engine.createEngine({
             registry,
             fallback: (normalized) => ns.legacy.respond(normalized)
@@ -227,14 +230,34 @@ function handleMotherCommand(cmd) {
 
 function updateSystemTime() {
     const timeElement = document.getElementById('system-time');
+    const store = dataSimulator ? dataSimulator.store : null;
     if (timeElement) {
+        // Ship time comes from the store, so the header and the log agree on it
+        const clockTime = store ? store.now() : Date.now();
         // Set futuristic date for the Nostromo mission
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        const timeString = `2122-06-02 ${hours}:${minutes}:${seconds}`;
-        timeElement.textContent = timeString;
+        timeElement.textContent = `2122-06-02 ${window.NostromoShipComputer.util.formatClock(clockTime)}`;
+    }
+    if (store) {
+        updateHeaderAlerts(store);
+    }
+}
+
+// Header alert count and overall status, from the same alert board the Dashboard reads
+function updateHeaderAlerts(store) {
+    const countElement = document.getElementById('header-alerts');
+    const statusElement = document.getElementById('main-status');
+    if (!countElement && !statusElement) return;
+
+    const board = store.tick();
+    const count = board.list.length;
+    if (countElement) {
+        countElement.textContent = count.toString();
+        countElement.className = count > 0 ? 'status-warning' : 'status-ok';
+    }
+    if (statusElement) {
+        statusElement.textContent = board.overall;
+        statusElement.className = board.overall === 'CRITICAL' ? 'status-critical'
+            : (board.overall === 'WARNING' ? 'status-warning' : 'status-ok');
     }
 }
 

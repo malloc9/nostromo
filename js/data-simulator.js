@@ -13,6 +13,7 @@ function resolveShipState() {
         require('./ship-computer/namespace.js');
         require('./ship-computer/util.js');
         require('./ship-computer/ship-scenario.js');
+        require('./ship-computer/alerts.js');
         require('./ship-computer/ship-state.js');
         return globalThis.NostromoShipComputer.shipState;
     }

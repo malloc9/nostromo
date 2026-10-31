@@ -11,11 +11,13 @@ const MODULES = [
     'util',
     'ship-scenario',
     'ship-state',
+    'alerts',
     'blocks',
     'parser',
     'registry',
     'engine',
     'system-commands',
+    'log-commands',
     'legacy-responses',
     'terminal-view'
 ];

@@ -124,8 +124,8 @@
                     status: 'NOMINAL',
                     fields: {},
                     measurements: {
-                        powerGeneration: measure(85, { offset: -1, amplitude: 4, period: 30, min: 0, max: 100 }),
-                        powerConsumption: measure(72, { offset: 2, amplitude: 10, period: 60, min: 0, max: 100 }),
+                        powerGeneration: measure(86, { amplitude: 1.5, period: 30, min: 0, max: 100 }),
+                        powerConsumption: measure(70, { amplitude: 2, period: 60, min: 0, max: 100 }),
                         powerEfficiency: measure(88, { offset: -0.5, amplitude: 2.5, period: 45, min: 0, max: 100 }),
                         fuelReserve: measure(67, { decayPerHour: 0.01, min: 0, max: 100, precision: 2 })
                     }
