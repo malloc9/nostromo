@@ -99,14 +99,21 @@ async function processCSS() {
 
 async function processJS() {
   console.log('⚡ Processing JavaScript files...');
-  
-  const jsDir = path.join(srcDir, 'js');
-  const distJsDir = path.join(distDir, 'js');
-  
+
+  // Top-level scripts first, then the ship-computer group (minified like the rest)
+  for (const subDir of ['', 'ship-computer']) {
+    await minifyJSDirectory(subDir);
+  }
+}
+
+async function minifyJSDirectory(subDir) {
+  const jsDir = path.join(srcDir, 'js', subDir);
+  const distJsDir = path.join(distDir, 'js', subDir);
+
   await fs.ensureDir(distJsDir);
-  
+
   const jsFiles = await fs.readdir(jsDir);
-  
+
   for (const file of jsFiles) {
     if (path.extname(file) === '.js') {
       const srcFile = path.join(jsDir, file);
@@ -212,6 +219,8 @@ async function validateBuild() {
     'js/app.js',
     'js/router.js',
     'js/data-simulator.js',
+    'js/ship-computer/namespace.js',
+    'js/ship-computer/util.js',
     '.nojekyll'
   ];
   

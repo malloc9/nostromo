@@ -9,8 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run clean` - Removes `/dist`
 - `npm run deploy` - Alias for build
 
-### Testing
-There is no automated test suite: `package.json` has no `test` script, and jest/jest-environment-jsdom are installed but unconfigured and unused. Verification is manual and lives at the **repo root** (there is no `/test` directory):
+### Unit tests
+- `npm test` runs Jest over `tests/**` (configured by the `jest.roots` key in `package.json`). It exits non-zero on failure. Only the ship-computer logic is covered so far.
+- Run one file with `npx jest tests/ship-computer/util.test.js`.
+- Tests load modules with `require('../../js/<group>/<file>.js')`. Modules end with the dual-export guard (`module.exports` in Node, global in the browser), so the same file runs in both places.
+- For a new ship-computer module, add a `tests/ship-computer/<name>.test.js` next to it. Use `jest-environment-jsdom` only when a test really needs a DOM. Pure logic modules must not touch the DOM.
+
+### Manual verification
+Everything else is verified manually. The pages live at the **repo root** (there is no `/test` directory):
 - `test-*.html` (e.g. `test-boot-and-nav.html`, `test-engineering.html`, `test-navigation.html`, `test-router.html`) - open via `npm run dev` and view in a browser
 - `verify-*.js` and `test-crew-basic.js` - ad-hoc scripts; run with `node <file>` (`test-crew-basic.js` works because `crew.js`/`data-simulator.js` export via `module.exports`; the `verify-*.js` scripts expect a DOM)
 - The root also holds many screenshot PNGs, plan docs, and deployment notes from past iterations; they are not part of the app.
@@ -19,6 +25,12 @@ There is no automated test suite: `package.json` has no `test` script, and jest/
 
 A static, build-light vanilla JS app (no framework, no bundler) that replicates the MU-TH-UR 6000 terminal from *Alien*. Understanding it takes several files:
 
+- **Ship-computer group (`js/ship-computer/`).** New command-engine and ship-state logic lives here, not in loose top-level files. Load order is fixed in `index.html`: `namespace.js` first, then the other modules. Conventions:
+  - Plain JavaScript with JSDoc types. There is no TypeScript and no compile step.
+  - Everything attaches to one namespace object, `window.NostromoShipComputer` (for example `NostromoShipComputer.util.clamp`). Do not add new loose globals.
+  - Pure logic modules have no DOM dependency. Only a thin presentation layer touches the DOM.
+  - Each file ends with the dual-export guard so tests can `require` it. `namespace.js` creates the namespace when loaded in Node.
+  - `scripts/build.js` minifies `js/ship-computer/` and `validateBuild()` requires `namespace.js` and `util.js`. Add any new required file there.
 - **No module system.** `index.html` loads every script with a plain `<script>` tag in dependency order: `data-simulator` → `audio-manager` → `boot-sequence` → `router` → `dashboard-components/*` (base → quadrant → specific) → `dashboard`, `life-support`, `navigation`, `engineering`, `crew`, `console` → `app.js` last. A new JS file does nothing until it is added to `index.html` in the right position. Classes are globals (e.g. `NostromoRouter`, `NostromoCrew`); several also end with `if (typeof module !== 'undefined') module.exports = ...` so Node scripts can `require` them.
 - **`app.js` is the composition root.** On `DOMContentLoaded` it instantiates each subsystem and publishes it on `window` (`window.router`, `window.dashboard`, `window.crew`, ...). Subsystems find each other through these globals, not imports.
 - **Hash router** (`router.js`): routes (`dashboard`, life support, navigation, engineering, crew, mother console) are registered in `registerDefaultRoutes()` with a screen element id, F-key hotkey, and `onEnter`/`onExit` hooks that call `window.<subsystem>.activate()`/`deactivate()`. Hash routing is what keeps it working on GitHub Pages. Adding a screen means a new route, a `<section>` in `index.html`, and an init in `app.js`.
