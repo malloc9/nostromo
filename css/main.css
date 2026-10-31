@@ -9,9 +9,6 @@
 
 /* Root Variables for Consistent Color Scheme */
 :root {
-    --terminal-green: #2fbf3a;
-    --terminal-green-dim: #1f9a28;
-    --terminal-green-bright: #6bff5b;
     --terminal-bg: #020a04;
     --terminal-bg-alt: #04140a;
     --terminal-border: #0f6b18;
@@ -27,7 +24,6 @@ body {
     height: 100%;
     /* Authentic 70s Terminal Font Stack */
     font-family: var(--terminal-font-primary);
-    background-color: var(--terminal-bg);
     color: var(--terminal-green);
     overflow: hidden;
     user-select: none;
@@ -42,7 +38,6 @@ body {
 .app-container {
     display: flex;
     flex-direction: column;
-    position: relative;
     /* Dimensions and background are handled in terminal.css for the CRT effect */
 }
 
@@ -50,47 +45,24 @@ body {
 .terminal-screen {
     flex: 1;
     padding: 2px 4px;
-    background: var(--terminal-bg);
-    border: 2px solid var(--terminal-border);
     margin: 1px;
-    border-radius: 5px;
-    box-shadow:
-        inset 0 0 20px var(--terminal-glow),
-        0 0 20px var(--terminal-shadow);
-    position: relative;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
 /* Terminal Header */
 .terminal-header {
-    border-bottom: 1px solid var(--terminal-green-dim);
-    padding: 2px 0;
     margin-bottom: 2px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     flex-shrink: 0;
 }
 
-.system-title {
-    font-size: 16px;
-    font-weight: bold;
-    color: var(--terminal-green-bright);
-    text-shadow: 0 0 10px var(--terminal-shadow);
-}
-
 .system-status {
-    font-size: 12px;
-    color: var(--terminal-green-dim);
     margin-top: 2px;
 }
 
 /* Terminal Content Area */
 .terminal-content {
     font-size: 14px;
-    line-height: 1.4;
     font-family: var(--terminal-font-secondary);
     white-space: pre-wrap;
     height: 100%;
@@ -100,38 +72,23 @@ body {
 
 /* Navigation Bar */
 .nav-bar {
-    background: var(--terminal-bg-alt);
-    border-top: 1px solid var(--terminal-border);
-    padding: 4px 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
     flex-shrink: 0;
 }
 
 .nav-item {
-    color: var(--terminal-green-dim);
     cursor: pointer;
-    padding: 5px 10px;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
 }
 
 .nav-item:hover {
-    color: var(--terminal-green-bright);
     border-color: var(--terminal-green-dim);
-    background: var(--terminal-glow);
     text-shadow: 0 0 5px var(--terminal-shadow);
 }
 
 .nav-item.active {
-    color: var(--terminal-green-bright);
     border-color: var(--terminal-green);
-    background: var(--terminal-glow);
-    text-shadow: 0 0 8px var(--terminal-shadow);
 }
 
 .nav-item.muted {
@@ -144,38 +101,8 @@ body {
     border-color: #666666;
 }
 
-/* Data Display Elements */
-.data-row {
-    display: flex;
-    justify-content: space-between;
-    margin: 5px 0;
-    padding: 2px 0;
-}
-
-.data-label {
-    color: var(--terminal-green-dim);
-    min-width: 150px;
-}
-
-.data-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    text-shadow: 0 0 3px var(--terminal-shadow);
-}
-
-/* Status Indicators */
-.status-ok {
-    color: var(--terminal-green-bright);
-}
-
 .status-warning {
-    color: #ffaa00;
     animation: pulse-warning 2s infinite;
-}
-
-.status-critical {
-    color: #ff0000;
-    animation: pulse-critical 1s infinite;
 }
 
 @keyframes pulse-warning {
@@ -221,7 +148,6 @@ body {
 
 /* ASCII Art Styling */
 .ascii-art {
-    font-family: 'Courier New', monospace;
     font-size: 14px;
     line-height: 1;
     color: var(--terminal-green-dim);
@@ -242,15 +168,11 @@ body {
     }
 
     .nav-bar {
-        flex-wrap: wrap;
         gap: 5px;
-        padding: 4px 10px;
     }
 
     .data-row {
         flex-direction: column;
-        gap: 1px;
-        margin: 2px 0;
     }
 
     .progress-bar {
@@ -258,14 +180,7 @@ body {
         max-width: 200px;
     }
 
-    .system-title {
-        font-size: 12px;
     }
-
-    .system-status {
-        font-size: 9px;
-    }
-}
 
 @media (max-width: 480px) {
     .terminal-screen {
@@ -277,23 +192,11 @@ body {
         font-size: 10px;
     }
 
-    .system-title {
-        font-size: 11px;
-    }
-
     .terminal-header {
-        padding: 5px 0;
         margin-bottom: 5px;
     }
 
-    .nav-bar {
-        padding: 3px 8px;
     }
-
-    .terminal-footer {
-        padding: 3px 8px;
-    }
-}
 
 /* Additional Navigation Styles */
 .nav-section {
@@ -312,13 +215,6 @@ body {
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
-    height: 100%;
-}
-
-.screen.active {
-    display: flex;
-    flex-direction: column;
-    opacity: 1;
     height: 100%;
 }
 
@@ -378,13 +274,10 @@ body {
     display: flex;
     flex-direction: column;
     opacity: 1;
-    animation: retro-fade-in 0.3s ease-out;
     height: 100%;
 }
 
 .screen-header {
-    border-bottom: 1px solid var(--terminal-green-dim);
-    padding: 1px 0;
     margin-bottom: 1px;
     flex-shrink: 0;
     display: flex;
@@ -393,17 +286,12 @@ body {
 }
 
 .screen-header h2 {
-    font-size: 13px;
-    color: var(--terminal-green-bright);
     margin: 0;
     font-weight: normal;
 }
 
 .breadcrumb {
-    font-size: 10px;
-    color: var(--terminal-green-dim);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
     margin: 0;
 }
 
@@ -425,16 +313,9 @@ body {
 
 /* Footer Styles */
 .terminal-footer {
-    background: var(--terminal-bg-alt);
-    border-top: 1px solid var(--terminal-border);
-    padding: 4px 12px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 10px;
-    color: var(--terminal-green-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
     flex-shrink: 0;
 }
 
@@ -485,13 +366,10 @@ body {
 }
 
 .trend-label {
-    color: var(--terminal-green-dim);
     font-size: 11px;
-    text-transform: uppercase;
 }
 
 .trend-value {
-    font-weight: bold;
     font-size: 12px;
 }
 
@@ -692,11 +570,6 @@ body {
 
 .loading-text {
     font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--terminal-green-bright);
-    text-shadow: 0 0 10px var(--terminal-shadow);
-    animation: pulse-loading 2s infinite;
 }
 
 /* Screen transition loading messages */
@@ -745,16 +618,6 @@ body {
     }
 }
 
-/* Boot Screen Specific Styles */
-.boot-content {
-    text-align: center;
-    padding: 40px 20px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
 .boot-header {
     margin-bottom: 40px;
 }
@@ -770,11 +633,9 @@ body {
 
 .boot-messages {
     margin-bottom: 40px;
-    text-align: center;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
-    min-height: 120px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -784,26 +645,16 @@ body {
 
 .boot-line {
     font-size: 16px;
-    color: var(--terminal-green-dim);
     opacity: 0;
     transition: opacity 0.5s ease-in-out;
-    white-space: nowrap;
-    margin: 4px 0;
-    text-transform: uppercase;
     letter-spacing: 1px;
-    font-family: 'Courier New', monospace;
 }
 
 .boot-line.diagnostic-header {
-    color: var(--terminal-green-dim);
-    font-weight: bold;
     margin-bottom: 20px;
-    text-shadow: 0 0 10px var(--terminal-shadow);
 }
 
 .boot-line.diagnostic-line {
-    font-size: 14px;
-    color: var(--terminal-green-dim);
     text-align: left;
     margin: 2px 0;
     padding-left: 20px;
@@ -817,14 +668,9 @@ body {
 
 .boot-prompt {
     font-size: 16px;
-    color: var(--terminal-green-bright);
-    animation: pulse-prompt 2s infinite;
     opacity: 1;
     white-space: nowrap;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 20px;
-    text-shadow: 0 0 10px var(--terminal-shadow);
 }
 
 @keyframes pulse-prompt {
@@ -846,7 +692,6 @@ body {
 }
 
 .cursor {
-    animation: blink-cursor 1s infinite;
     font-weight: bold;
 }
 
@@ -907,127 +752,37 @@ body {
         "console console";
 }
 
-.ship-schematic-section {
-    grid-area: schematic;
-    border: 1px solid var(--terminal-border);
-    padding: 6px;
-    background: var(--terminal-bg-alt);
-    display: flex;
-    flex-direction: column;
-}
-
 .section-header {
-    font-size: 13px;
-    color: var(--terminal-green-bright);
     text-align: center;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--terminal-green-dim);
-    padding-bottom: 2px;
     flex-shrink: 0;
 }
 
 .ship-schematic {
     text-align: center;
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.ascii-ship {
-    font-family: 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1.1;
-    color: var(--terminal-green-dim);
-    margin: 0;
-    white-space: pre;
-}
-
-.system-indicator {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
 }
 
 .system-indicator.clickable {
-    cursor: pointer;
     text-decoration: underline;
 }
 
 .system-indicator.clickable:hover {
     background: var(--terminal-glow);
-    text-shadow: 0 0 8px currentColor;
 }
 
 .system-indicator.status-ok {
     color: var(--terminal-green-bright);
 }
 
-.system-indicator.status-warning {
-    color: #ffaa00;
-    animation: pulse-warning 2s infinite;
-}
-
-.system-indicator.status-critical {
-    color: #ff0000;
-    animation: pulse-critical 1s infinite;
-}
-
-/* Status Grid Layout */
-.status-grid {
-    grid-area: status-grid;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 4px;
-}
-
 .status-quadrant {
-    border: 1px solid var(--terminal-border);
-    background: var(--terminal-bg-alt);
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
     min-height: 0;
-    overflow: hidden;
 }
-
-.quadrant-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-    padding-bottom: 2px;
-    border-bottom: 1px solid var(--terminal-green-dim);
-    flex-shrink: 0;
-}
-
-.quadrant-title {
-    font-size: 12px;
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-indicator {
-    font-size: 14px;
-    font-weight: bold;
-}
-
-
 
 /* System Summary Styles */
 .system-summary {
     margin-top: auto;
     border-top: 1px solid var(--terminal-green-dim);
     padding-top: 10px;
-    display: flex;
-    justify-content: space-around;
-    font-size: 14px;
     flex-direction: column;
-    align-items: center;
     gap: 8px;
 }
 
@@ -1143,34 +898,20 @@ body {
 }
 
 .summary-item {
-    display: flex;
     flex-direction: column;
-    align-items: center;
 }
 
 .summary-label {
-    color: var(--terminal-green-dim);
-    font-size: 12px;
     margin-bottom: 2px;
-}
-
-.summary-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    font-size: 16px;
 }
 
 /* Console Interface Styles */
 .console-interface {
     grid-area: console;
-    border: 1px solid var(--terminal-border);
-    background: var(--terminal-bg-alt);
-    padding: 10px;
     display: flex;
     flex-direction: column;
     font-family: 'VT323', monospace;
     overflow: hidden;
-    min-height: 200px;
 }
 
 .console-header {
@@ -1190,44 +931,15 @@ body {
     gap: 5px;
 }
 
-.console-line {
-    color: var(--terminal-green);
-    font-size: 16px;
-    line-height: 1.2;
-}
-
 .console-line.mother-response {
-    color: var(--terminal-green-bright);
     text-shadow: 0 0 5px var(--terminal-shadow);
 }
 
-.console-line.warning {
-    color: #ffaa00;
-}
-
-.console-line.error {
-    color: #ff0000;
-}
-
-.console-line.critical {
-    color: #ff0000;
-    font-weight: bold;
-    animation: pulse-critical 0.5s infinite;
-}
-
 .console-line.special-order {
-    color: var(--terminal-green-bright);
-    white-space: pre;
-    border: 1px solid var(--terminal-green);
-    padding: 10px;
     margin: 10px 0;
-    background: rgba(0, 255, 65, 0.05);
 }
 
 .console-input-line {
-    display: flex;
-    align-items: center;
-    border-top: 1px solid var(--terminal-border);
     padding-top: 5px;
 }
 
@@ -1235,23 +947,6 @@ body {
     color: var(--terminal-green-bright);
     margin-right: 10px;
     font-weight: bold;
-}
-
-.console-input {
-    background: transparent;
-    border: none;
-    color: var(--terminal-green-bright);
-    font-family: 'VT323', monospace;
-    font-size: 16px;
-    flex: 1;
-    outline: none;
-    text-transform: uppercase;
-    caret-color: var(--terminal-green);
-}
-
-font-size: 14px;
-line-height: 1.2;
-overflow: hidden;
 }
 
 .data-loading {
@@ -1275,25 +970,8 @@ overflow: hidden;
 
 /* Data Display Enhancements */
 .data-row {
-    display: flex;
-    justify-content: space-between;
     margin: 2px 0;
-    padding: 1px 0;
     gap: 8px;
-}
-
-.data-label {
-    color: var(--terminal-green-dim);
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.data-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    text-shadow: 0 0 3px var(--terminal-shadow);
-    font-size: 14px;
 }
 
 .data-value.positive {
@@ -1305,105 +983,25 @@ overflow: hidden;
     animation: pulse-warning 2s infinite;
 }
 
-/* System Summary Bar */
-.system-summary {
-    grid-area: summary;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 3px 8px;
-    border: 1px solid var(--terminal-border);
-    background: var(--terminal-bg-alt);
-    font-size: 11px;
-}
-
-.summary-item {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-}
-
-.summary-label {
-    color: var(--terminal-green-dim);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.summary-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    text-shadow: 0 0 3px var(--terminal-shadow);
-}
-
 /* Responsive Dashboard Layout */
 @media (max-width: 768px) {
-    .status-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: repeat(4, auto);
-        gap: 6px;
-    }
-
-    .ship-schematic-section {
-        padding: 6px;
-    }
-
-    .ascii-ship {
-        font-size: 8px;
-    }
-
     .system-summary {
         flex-direction: column;
         gap: 4px;
-        align-items: stretch;
-        padding: 4px 8px;
     }
 
     .summary-item {
         justify-content: space-between;
     }
 
-    .section-header {
-        font-size: 10px;
-        margin-bottom: 4px;
     }
-}
 
 @media (max-width: 480px) {
     .dashboard-container {
         gap: 6px;
     }
 
-    .status-quadrant {
-        padding: 6px;
     }
-
-    .quadrant-title {
-        font-size: 9px;
-    }
-
-    .data-label,
-    .data-value {
-        font-size: 8px;
-    }
-
-    .ascii-ship {
-        font-size: 7px;
-        line-height: 1.0;
-    }
-
-    .ship-schematic-section {
-        padding: 4px;
-    }
-
-    .section-header {
-        font-size: 9px;
-    }
-
-    .system-summary {
-        font-size: 8px;
-        padding: 3px 6px;
-    }
-}
 
 /* Life Support Screen Styles */
 .life-support-container {
@@ -1426,9 +1024,6 @@ overflow: hidden;
 }
 
 .environmental-overview {
-    border: 1px solid var(--terminal-border);
-    padding: 6px;
-    background: var(--terminal-bg-alt);
     display: flex;
     flex-direction: column;
 }
@@ -1442,9 +1037,7 @@ overflow: hidden;
 }
 
 .metric-panel {
-    border: 1px solid var(--terminal-green-dim);
     padding: 4px;
-    background: var(--terminal-bg);
     display: flex;
     flex-direction: column;
 }
@@ -1481,10 +1074,6 @@ overflow: hidden;
 }
 
 .metric-value {
-    font-size: 16px;
-    color: var(--terminal-green-bright);
-    font-weight: bold;
-    text-shadow: 0 0 5px var(--terminal-shadow);
     text-align: center;
 }
 
@@ -1503,12 +1092,7 @@ overflow: hidden;
     gap: 2px;
 }
 
-.bar-filled {
-    color: var(--terminal-green-bright);
-}
-
 .bar-empty {
-    color: var(--terminal-green-dim);
     opacity: 0.3;
 }
 
@@ -1529,34 +1113,20 @@ overflow: hidden;
 
 /* Zone Status Section */
 .zone-status-section {
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
-    display: flex;
-    flex-direction: column;
-}
-/* Trend Section */
-.trend-section {
-    border: 1px solid var(--terminal-border);
-    padding: 6px;
-    background: var(--terminal-bg-alt);
     display: flex;
     flex-direction: column;
 }
 /* Alert Section */
 .alert-section {
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     display: flex;
     flex-direction: column;
 }
 /* Star Map Section */
 .star-map-section {
     grid-area: star-map;
-    border: 1px solid var(--terminal-border);
     padding: 4px;
-    background: var(--terminal-bg-alt);
     display: flex;
     flex-direction: column;
 }
@@ -1585,10 +1155,7 @@ overflow: hidden;
 }
 
 .star-field {
-    font-family: 'Courier New', monospace;
     font-size: 8px;
-    line-height: 1.0;
-    color: var(--terminal-green-dim);
     margin: 0;
     padding: 0;
     white-space: pre;
@@ -1711,93 +1278,64 @@ overflow: hidden;
 /* Coordinate Details Section */
 .coordinate-details-section {
     grid-area: coordinate-details;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     display: flex;
     flex-direction: column;
 }
 /* Power Overview Section */
 .power-overview-section {
     grid-area: power-overview;
-    border: 1px solid var(--terminal-green-dim);
     padding: 6px;
-    background: var(--terminal-bg-alt);
-}
-/* Power Distribution Diagram Section */
-.power-diagram-section {
-    grid-area: power-diagram;
-    border: 1px solid var(--terminal-green-dim);
-    padding: 6px;
-    background: var(--terminal-bg-alt);
-    overflow: auto;
 }
 /* System Consumption Section */
 .system-consumption-section {
     grid-area: system-consumption;
-    border: 1px solid var(--terminal-green-dim);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     overflow: auto;
 }
 /* Power Summary Section */
 .power-summary-section {
     grid-area: power-summary;
-    border: 1px solid var(--terminal-green-dim);
     padding: 6px;
-    background: var(--terminal-bg-alt);
 }
 /* Power Diagram Section */
 .power-diagram-section {
     grid-area: diagram;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
     overflow: hidden;
 }
 /* Personnel Roster Section */
 .personnel-section {
     grid-area: personnel;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
     overflow: hidden;
 }
 /* Location Tracking Section */
 .location-section {
     grid-area: location;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
     overflow: hidden;
 }
 /* Vital Signs Section */
 .vitals-section {
     grid-area: vitals;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
-    overflow: hidden;
 }
 /* Quarters Environmental Section */
 .quarters-section {
     grid-area: quarters;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
     overflow: hidden;
 }
 /* Crew Alerts Section */
 .crew-alerts-section {
     grid-area: alerts;
-    border: 1px solid var(--terminal-border);
     padding: 6px;
-    background: var(--terminal-bg-alt);
     min-height: 0;
     max-height: 120px;
     overflow: hidden;
@@ -1805,17 +1343,13 @@ overflow: hidden;
 /* Environmental Overview Section */
 .environmental-overview {
     grid-area: overview;
-    border: 1px solid var(--terminal-border);
     padding: 5px;
-    background: var(--terminal-bg-alt);
     overflow: hidden;
 }
 /* Environmental Trends Section - Grid Layout */
 .trend-section {
     grid-area: trends;
-    border: 1px solid var(--terminal-border);
     padding: 5px;
-    background: var(--terminal-bg-alt);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1823,9 +1357,7 @@ overflow: hidden;
 /* Ship Schematic Section - Compact */
 .ship-schematic-section {
     grid-area: schematic;
-    border: 1px solid var(--terminal-border);
     padding: 4px;
-    background: var(--terminal-bg-alt);
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1845,11 +1377,8 @@ overflow: hidden;
 
 .ascii-ship {
     margin: 0;
-    color: var(--terminal-green);
     white-space: pre;
-    font-family: 'Courier New', monospace;
     font-size: 11px;
-    line-height: 1.2;
     transform-origin: center;
 }
 
@@ -1864,10 +1393,6 @@ overflow: hidden;
 .system-indicator:hover {
     color: var(--terminal-green-bright);
     text-shadow: 0 0 5px var(--terminal-shadow);
-}
-
-.system-indicator.clickable {
-    cursor: pointer;
 }
 
 .system-indicator.status-warning {
@@ -1891,8 +1416,6 @@ overflow: hidden;
 }
 
 .status-quadrant {
-    border: 1px solid var(--terminal-border);
-    background: var(--terminal-bg-alt);
     padding: 4px;
     display: flex;
     flex-direction: column;
@@ -1918,7 +1441,6 @@ overflow: hidden;
 }
 
 .status-indicator {
-    font-size: 10px;
     font-weight: bold;
 }
 
@@ -1930,22 +1452,11 @@ overflow: hidden;
     gap: 2px;
 }
 
-.data-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 8px;
-    padding: 1px 0;
-}
-
 .data-label {
-    color: var(--terminal-green-dim);
     min-width: 60px;
 }
 
 .data-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
     text-align: right;
 }
 
@@ -1979,16 +1490,6 @@ overflow: hidden;
     display: flex;
     gap: 4px;
     align-items: center;
-}
-
-.summary-label {
-    color: var(--terminal-green-dim);
-    text-transform: uppercase;
-}
-
-.summary-value {
-    color: var(--terminal-green-bright);
-    font-weight: bold;
 }
 
 .summary-value.status-warning {
@@ -2035,9 +1536,6 @@ overflow: hidden;
 /* Enhanced Navigation 3D Styles */
 .terrain-wireframe {
     font-family: 'Courier New', monospace;
-    font-size: 12px;
-    line-height: 1;
-    color: var(--terminal-green);
     background: var(--terminal-bg-alt);
     padding: 8px;
     border-radius: 3px;
@@ -2046,9 +1544,6 @@ overflow: hidden;
 
 .radar-scope {
     font-family: 'Courier New', monospace;
-    font-size: 11px;
-    line-height: 1;
-    color: var(--terminal-green);
     background: var(--terminal-bg-alt);
     padding: 8px;
     border-radius: 3px;
@@ -2119,9 +1614,7 @@ overflow: hidden;
 
 /* ── Navigation Layout ────────────────────────────────────────────── */
 .navigation-container {
-    display: flex;
     flex-direction: column;
-    gap: 8px;
     height: 100%;
     overflow: hidden;
 }
@@ -2169,8 +1662,6 @@ overflow: hidden;
     white-space: pre;
     font-size: 9px;
     line-height: 1.1;
-    color: var(--terminal-green-dim);
-    margin: 0;
     overflow: hidden;
     min-height: 0;
 }
@@ -2261,7 +1752,6 @@ overflow: hidden;
 /* ── Nav Data Section ─────────────────────────────────────────────── */
 .nav-data-section .data-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
     font-size: 10px;
 }
@@ -2547,12 +2037,7 @@ overflow: hidden;
     white-space: nowrap;
 }
 
-.ship-schematic-section .ship-schematic {
-    min-height: 150px;
-}
-
 .ship-schematic-section .alert-details {
-    max-height: 70px;
     overflow-y: auto;
     flex-shrink: 1;
     font-size: 10px;
@@ -2678,8 +2163,6 @@ overflow: hidden;
 .power-grid-ascii {
     margin: 0;
     white-space: pre;
-    font-size: 9px;
-    line-height: 1.02;
 }
 
 /* Consumption list: one compact row per system */
@@ -2735,7 +2218,6 @@ overflow: hidden;
 .consumption-item .ascii-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
     white-space: nowrap;
     line-height: 1.1;
 }

@@ -643,7 +643,6 @@ html, body {
     radial-gradient(ellipse 90% 70% at 50% 50%,
       var(--crt-bg-warm) 0%,
       var(--crt-bg-deep) 80%) !important;
-  padding: 16px 22px !important;
   height: 100%;
   font-family: 'Share Tech Mono', 'Courier New', monospace !important;
   font-size: 17px !important;
@@ -651,7 +650,6 @@ html, body {
   letter-spacing: 0.04em;
   color: var(--phosphor-bright);
   overflow-y: auto;
-  display: block;
 }
 
 .mother-session-info {
@@ -672,16 +670,12 @@ html, body {
 }
 
 .mother-interface .mother-output {
-  font-size: 17px !important;
-  line-height: 1.5;
   color: var(--phosphor-bright);
   text-shadow:
     0 0 1px var(--phosphor-core),
     0 0 4px var(--phosphor-bright),
     0 0 8px var(--phosphor-glow);
   white-space: pre-wrap;
-  margin-bottom: 16px;
-  flex: 1;
   overflow-y: auto;
 }
 
@@ -1045,7 +1039,7 @@ html, body {
   .boot-divider { font-size: 9px; max-width: 95%; }
   .boot-info-line { flex-direction: column; gap: 2px; }
   .boot-info-tag { min-width: 0; }
-  .mother-interface { font-size: 15px !important; padding: 14px !important; }
+  .mother-interface { font-size: 15px !important;  }
   .console-line, .console-input { font-size: 15px !important; }
   .system-title { font-size: 12px !important; }
   .nav-bar { font-size: 11px !important; flex-wrap: wrap; }
@@ -1069,8 +1063,6 @@ html, body {
 
 .ls-1979 {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 10px;
   height: 100%;
   padding: 4px 2px;
   font-size: 14px;
@@ -1088,7 +1080,6 @@ html, body {
 
 .ls-row-metrics {
   grid-template-columns: repeat(4, 1fr);
-  height: 168px;
 }
 
 .ls-metric {
@@ -1214,7 +1205,6 @@ html, body {
 
 .ls-row-body {
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  min-height: 0;
 }
 
 .ls-section {
@@ -1446,7 +1436,6 @@ html, body {
 .ls-row-alerts {
   grid-template-rows: auto 1fr;
   min-height: 0;
-  height: 130px;
   display: grid;
   background: rgba(8, 22, 10, 0.4);
   border: 1px solid var(--phosphor-dim);
@@ -1521,7 +1510,6 @@ html, body {
 .ls-alert-panel .alert-time   { font-size: 10px; color: var(--phosphor-dim); letter-spacing: 0.12em; }
 
 @media (max-width: 1280px) {
-  .ls-row-metrics { height: 150px; }
   .ls-metric-value { font-size: 36px; }
   .ls-metric-value .ls-unit { font-size: 15px; }
   .ls-zone-name { font-size: 12px; }
@@ -1532,7 +1520,7 @@ html, body {
 }
 
 @media (max-width: 980px) {
-  .ls-row-metrics { grid-template-columns: repeat(2, 1fr); height: auto; }
+  .ls-row-metrics { grid-template-columns: repeat(2, 1fr);  }
   .ls-row-body { grid-template-columns: 1fr; }
   .ls-zone-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
 }

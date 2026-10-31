@@ -18,7 +18,6 @@
 
 /* Main CRT Container - Simulates the physical monitor */
 body {
-  background-color: #050505;
   overflow: hidden;
   margin: 0;
   height: 100vh;
@@ -28,16 +27,11 @@ body {
 
 /* The Screen Surface - Curved and Distorted */
 .app-container {
-  position: relative;
   width: 98vw;
   height: 96vh;
   margin: 2vh 1vw;
   background-color: #001100;
-  border-radius: 20px;
-  box-shadow:
-    0 0 0 10px #1a1a1a,
-    /* Bezel */ 0 0 0 12px #000,
-    /* Outer Bezel */ inset 0 0 40px rgba(0, 0, 0, 0.8); /* Inner shadow */
+   /* Inner shadow */
   overflow: hidden;
   transform-style: preserve-3d;
   /* Enhanced curvature transform */
@@ -46,27 +40,7 @@ body {
 
 /* Enhanced CRT curvature with bezel */
 .app-container::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   border-radius: 22px;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(0, 0, 0, 0.3) 0%,
-      rgba(0, 0, 0, 0) 40%,
-      rgba(0, 0, 0, 0.2) 70%
-    ),
-    radial-gradient(
-      ellipse at center,
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0.3) 80%
-    );
-  z-index: 1001;
 }
 
 /* Screen content wrapper for phosphor persistence effect */
@@ -125,33 +99,14 @@ body {
 
 /* CRT Screen Overlay Effects */
 .app-container::before {
-  content: " ";
   display: block;
-  position: absolute;
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-  background:
-        /* Enhanced Scanlines */
-    repeating-linear-gradient(
-      rgba(0, 0, 0, 0) 0%,
-      rgba(0, 0, 0, 0) 49%,
-      rgba(0, 0, 0, 0.25) 50%,
-      rgba(0, 0, 0, 0.25) 51%
-    ),
-    /* Enhanced RGB Split / Chromatic Aberration */
-    linear-gradient(
-        90deg,
-        rgba(255, 0, 0, 0.08),
-        rgba(0, 255, 0, 0.02),
-        rgba(0, 0, 255, 0.08)
-      );
-  z-index: 1000;
   background-size:
     100% 2px,
     100% 100%;
-  pointer-events: none;
 }
 
 /* Screen Flicker, Vignette and Additional CRT Effects */
@@ -203,9 +158,6 @@ body {
 .terminal-content,
 .terminal-header,
 .nav-bar {
-  text-shadow:
-    0 0 2px var(--terminal-green-dim),
-    0 0 8px var(--terminal-green-dim);
   filter: contrast(1.2) brightness(1.1);
 }
 
@@ -245,12 +197,7 @@ h2,
 
 /* Cursor Animation - Enhanced */
 .cursor {
-  display: inline-block;
-  width: 10px;
-  height: 1em;
   background-color: var(--terminal-green);
-  animation: blink 1s step-end infinite;
-  vertical-align: text-bottom;
 }
 
 @keyframes blink {
@@ -347,15 +294,7 @@ h2,
 /* Mother Interface Styles */
 .mother-interface {
   background-color: #000000;
-  color: var(--terminal-green);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
-  padding: 40px;
-  font-family: var(--terminal-font-secondary);
-  overflow: hidden;
 }
 
 .mother-interface .mother-prompt {
@@ -371,15 +310,8 @@ h2,
 }
 
 .mother-interface .mother-output {
-  font-size: 24px;
-  line-height: 1.4;
-  white-space: pre-wrap;
   width: 100%;
   height: auto;
-  margin-bottom: 20px;
-  text-shadow:
-    0 0 2px var(--terminal-green-dim),
-    0 0 8px var(--terminal-green-dim);
 }
 
 @keyframes blink {
