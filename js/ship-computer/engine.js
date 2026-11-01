@@ -6,7 +6,7 @@
  * result, and notify the event hook. It has no DOM dependency: the terminal
  * and tests call it the same way.
  *
- * @typedef {'empty'|'ok'|'error'|'unknown'|'fallback'|'denied'|'pending'|'cancelled'} EngineStatus
+ * @typedef {'empty'|'ok'|'error'|'unknown'|'denied'|'pending'|'cancelled'} EngineStatus
  *
  * @typedef {Object} EngineResult
  * @property {string} input         The raw text as submitted
@@ -17,8 +17,6 @@
  *
  * @typedef {Object} EngineOptions
  * @property {ReturnType<import('./registry.js').createRegistry>} registry
- * @property {(normalized: string) => import('./blocks.js').Block[]|null} [fallback]
- *     Legacy responder, asked only when the registry does not know the input
  * @property {(required: string) => ({required: string, current: string}|null)} [authorize]
  *     Asked before any handler runs; returns a denial, or null when permitted.
  *     Defaults to permitting everything (tests and the bare engine).
@@ -34,7 +32,6 @@
      */
     function createEngine(options) {
         const registry = options.registry;
-        const fallback = options.fallback || (() => null);
         // The one authorization decision lives in privilege.js; the engine only asks it.
         const authorize = options.authorize || (() => null);
         const hooks = Object.assign({ refreshState() {}, recordEvent() {} }, options.hooks);
@@ -128,10 +125,6 @@
 
             const match = registry.match(values);
             if (!match) {
-                const legacy = fallback(normalized);
-                if (legacy && legacy.length) {
-                    return finish({ input, normalized, status: 'fallback', command: null, blocks: ns.blocks.normalize(legacy) });
-                }
                 // Did-you-mean offers only commands the session may use, in the plan's structure.
                 const near = ns.suggest.didYouMean(ns.suggest.candidatesFor(registry, null), normalized, authorize);
                 const blocks = [

@@ -132,6 +132,17 @@
                 } catch (err) {
                     return false;
                 }
+            },
+            /** Remove a saved item. Returns false when storage cannot be reached. */
+            remove(key) {
+                const store = backend();
+                if (!store) return false;
+                try {
+                    store.removeItem(key);
+                    return true;
+                } catch (err) {
+                    return false;
+                }
             }
         };
     }

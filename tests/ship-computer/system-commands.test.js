@@ -32,7 +32,7 @@ describe('HELP', () => {
         const categories = result.blocks.filter((b) => b.type === 'text').map((b) => b.text);
         expect(categories).toEqual(['SYSTEM', 'SHIP']);
         const allNames = tables.flatMap((t) => t.rows.map((r) => r[0]));
-        expect(allNames).toEqual(['HELP', 'STATUS', 'LIFE SUPPORT']);
+        expect(allNames).toEqual(['HELP', 'HELLO', 'WHO ARE YOU', 'SYSTEM', 'STATUS', 'LIFE SUPPORT']);
     });
 
     test('HELP COMMAND shows the usage and description from metadata', () => {

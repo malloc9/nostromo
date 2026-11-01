@@ -44,7 +44,6 @@ const MODULES = [
     'scripted-events',
     'persistence',
     'simulation-reset',
-    'legacy-responses',
     'terminal-view'
 ];
 

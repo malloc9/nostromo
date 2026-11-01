@@ -28,6 +28,20 @@
     function register(registry, store) {
         const mission = () => store.snapshot('mission');
 
+        // The one-line answer the retired responder gave, read from the ship data it describes.
+        registry.register({
+            name: 'WHAT IS YOUR MISSION',
+            category: 'MISSION',
+            description: 'SAYS WHAT THE SHIP IS CARRYING AND HOW MANY ARE ABOARD.',
+            usage: 'WHAT IS YOUR MISSION',
+            handler: (ctx) => refuseArgs('WHAT IS YOUR MISSION')(ctx) || (() => {
+                const identity = store.snapshot('identity').state;
+                const humans = store.snapshot('crew').state.members.filter((m) => m.type === 'human').length;
+                const vessel = identity.vessel.split(' ').pop();
+                return [text(`${identity.vesselClass} ${vessel}. CREW: ${humans}. CARGO: ${mission().state.cargo}.`)];
+            })()
+        });
+
         const sub = (name, description, privilege, build) => registry.register({
             name,
             category: 'MISSION',

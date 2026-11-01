@@ -95,6 +95,8 @@ function saveSimulation() {
 function initializeDataSimulator() {
     if (typeof DataSimulator !== 'undefined') {
         const ns = window.NostromoShipComputer;
+        // The unlock progress of the retired console is no longer used; a returning user's copy is removed.
+        browserStorage().remove('nostromoSession');
         const store = openSimulation() || ns.shipState.createShipStore();
         dataSimulator = new DataSimulator({ store });
         dataSimulator.store.subscribe(printScriptedEvent);
@@ -420,9 +422,9 @@ function updateSessionHeader() {
     if (privElement) privElement.textContent = session.level;
 }
 
-// The MOTHER terminal's command engine. Built once; the registry holds the commands and
-// the legacy responder answers anything the registry does not know yet. Every command
-// is gated by the one privilege decision, through the engine's authorize option.
+// The MOTHER terminal's command engine. Built once; the registry holds every command, and
+// anything it does not know is refused. Every command is gated by the one privilege
+// decision, through the engine's authorize option.
 function getMotherEngine() {
     if (!motherEngine) {
         const ns = window.NostromoShipComputer;
@@ -449,8 +451,7 @@ function getMotherEngine() {
         }
         motherEngine = ns.engine.createEngine({
             registry,
-            authorize: (required) => ns.privilege.authorize(session, required),
-            fallback: (normalized) => ns.legacy.respond(normalized)
+            authorize: (required) => ns.privilege.authorize(session, required)
         });
     }
     return motherEngine;

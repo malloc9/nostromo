@@ -98,17 +98,8 @@ describe('engine: lifecycle', () => {
         expect(refreshState).not.toHaveBeenCalled();
     });
 
-    test('input the registry does not know falls back to the legacy responder', () => {
-        const fallback = jest.fn((input) => (input === 'STATUS' ? [{ type: 'text', text: 'LEGACY' }] : null));
-        const engine = makeEngine({ fallback });
-        const result = engine.execute('status');
-        expect(fallback).toHaveBeenCalledWith('STATUS');
-        expect(result.status).toBe('fallback');
-        expect(result.blocks).toEqual([{ type: 'text', text: 'LEGACY' }]);
-    });
-
-    test('when the fallback has no answer the unknown-command error is used', () => {
-        const engine = makeEngine({ fallback: () => null });
+    test('input the registry does not know is refused as unknown', () => {
+        const engine = makeEngine();
         expect(engine.execute('zzz').status).toBe('unknown');
     });
 

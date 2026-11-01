@@ -56,6 +56,32 @@
             args: [{ name: 'COMMAND', required: false }],
             handler: helpHandler
         });
+
+        // Greetings and identity, as the retired responder answered them. Extra words are refused, not ignored.
+        const noArgs = (usage) => (ctx) => (ctx.args.length > 0 ? [{ type: 'error', text: `USAGE: ${usage}` }] : null);
+        const answer = (usage, text) => (ctx) => noArgs(usage)(ctx) || [{ type: 'text', text }];
+        registry.register({
+            name: 'HELLO',
+            aliases: ['HI'],
+            category: 'SYSTEM',
+            description: 'GREETS THE MOTHER INTERFACE.',
+            usage: 'HELLO',
+            handler: answer('HELLO', 'INTERFACE 2037 READY FOR INQUIRY.')
+        });
+        registry.register({
+            name: 'WHO ARE YOU',
+            category: 'SYSTEM',
+            description: 'IDENTIFIES THIS COMPUTER.',
+            usage: 'WHO ARE YOU',
+            handler: answer('WHO ARE YOU', 'I AM MU/TH/UR 6000. SHIP MAINFRAME.')
+        });
+        registry.register({
+            name: 'SYSTEM',
+            category: 'SYSTEM',
+            description: 'SHOWS THE COMPUTER DIAGNOSTIC.',
+            usage: 'SYSTEM',
+            handler: answer('SYSTEM', 'SYSTEM DIAGNOSTIC: OPERATIONAL. 2.1 TB MEMORY ALLOCATED.')
+        });
     }
 
     ns.systemCommands = { register };
