@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run deploy` - Alias for build
 
 ### Unit tests
-- `npm test` runs Jest over `tests/**` (configured by the `jest.roots` key in `package.json`). It exits non-zero on failure. Only the ship-computer logic is covered so far.
+- `npm test` runs Jest over `tests/**` (configured by the `jest.roots` key in `package.json`). It exits non-zero on failure. It covers the ship-computer logic: engine and parser, registry, privilege, confirmation, store, reports, persistence, reset, scripted events, and the state-consistency scenario (`tests/ship-computer/state-consistency.test.js`).
 - Run one file with `npx jest tests/ship-computer/util.test.js`.
 - Tests load modules with `require('../../js/<group>/<file>.js')`. Modules end with the dual-export guard (`module.exports` in Node, global in the browser), so the same file runs in both places.
 - For a new ship-computer module, add a `tests/ship-computer/<name>.test.js` next to it. Use `jest-environment-jsdom` only when a test really needs a DOM. Pure logic modules must not touch the DOM.
@@ -78,3 +78,52 @@ The UI is a fixed 1366×768 stage (`#terminal-container` at the end of `nostromo
 - Requires Node >=16. `NOSTROMO_IMPROVEMENT_PLAN.md` describes the intended design vision.
 
 - **Retired responders (from ticket 22).** `legacy-responses.js` and `console.js` are deleted. Old answers are now commands: `HELLO` (alias `HI`), `WHO ARE YOU` and `SYSTEM` in `system-commands.js`; `WHAT IS YOUR MISSION` in `mission-commands.js`, answered from the store. Retired on purpose: `LOGS` (use `LOG`), bare crew names (use `CREW <NAME>`), and the `WHAT IS ...` catch-all. The old REPORT one-liner is gone; `REPORT` is the full report.
+
+## Adding a command
+
+1. Put the command in the module for its subsystem (`*-commands.js`), or make a new module with `register(registry, store, session)`. Declare `name`, `aliases`, `category`, `description`, `usage`, `args`, and `privilege` (from `ns.privilege.OPERATIONS`; the default is CREW).
+2. The handler reads the store (`store.snapshot(...)`) and returns blocks. It never checks privilege and never returns HTML. Refuse extra words with `USAGE: ...`, as the other commands do.
+3. A command that changes state declares COMMANDER (or the level it needs), asks with `ctx.ask({question, confirm, cancel})`, and changes state only in `confirm`, through the owner's operation.
+4. Wire it: add the file to `index.html` before `app.js`, to the `scripts/build.js` required list, and to `tests/ship-computer/load.js`; register it in `getMotherEngine()` in `app.js`.
+5. Test it in `tests/ship-computer/<name>.test.js` against a store built from the scenario, with a test for each privilege it declares.
+
+## Adding a subsystem
+
+1. Describe its state, measurements, and initial values in `ship-scenario.js` (see the units and drift policy at the top of that file).
+2. Write a pure model module that reads a snapshot, and the commands that render it. Panels call the same model builder, so the terminal and the screen cannot disagree.
+3. Change its data only through its own operations, which return an event `{type, severity, message}`. The store logs exactly one event per operation and judges alerts in the same transition.
+4. Thresholds go in `alerts.js`. Scripted events go in the scenario's `script`, as data.
+5. Add a consistency test: one change, read through the terminal, the panel, the alert board and the log.
+
+## Definition of done (ticket 23 audit)
+
+Checked against the plan's section 16.3:
+
+- [x] Informational commands are registered and work: 31 commands run on the production build with no failure text.
+- [x] One shared engine, and parser with subcommands and arguments (`engine.test.js`, `parser.test.js`).
+- [x] Autocomplete comes from command definitions (`suggest.test.js`); history walks with the arrow keys (`input-history.test.js`, checked in the browser).
+- [x] Reports return structured blocks; crew records are queried by name (`CREW RIPLEY`).
+- [x] Ship state has one source (the store), and the panels, screens and terminal read it (`state-consistency.test.js`).
+- [x] Responses and dashboard values agree for the alert state. Other values are checked by the subsystem tests, not screen by screen.
+- [x] Permission checks are centralized in `privilege.authorize` (`privilege.test.js`).
+- [x] Operational commands confirm before changing state (`confirmation.test.js`; checked in the browser with a course change).
+- [x] State changes write events, and `LOG` reads them.
+- [x] Simulation state survives reloads (`persistence.test.js`, `store-restore.test.js`; checked in the browser on the production build).
+- [ ] **Not met: the terminal on mobile.** The stage scales to about 36% at a 375px-wide phone, so the text is too small to use. Follow-up: a mobile layout.
+- [x] Automated tests cover the engine, the state, and the critical transitions (see the test files above).
+
+## Deferred items
+
+These are deferred on purpose, from the plan's section 17 or from this audit:
+
+- Special Order 937 storyline, voice interaction, AI-generated responses, multiple users, a filesystem simulation, a full self-destruct sequence, and animated diagnostics. The plan defers each of these as separate work.
+- Random ship failures. Scripted events come first; random ones wait until the scripted model has been played.
+- Mobile layout (the one unmet checklist item above).
+- Engineering screen shows power allocation (ticket 17 follow-up). The POWER report shows it.
+- Dashboard panels are mouse-only: no keyboard focus or key handler (ticket 18).
+- Dashboard panel and console wiring has no automated DOM test; the browser checks cover it (tickets 18, 21).
+- The session identifier is not saved, so a reload brings back the default (tickets 20, 21).
+- Saves grow with the event log: each change clones and encodes the whole log (ticket 20).
+- `store.reset()` is public with no owner check; only the reset control calls it (ticket 21).
+- No player-facing command or setting turns the script on or off (ticket 19).
+- Retired words: `LOGS`, bare crew names, and the `WHAT IS ...` catch-all (ticket 22). `OVERRIDE` still prints its access-denied wording when permitted (kept on purpose).
