@@ -92,7 +92,11 @@
                         vessel: 'USCSS NOSTROMO',
                         registration: '1809246(09)',
                         vesselClass: 'COMMERCIAL TOWING VEHICLE',
-                        homePort: 'THOMAS EDISON'
+                        homePort: 'THOMAS EDISON',
+                        operator: 'WEYLAND-YUTANI CORPORATION',
+                        specifications: { length: '39 M', mass: '2400 TONNES', crewRated: 7 },
+                        systems: ['MU/TH/UR 6000 MAINFRAME', 'TOWING ARRAY', 'LIFE SUPPORT', 'NAVIGATION SUITE', 'SHUTTLE (LANDER)'],
+                        configuration: 'TOWING CONFIGURATION, REFINERY LOADED'
                     },
                     measurements: {}
                 },
@@ -101,7 +105,16 @@
                     fields: {
                         objective: 'RETURN REFINERY TO EARTH',
                         cargo: 'REFINERY',
-                        crewComplement: 7
+                        phase: 'IN PROGRESS',
+                        objectives: [
+                            { text: 'RETURN REFINERY TO EARTH', status: 'IN PROGRESS' },
+                            { text: 'MAINTAIN CREW SAFETY', status: 'IN PROGRESS' },
+                            { text: 'DELIVER CARGO INTACT', status: 'PENDING' }
+                        ],
+                        orders: [
+                            { code: 'OPS-01', text: 'MAINTAIN COURSE FOR SOL SYSTEM' },
+                            { code: 'OPS-02', text: 'HOLD TOWING CONFIGURATION' }
+                        ]
                     },
                     measurements: {}
                 },
@@ -175,7 +188,14 @@
                 },
                 cargo: {
                     status: 'NOMINAL',
-                    fields: { manifest: 'REFINERY', massTonnes: 0 },
+                    fields: {
+                        items: [
+                            { item: 'REFINERY UNIT A', units: 1, location: 'CARGO BAY 1', condition: 'NOMINAL' },
+                            { item: 'REFINERY UNIT B', units: 1, location: 'CARGO BAY 1', condition: 'NOMINAL' },
+                            { item: 'ORE CONTAINER', units: 4, location: 'CARGO BAY 2', condition: 'NOMINAL' },
+                            { item: 'SPARE PARTS', units: 12, location: 'STORES', condition: 'NOMINAL' }
+                        ]
+                    },
                     measurements: {}
                 },
                 communications: {

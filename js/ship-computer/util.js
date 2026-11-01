@@ -43,7 +43,17 @@
         return `${label} ${'.'.repeat(dots)} ${value}`;
     }
 
-    ns.util = { clamp, formatClock, formatLeader };
+    /**
+     * The ship's date and time: the mission date and the simulation clock's time of day.
+     * The header and the TIME command both use this, so they cannot disagree.
+     * @param {number} ms
+     * @returns {string}
+     */
+    function formatShipDateTime(ms) {
+        return `2122-06-02 ${formatClock(ms)}`;
+    }
+
+    ns.util = { clamp, formatClock, formatLeader, formatShipDateTime };
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = ns.util;

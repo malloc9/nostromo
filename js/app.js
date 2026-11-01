@@ -206,6 +206,12 @@ function getMotherSession() {
     return motherSession;
 }
 
+// The firmware label as the header shows it, which is built from VERSION. One source for both.
+function headerFirmware() {
+    const element = document.getElementById('mu-thur-version');
+    return element ? element.textContent.trim() : 'UNKNOWN';
+}
+
 // Header session fields read from the session, so they cannot disagree with the gate.
 function updateSessionHeader() {
     const session = getMotherSession();
@@ -232,6 +238,9 @@ function getMotherEngine() {
             ns.crewCommands.register(registry, dataSimulator.store, session);
             ns.lifeSupportCommands.register(registry, dataSimulator.store);
             ns.navigationCommands.register(registry, dataSimulator.store);
+            ns.shipCommands.register(registry, dataSimulator.store, { firmware: headerFirmware() });
+            ns.missionCommands.register(registry, dataSimulator.store);
+            ns.cargoCommands.register(registry, dataSimulator.store);
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }
@@ -279,7 +288,7 @@ function updateSystemTime() {
         // Ship time comes from the store, so the header and the log agree on it
         const clockTime = store ? store.now() : Date.now();
         // Set futuristic date for the Nostromo mission
-        timeElement.textContent = `2122-06-02 ${window.NostromoShipComputer.util.formatClock(clockTime)}`;
+        timeElement.textContent = window.NostromoShipComputer.util.formatShipDateTime(clockTime);
     }
     if (store) {
         updateHeaderAlerts(store);
