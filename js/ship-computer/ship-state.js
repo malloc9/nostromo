@@ -250,7 +250,7 @@
         const scenario = opts.scenario || ns.scenario.standardScenario();
         const restore = opts.restore || null;
         if (restore) assertRestorable(restore, scenario, clock.now());
-        const startedAt = restore ? restore.startedAt : clock.now();
+        let startedAt = restore ? restore.startedAt : clock.now();
 
         const privates = restore ? clone(restore.subsystems) : initialPrivates(scenario, startedAt);
 
@@ -380,6 +380,23 @@
             const current = new Map(ns.alerts.faultAlerts(faultsByName()).map((a) => [a.id, a]));
             logTransitions(faultAlertsNow, current, now);
             faultAlertsNow = current;
+        }
+
+        /**
+         * Start again from the scenario's initial state at this moment: every subsystem, the log, the
+         * alerts and the script position. Only the reset control calls this; no command does.
+         */
+        function reset() {
+            startedAt = clock.now();
+            Object.keys(privates).forEach((name) => { delete privates[name]; });
+            Object.assign(privates, initialPrivates(scenario, startedAt));
+            version = 0;
+            sampledUpTo = startedAt;
+            scriptNext = 0;
+            faultAlertsNow = new Map();
+            thresholdAlertsNow = thresholdAlertsAt(startedAt);
+            logTransitions(new Map(), thresholdAlertsNow, startedAt);
+            notify({ subsystem: 'eventLog', operation: 'reset', version, time: startedAt });
         }
 
         /** Apply the scripted transitions due by `until`, then judge thresholds up to `until`. */
@@ -560,7 +577,9 @@
 
         return {
             dataVersion: scenario.dataVersion,
-            startedAt,
+            get startedAt() {
+                return startedAt;
+            },
             now: () => clock.now(),
             operations: Object.keys(OPERATIONS),
             subsystemNames: () => Object.keys(privates),
@@ -572,6 +591,7 @@
             events: () => snapshot('eventLog').state.entries,
             alerts: alertBoard,
             tick,
+            reset,
             /**
              * Everything a save needs to resume exactly: the subsystems, the event log (inside the
              * eventLog subsystem), the change count, and the positions the sampling and the script are at.

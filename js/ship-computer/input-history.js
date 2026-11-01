@@ -86,11 +86,18 @@
             return draft;
         }
 
+        /** Forget every entry and the walk through them. The next command starts a new history. */
+        function clear() {
+            items = [];
+            cursor = null;
+            draft = '';
+        }
+
         function entries() {
             return items.map((e) => ({ ...e }));
         }
 
-        return { add, previous, next, entries };
+        return { add, previous, next, entries, clear };
     }
 
     ns.inputHistory = { createInputHistory, DEFAULT_LIMIT: DEFAULT_LIMIT };

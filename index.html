@@ -131,6 +131,15 @@
                             <span>SESSION: <span id="mother-session-id">0000-A7F3</span></span>
                             <span>PRIVILEGE: <span id="mother-priv-level">COMMANDER</span></span>
                             <span>STATUS: <span class="status-ok">ONLINE</span></span>
+                            <span class="settings-area">
+                                <button type="button" id="reset-request" class="settings-button">RESET SIMULATION</button>
+                                <span id="reset-confirm" class="reset-confirm" hidden>
+                                    <span>RESET THE SHIP TO ITS INITIAL STATE? THE EVENT LOG IS CLEARED.</span>
+                                    <label><input type="checkbox" id="reset-clear-history"> CLEAR COMMAND HISTORY</label>
+                                    <button type="button" id="reset-confirm-yes" class="settings-button">CONFIRM</button>
+                                    <button type="button" id="reset-confirm-no" class="settings-button">CANCEL</button>
+                                </span>
+                            </span>
                         </div>
                         <div class="mother-output" id="mother-output">
                             <div class="mother-response">MU/TH/UR 6000 ONLINE.</div>
@@ -258,6 +267,7 @@
     <script src="js/ship-computer/dashboard-panels.js"></script>
     <script src="js/ship-computer/scripted-events.js"></script>
     <script src="js/ship-computer/persistence.js"></script>
+    <script src="js/ship-computer/simulation-reset.js"></script>
     <script src="js/ship-computer/legacy-responses.js"></script>
     <script src="js/ship-computer/terminal-view.js"></script>
     <script src="js/data-simulator.js"></script>

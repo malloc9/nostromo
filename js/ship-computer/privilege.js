@@ -78,10 +78,16 @@
      */
     function createSession(options) {
         const opts = options || {};
+        let id = opts.id || '0000-A7F3';
         let level = opts.level || 'COMMANDER';
         rank(level);
         return {
-            id: opts.id || '0000-A7F3',
+            get id() {
+                return id;
+            },
+            setId(next) {
+                id = String(next);
+            },
             get level() {
                 return level;
             },
@@ -90,6 +96,15 @@
                 level = next;
             }
         };
+    }
+
+    /**
+     * A session identifier in the same shape as the others, XXXX-XXXX in hexadecimal.
+     * @param {() => number} [random]  returns a number in [0, 1); injected by tests
+     */
+    function newSessionId(random = Math.random) {
+        const part = () => Math.floor(random() * 0x10000).toString(16).toUpperCase().padStart(4, '0');
+        return `${part()}-${part()}`;
     }
 
     ns.privilege = {
@@ -101,7 +116,8 @@
         permits,
         authorize,
         operationsFor,
-        createSession
+        createSession,
+        newSessionId
     };
 
     if (typeof module !== 'undefined' && module.exports) {

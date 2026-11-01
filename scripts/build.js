@@ -255,6 +255,7 @@ async function validateBuild() {
     'js/ship-computer/dashboard-panels.js',
     'js/ship-computer/scripted-events.js',
     'js/ship-computer/persistence.js',
+    'js/ship-computer/simulation-reset.js',
     'js/ship-computer/legacy-responses.js',
     'js/ship-computer/terminal-view.js',
     '.nojekyll'

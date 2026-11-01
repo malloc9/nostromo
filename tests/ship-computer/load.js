@@ -43,6 +43,7 @@ const MODULES = [
     'dashboard-panels',
     'scripted-events',
     'persistence',
+    'simulation-reset',
     'legacy-responses',
     'terminal-view'
 ];

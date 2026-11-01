@@ -27,6 +27,11 @@ function round1(value) {
 }
 
 class DataSimulator {
+    // The ship's start time, read from the store so a reset is seen at once.
+    get startTime() {
+        return this.store.startedAt;
+    }
+
     /**
      * @param {{clock?: {now: () => number}, store?: Object}} [options]
      *   clock: injectable simulation clock (defaults to Date.now)
@@ -36,7 +41,6 @@ class DataSimulator {
         const opts = options || {};
         const shipState = resolveShipState();
         this.store = opts.store || shipState.createShipStore({ clock: opts.clock });
-        this.startTime = this.store.startedAt;
         this.hourMs = shipState.HOUR_MS;
 
         // Historical data storage for trend analysis

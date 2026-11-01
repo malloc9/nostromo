@@ -193,11 +193,63 @@ function initializeConsole() {
 }
 
 // The MOTHER terminal. The Dashboard console binds itself when the Dashboard renders.
+// The reset control. It is a button on this screen, never a terminal command, and it asks first.
+let resetControl = null;
+
+// A new session with a new identifier. The ship starts from its initial state, and the event log is cleared.
+function performReset({ clearHistory }) {
+    const ns = window.NostromoShipComputer;
+    // A question still waiting for Y or N belongs to the old ship; it is dropped, not answered later.
+    getMotherEngine().cancelPending();
+    dataSimulator.store.reset();
+    Object.keys(dataSimulator.history).forEach((key) => { dataSimulator.history[key] = []; });
+
+    const session = getMotherSession();
+    session.setId(ns.privilege.newSessionId());
+    session.setLevel('COMMANDER');
+    if (clearHistory) {
+        getMotherHistory().clear();
+        if (PERSISTENCE.history) {
+            browserStorage().write(HISTORY_KEY, ns.persistence.encodeSave(getMotherHistory().entries()));
+        }
+    }
+    updateSessionHeader();
+    const out = document.getElementById('mother-output');
+    if (out) ns.terminalView.renderBlocks(out, [{ type: 'text', text: `SIMULATION RESET. NEW SESSION: ${session.id}.` }]);
+    drawResetControl();
+}
+
+// Shows the request button, or the confirmation with its history option, from the control's state.
+function drawResetControl() {
+    const asking = resetControl.state() === 'asking';
+    const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+    set('reset-request', (el) => { el.hidden = asking; });
+    set('reset-confirm', (el) => { el.hidden = !asking; });
+    set('reset-clear-history', (el) => { el.checked = resetControl.clearHistory(); });
+}
+
+function initResetControl() {
+    resetControl = window.NostromoShipComputer.simulationReset.createResetControl(performReset);
+    const on = (id, handler) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', handler);
+    };
+    on('reset-request', () => { resetControl.request(); drawResetControl(); });
+    on('reset-confirm-yes', () => { resetControl.confirm(); drawResetControl(); });
+    on('reset-confirm-no', () => { resetControl.decline(); drawResetControl(); });
+    const history = document.getElementById('reset-clear-history');
+    if (history) {
+        history.addEventListener('change', () => { resetControl.setClearHistory(history.checked); drawResetControl(); });
+    }
+    drawResetControl();
+}
+
 function initMotherInterface() {
     const input = document.getElementById('mother-input');
     if (!input) return;
     updateSessionHeader();
     bindTerminal(input, document.getElementById('mother-output'), { suggestions: true });
+    initResetControl();
     // Auto-focus the input when on mother screen
     const observer = new MutationObserver(() => {
         const motherScreen = document.getElementById('mother-screen');

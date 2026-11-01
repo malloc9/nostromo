@@ -1716,3 +1716,36 @@ html, body {
 /* A panel is clickable: it runs its command on the console */
 .status-grid > .status-quadrant { cursor: pointer; }
 .status-grid > .status-quadrant:hover { box-shadow: inset 0 0 0 1px var(--phosphor-dim); }
+
+/* SETTINGS: the simulation reset control on the MOTHER screen (ticket 21) */
+.mother-session-info .settings-area {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.mother-session-info .settings-button {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--phosphor);
+  background: transparent;
+  border: 1px solid var(--phosphor-dim);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.mother-session-info .settings-button:hover,
+.mother-session-info .settings-button:focus-visible {
+  color: var(--phosphor-core);
+  border-color: var(--phosphor);
+}
+.mother-session-info .reset-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--phosphor-bright);
+}
+.mother-session-info .reset-confirm[hidden],
+.mother-session-info .settings-button[hidden] {
+  display: none;
+}
