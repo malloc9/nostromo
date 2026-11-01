@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
 function initializeDataSimulator() {
     if (typeof DataSimulator !== 'undefined') {
         dataSimulator = new DataSimulator();
+        dataSimulator.store.subscribe(printScriptedEvent);
         console.log('Data simulator initialized');
     } else {
         console.warn('DataSimulator not available - ensure data-simulator.js is loaded');
@@ -175,11 +176,15 @@ function initMotherInterface() {
     }
 }
 
+// Every bound terminal output, so a scripted event can print to each of them.
+const terminalOutputs = new Set();
+
 // One binding for every terminal: the MOTHER screen and the Dashboard console share the engine,
 // the history and these key rules. Only the input and output elements differ. Suggestions draw
 // in the MOTHER screen's box, so only the MOTHER terminal turns them on.
 function bindTerminal(input, out, options = {}) {
     if (!input || !out) return;
+    terminalOutputs.add(out);
     const withSuggestions = options.suggestions === true;
     input.addEventListener('keydown', (e) => {
         // Suggestions first: arrows move the highlight, Enter takes it, Escape closes the list.
@@ -241,6 +246,22 @@ window.shipTerminal = {
     bind: bindTerminal,
     run: (cmd, out) => runTerminalCommand(out, cmd)
 };
+
+// A scripted event prints once to each terminal output, in warning style. Outputs that have left
+// the page (a re-rendered Dashboard, for example) are dropped.
+function printScriptedEvent(event) {
+    if (!event.notice) return;
+    const blocks = window.NostromoShipComputer.scriptedEvents.noticeBlocks(event.notice);
+    terminalOutputs.forEach((out) => {
+        if (!out.isConnected) {
+            terminalOutputs.delete(out);
+            return;
+        }
+        const wasAtBottom = isAtBottom(out);
+        window.NostromoShipComputer.terminalView.renderBlocks(out, blocks);
+        keepAtBottom(out, wasAtBottom);
+    });
+}
 
 let motherEngine = null;
 let motherSession = null;

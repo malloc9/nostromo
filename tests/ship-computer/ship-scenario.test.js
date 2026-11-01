@@ -44,13 +44,14 @@ describe('standard scenario: crew roster', () => {
 });
 
 describe('standard scenario: a stable ship', () => {
-    test('no alert is active at any hour over ten simulated days', () => {
+    test('no alert is active before the script fires, and only its cooling alert after', () => {
         const HOUR = 60 * 60 * 1000;
         const clock = createManualClock(0);
         const store = createShipStore({ clock });
+        expect(store.alerts().list).toEqual([]);
         for (let h = 0; h < 24 * 10; h++) {
             clock.advance(HOUR);
-            expect(store.alerts().list).toEqual([]);
+            expect(store.alerts().list.map((a) => a.id)).toEqual(['engineering:COOLING-TEMP']);
         }
     });
 });

@@ -41,6 +41,7 @@ const MODULES = [
     'engineering-commands',
     'status-commands',
     'dashboard-panels',
+    'scripted-events',
     'legacy-responses',
     'terminal-view'
 ];

@@ -162,6 +162,16 @@
             if (!args.status) throw new Error('status needs a value');
             state.status = String(args.status);
             return { type: 'status', severity: 'INFO', message: `STATUS SET: ${state.status}` };
+        },
+        // Moves one reading by a fixed amount from now on. The script uses it for a rise in a reading;
+        // the transition's own event describes the change, so this writes no event of its own.
+        shiftMeasurement(state, args) {
+            const def = state.measurements[args.key];
+            if (!def || def.kind !== 'measurement') throw new Error(`no measurement: ${args.key}`);
+            const by = Number(args.by);
+            if (!Number.isFinite(by)) throw new Error('shift needs a number');
+            def.offset += by;
+            return null;
         }
     };
 
@@ -173,7 +183,7 @@
     }
 
     /**
-     * @param {{clock?: Clock, scenario?: Object}} [options]
+     * @param {{clock?: Clock, scenario?: Object, scripted?: boolean}} [options]  scripted defaults to on
      */
     function createShipStore(options) {
         const opts = options || {};
@@ -201,6 +211,11 @@
         let sampledUpTo = startedAt;
         let thresholdAlertsNow = new Map();
         let faultAlertsNow = new Map();
+
+        // Scripted events fire at their own times, in order. A script that is off skips its entries as they pass.
+        const script = (scenario.script || []).slice().sort((a, b) => a.at - b.at);
+        let scriptNext = 0;
+        let scriptOn = opts.scripted !== false;
 
         function elapsed() {
             return clock.now() - startedAt;
@@ -314,7 +329,50 @@
             faultAlertsNow = current;
         }
 
-        function snapshot(name) {
+        /** Apply the scripted transitions due by `until`, then judge thresholds up to `until`. */
+        function advance(until) {
+            while (scriptNext < script.length && startedAt + script[scriptNext].at <= until) {
+                const entry = script[scriptNext];
+                scriptNext += 1;
+                if (!scriptOn) continue;
+                const time = startedAt + entry.at;
+                const result = applyChanges(entry.changes, time);
+                notify({
+                    subsystem: entry.changes[0].subsystem,
+                    operation: 'scripted',
+                    version: result.version,
+                    time,
+                    notice: noticeFor(entry, time)
+                });
+            }
+            sampleThresholdsUntil(until);
+        }
+
+        /** What the terminal prints for a scripted event: its readings as they stand at the event. */
+        function noticeFor(entry, time) {
+            const values = entry.notice.values.map((v) => ({
+                label: v.label,
+                value: v.measurement
+                    ? readMeasurement(privates[v.subsystem].measurements[v.measurement], time - startedAt)
+                    : privates[v.subsystem].fields[v.field],
+                unit: v.unit
+            }));
+            return { time, source: entry.notice.source, level: entry.notice.level, headline: entry.notice.headline, values };
+        }
+
+        function notify(event) {
+            // The change is already committed, so one bad subscriber must not
+            // hide it from the others or make this write look failed.
+            listeners.slice().forEach((listener) => {
+                try {
+                    listener(event);
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+        }
+
+        function readSubsystem(name) {
             const state = privates[name];
             if (!state) throw new Error(`unknown subsystem: ${name}`);
             const faults = state.faults.map((f) => ({ ...f }));
@@ -332,10 +390,60 @@
             });
         }
 
+        function snapshot(name) {
+            advance(clock.now());
+            return readSubsystem(name);
+        }
+
         function snapshotAll() {
+            advance(clock.now());
             const all = {};
-            Object.keys(privates).forEach((name) => { all[name] = snapshot(name); });
+            Object.keys(privates).forEach((name) => { all[name] = readSubsystem(name); });
             return all;
+        }
+
+        /**
+         * Apply one or more owner operations as a single transition at `time`. Every change is
+         * checked and run on a copy first, so a refused change commits nothing. Each operation's
+         * event is logged, and alerts are judged once the transition is in place.
+         * @param {Array<{subsystem: string, operation: string, args?: Object}>} changes
+         * @param {number} time
+         * @returns {{version: number, time: number}}
+         */
+        function applyChanges(changes, time) {
+            // Judge threshold readings up to this moment against the state before the change.
+            sampleThresholdsUntil(time);
+            const working = {};
+            const described = [];
+            changes.forEach((change) => {
+                const name = change.subsystem;
+                const args = change.args || {};
+                if (!privates[name]) throw new Error(`unknown subsystem: ${name}`);
+                const op = OPERATIONS[change.operation];
+                if (!op) throw new Error(`unknown operation: ${change.operation}`);
+                // Engineering component names belong to the engineering model; a typo must not
+                // record a fault that no panel will ever show.
+                const parts = componentKeysFor(name);
+                if (parts && args.component && parts.indexOf(args.component) === -1) {
+                    throw new Error(`unknown ${name} component: ${args.component}`);
+                }
+                if (!working[name]) working[name] = clone(privates[name]);
+                const result = op(working[name], args, time);
+                if (result) described.push({ ...result, subsystem: name });
+            });
+
+            Object.keys(working).forEach((name) => {
+                working[name].lastUpdated = time;
+                privates[name] = working[name];
+            });
+            version += changes.length;
+            described.forEach((event) => appendEvent(time, event));
+            syncFaultAlerts(time);
+            // A change can move a threshold at this very moment (a power allocation does), so judge it now too.
+            const atTime = thresholdAlertsAt(time);
+            logTransitions(thresholdAlertsNow, atTime, time);
+            thresholdAlertsNow = atTime;
+            return { version, time };
         }
 
         /**
@@ -350,43 +458,12 @@
             if (actor !== name) {
                 throw new OwnershipError(`${actor} may not change ${name}`);
             }
-            const op = OPERATIONS[operation];
-            if (!op) throw new Error(`unknown operation: ${operation}`);
-            // Engineering component names belong to the engineering model; a typo must not
-            // record a fault that no panel will ever show.
-            const parts = componentKeysFor(name);
-            if (parts && args && args.component && parts.indexOf(args.component) === -1) {
-                throw new Error(`unknown ${name} component: ${args.component}`);
-            }
-
             const now = clock.now();
-            // Judge threshold readings up to now against the state before this change.
-            sampleThresholdsUntil(now);
-            const next = clone(privates[name]);
-            const described = op(next, args || {}, now);
-            next.lastUpdated = now;
-
-            privates[name] = next;
-            version += 1;
-            if (described) {
-                appendEvent(now, { ...described, subsystem: name });
-            }
-            syncFaultAlerts(now);
-            // A change can move a threshold at this very moment (a power allocation does), so judge it now too.
-            const atNow = thresholdAlertsAt(now);
-            logTransitions(thresholdAlertsNow, atNow, now);
-            thresholdAlertsNow = atNow;
-            const event = { subsystem: name, operation, version, time: now };
-            // The change is already committed, so one bad subscriber must not
-            // hide it from the others or make this write look failed.
-            listeners.slice().forEach((listener) => {
-                try {
-                    listener(event);
-                } catch (err) {
-                    console.error(err);
-                }
-            });
-            return snapshot(name);
+            // Scripted events due by now fire first, so this change is applied after them.
+            advance(now);
+            const result = applyChanges([{ subsystem: name, operation, args }], now);
+            notify({ subsystem: name, operation, version: result.version, time: now });
+            return readSubsystem(name);
         }
 
         /**
@@ -403,8 +480,8 @@
 
         /** The alert board every screen reads: overall status and the active alerts. */
         function alertBoard() {
-            // Sample first, so the board never shows a threshold the log has not yet recorded.
-            sampleThresholdsUntil(clock.now());
+            // Advance first, so the board never shows a threshold or scripted fault the log has not yet recorded.
+            advance(clock.now());
             const list = currentAlerts();
             const overall = list.some((a) => a.severity === 'CRITICAL') ? 'CRITICAL'
                 : (list.length ? 'WARNING' : 'OPERATIONAL');
@@ -416,7 +493,6 @@
          * so the UI calls this on each refresh; calling it twice at the same time logs nothing new.
          */
         function tick() {
-            sampleThresholdsUntil(clock.now());
             return alertBoard();
         }
 
@@ -437,7 +513,14 @@
             version: () => version,
             events: () => snapshot('eventLog').state.entries,
             alerts: alertBoard,
-            tick
+            tick,
+            /** Whether the scripted events fire. Turning it off skips the entries whose time passes. */
+            scripted: () => scriptOn,
+            setScripted(on) {
+                // Settle everything due under the old setting, so the switch only affects later times.
+                advance(clock.now());
+                scriptOn = Boolean(on);
+            }
         };
     }
 

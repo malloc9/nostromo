@@ -27,8 +27,33 @@
 (function (root) {
     const ns = root.NostromoShipComputer = root.NostromoShipComputer || {};
 
+    const MINUTE_MS = 60 * 1000;
     const HOUR_MS = 60 * 60 * 1000;
     const SCENARIO_ETA_HOURS = 72;
+
+    /**
+     * The scripted events, in simulated time from the store's start. Each entry is data: a trigger
+     * time, the owner operations that make up one transition, and the notice the terminal prints.
+     * `values` are read at the trigger time: a measurement by its key, a field by its name.
+     */
+    const SCRIPT = [
+        {
+            at: 2 * MINUTE_MS,
+            changes: [
+                { subsystem: 'engineering', operation: 'shiftMeasurement', args: { key: 'coolingTemperature', by: 30 } },
+                { subsystem: 'engineering', operation: 'addFault', args: { code: 'COOLING-TEMP', message: 'COOLING SYSTEM TEMPERATURE ABOVE NORMAL', component: 'coolingSystem', severity: 'WARNING' } }
+            ],
+            notice: {
+                source: 'ENGINEERING',
+                level: 'WARNING',
+                headline: 'COOLING SYSTEM TEMPERATURE ABOVE NORMAL.',
+                values: [
+                    { label: 'CURRENT TEMPERATURE', subsystem: 'engineering', measurement: 'coolingTemperature', unit: 'C' },
+                    { label: 'WARNING THRESHOLD', subsystem: 'engineering', field: 'coolingWarningAt', unit: 'C' }
+                ]
+            }
+        }
+    ];
 
     /**
      * @param {number} base
@@ -85,6 +110,7 @@
         return {
             scenarioId: 'standard',
             dataVersion: 1,
+            script: JSON.parse(JSON.stringify(SCRIPT)),
             subsystems: {
                 identity: {
                     status: 'NOMINAL',
@@ -138,8 +164,8 @@
                 },
                 engineering: {
                     status: 'NOMINAL',
-                    // Cooling warning threshold, in degrees Celsius. The scripted-events ticket
-                    // raises a cooling warning when the temperature reaches it.
+                    // Cooling warning threshold, in degrees Celsius. The scripted cooling event
+                    // below reports the reading against it.
                     fields: {
                         coolingWarningAt: 80,
                         // Power shares across subsystems, in percent. They always total 100.
