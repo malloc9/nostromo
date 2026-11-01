@@ -140,7 +140,19 @@
                     status: 'NOMINAL',
                     // Cooling warning threshold, in degrees Celsius. The scripted-events ticket
                     // raises a cooling warning when the temperature reaches it.
-                    fields: { coolingWarningAt: 80 },
+                    fields: {
+                        coolingWarningAt: 80,
+                        // Power shares across subsystems, in percent. They always total 100.
+                        allocation: { lifeSupport: 35, navigation: 25, communications: 20, engines: 20 },
+                        // Allowed range per subsystem. Life support has a safety minimum, and below a warning
+                        // level the subsystem raises a POWER LOW alert.
+                        allocationRules: {
+                            lifeSupport: { min: 5, max: 60, safetyMin: 30 },
+                            navigation: { min: 5, max: 60, warnBelow: 15 },
+                            communications: { min: 5, max: 60, warnBelow: 10 },
+                            engines: { min: 5, max: 60, warnBelow: 15 }
+                        }
+                    },
                     measurements: {
                         primaryEngineLoad: measure(35, { amplitude: 4, period: 75, min: 0, max: 100 }),
                         secondaryEngineLoad: measure(0, { min: 0, max: 100 }),

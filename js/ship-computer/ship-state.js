@@ -113,6 +113,21 @@
             const [cleared] = state.faults.splice(index, 1);
             return { type: 'status', severity: 'INFO', message: `FAULT CLEARED: ${cleared.message}` };
         },
+        // Moves power between two subsystems. The validation is the engineering model's own rule.
+        setAllocation(state, args) {
+            const alloc = state.fields.allocation;
+            const rules = state.fields.allocationRules;
+            if (!alloc || !rules) throw new Error('only engineering allocates power');
+            const percent = Number(args.percent);
+            const problem = ns.engineeringModel.allocationProblem(alloc, rules, args.target, args.donor, percent);
+            if (problem) throw new Error(problem);
+            const from = alloc[args.target];
+            alloc[args.target] = percent;
+            alloc[args.donor] -= percent - from;
+            const label = ns.engineeringModel.labelOf;
+            return { type: 'status', severity: 'INFO', message: `POWER ALLOCATION: ${label(args.target)} ${from}% TO ${percent}%, FROM ${label(args.donor)}` };
+        },
+
         // Changes the course. Only navigation has destinations; the change is logged by the caller's event.
         setCourse(state, args) {
             const destinations = state.fields.destinations;
@@ -214,6 +229,7 @@
                 .filter((m) => m.type === 'human' && m.status === 'active').length;
             return {
                 power: { generation: read('engineering', 'powerGeneration'), consumption: read('engineering', 'powerConsumption') },
+                allocationWarnings: allocationWarnings(),
                 lifeSupport: {
                     oxygen: read('lifeSupport', 'oxygen'),
                     co2: read('lifeSupport', 'co2'),
@@ -223,6 +239,15 @@
                 navigation: { velocity: read('navigation', 'velocity') },
                 activeCrew: activeHumans
             };
+        }
+
+        // Subsystems whose allocation is below their warning level now.
+        function allocationWarnings() {
+            const alloc = privates.engineering.fields.allocation;
+            const rules = privates.engineering.fields.allocationRules;
+            return Object.keys(rules)
+                .filter((k) => rules[k].warnBelow !== undefined && alloc[k] < rules[k].warnBelow)
+                .map((k) => ({ subsystem: k, value: alloc[k], warnBelow: rules[k].warnBelow }));
         }
 
         function thresholdAlertsAt(time) {
@@ -347,6 +372,10 @@
                 appendEvent(now, { ...described, subsystem: name });
             }
             syncFaultAlerts(now);
+            // A change can move a threshold at this very moment (a power allocation does), so judge it now too.
+            const atNow = thresholdAlertsAt(now);
+            logTransitions(thresholdAlertsNow, atNow, now);
+            thresholdAlertsNow = atNow;
             const event = { subsystem: name, operation, version, time: now };
             // The change is already committed, so one bad subscriber must not
             // hide it from the others or make this write look failed.

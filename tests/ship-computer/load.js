@@ -30,6 +30,7 @@ const MODULES = [
     'life-support-commands',
     'navigation-model',
     'navigation-commands',
+    'power-allocation-commands',
     'ship-commands',
     'mission-commands',
     'cargo-commands',

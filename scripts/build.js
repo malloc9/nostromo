@@ -239,6 +239,7 @@ async function validateBuild() {
     'js/ship-computer/life-support-commands.js',
     'js/ship-computer/navigation-model.js',
     'js/ship-computer/navigation-commands.js',
+    'js/ship-computer/power-allocation-commands.js',
     'js/ship-computer/ship-commands.js',
     'js/ship-computer/mission-commands.js',
     'js/ship-computer/cargo-commands.js',

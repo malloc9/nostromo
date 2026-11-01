@@ -60,7 +60,34 @@
         };
     }
 
-    ns.engineeringModel = { build, COMPONENTS };
+    /** Display name for an allocation key: navigation -> NAVIGATION, lifeSupport -> LIFE SUPPORT. */
+    function labelOf(key) {
+        return key.replace(/([A-Z])/g, ' $1').toUpperCase().trim();
+    }
+
+    /**
+     * The one allocation rule. Returns the reason a change is refused, or null when it is allowed.
+     * The store and the command both call this, so the rule has one definition.
+     */
+    function allocationProblem(alloc, rules, target, donor, percent) {
+        if (!rules[target]) return `UNKNOWN SUBSYSTEM: ${target}.`;
+        if (!rules[donor]) return `UNKNOWN SUBSYSTEM: ${donor}.`;
+        if (target === donor) return 'TARGET AND DONOR MUST DIFFER.';
+        if (!Number.isInteger(percent)) return 'PERCENT MUST BE A WHOLE NUMBER.';
+        const tr = rules[target];
+        const dr = rules[donor];
+        if (percent < tr.min || percent > tr.max) return `${labelOf(target)} MUST STAY BETWEEN ${tr.min}% AND ${tr.max}%.`;
+        const donorAfter = alloc[donor] - (percent - alloc[target]);
+        if (donorAfter < dr.min || donorAfter > dr.max) return `${labelOf(donor)} MUST STAY BETWEEN ${dr.min}% AND ${dr.max}%.`;
+        const safety = rules.lifeSupport && rules.lifeSupport.safetyMin;
+        if (safety !== undefined) {
+            const lifeSupportAfter = target === 'lifeSupport' ? percent : (donor === 'lifeSupport' ? donorAfter : alloc.lifeSupport);
+            if (lifeSupportAfter < safety) return `LIFE SUPPORT CANNOT FALL BELOW ${safety}%.`;
+        }
+        return null;
+    }
+
+    ns.engineeringModel = { build, COMPONENTS, labelOf, allocationProblem };
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = ns.engineeringModel;

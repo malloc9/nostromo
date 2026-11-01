@@ -64,6 +64,8 @@
             leader('MARGIN', signed(margin)),
             leader('EFFICIENCY', percent(m.powerEfficiency)),
             leader('DISTRIBUTION', componentStatus(model, 'powerDistribution')),
+            ...Object.keys(store.snapshot('engineering').state.allocation).map((k) =>
+                leader(`${ns.engineeringModel.labelOf(k)} ALLOCATION`, `${store.snapshot('engineering').state.allocation[k]}%`)),
             text(''),
             text('POWER REPORT COMPLETE.')
         ];

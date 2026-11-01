@@ -290,6 +290,7 @@ function getMotherEngine() {
             ns.crewCommands.register(registry, dataSimulator.store, session);
             ns.lifeSupportCommands.register(registry, dataSimulator.store);
             ns.navigationCommands.register(registry, dataSimulator.store, session);
+            ns.powerAllocationCommands.register(registry, dataSimulator.store, session);
             ns.shipCommands.register(registry, dataSimulator.store, { firmware: headerFirmware() });
             ns.missionCommands.register(registry, dataSimulator.store);
             ns.cargoCommands.register(registry, dataSimulator.store);

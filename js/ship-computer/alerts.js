@@ -96,6 +96,12 @@
             threshold('navigation', 'NAV_VELOCITY', 'WARNING', 'NAVIGATION WARNING: VELOCITY BELOW NOMINAL');
         }
 
+        // Power allocation: a subsystem below its warning level raises one POWER LOW alert.
+        (input.allocationWarnings || []).forEach((w) => {
+            const label = ns.engineeringModel.labelOf(w.subsystem);
+            threshold('engineering', `POWER_${w.subsystem.toUpperCase()}`, 'WARNING', `${label} POWER LOW: ${w.value}%`);
+        });
+
         if (input.activeCrew < 5) {
             threshold('crew', 'CREW_ACTIVE', 'WARNING', 'CREW STATUS: FEWER THAN 5 CREW ACTIVE');
         }
