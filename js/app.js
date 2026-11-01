@@ -62,10 +62,45 @@ document.addEventListener('DOMContentLoaded', function () {
     startApplicationBootSequence();
 });
 
+// What is kept in the browser. The simulation and the command history are switched separately.
+const PERSISTENCE = { simulation: true, history: true };
+const SIMULATION_KEY = 'nostromo.simulation';
+const HISTORY_KEY = 'nostromo.history';
+
+function browserStorage() {
+    return window.NostromoShipComputer.persistence.createStorage(() => window.localStorage);
+}
+
+// Messages about saves that could not be used. The first terminal to open shows them.
+let startupNotices = [];
+
+// The saved simulation, or null when there is none to use (the caller then starts a new one).
+function openSimulation() {
+    if (!PERSISTENCE.simulation) return null;
+    const ns = window.NostromoShipComputer;
+    const saved = ns.persistence.loadSaved(browserStorage().read(SIMULATION_KEY), {
+        label: 'SAVED SIMULATION',
+        outcome: 'INITIAL STATE RESTORED.',
+        build: (payload) => ns.shipState.createShipStore({ restore: payload })
+    });
+    startupNotices = startupNotices.concat(saved.notices);
+    return saved.value;
+}
+
+function saveSimulation() {
+    const text = window.NostromoShipComputer.persistence.encodeSave(dataSimulator.store.exportState());
+    browserStorage().write(SIMULATION_KEY, text);
+}
+
 function initializeDataSimulator() {
     if (typeof DataSimulator !== 'undefined') {
-        dataSimulator = new DataSimulator();
+        const ns = window.NostromoShipComputer;
+        const store = openSimulation() || ns.shipState.createShipStore();
+        dataSimulator = new DataSimulator({ store });
         dataSimulator.store.subscribe(printScriptedEvent);
+        if (PERSISTENCE.simulation) dataSimulator.store.subscribe(saveSimulation);
+        // Opened now, so a damaged saved history is reported before any terminal opens.
+        getMotherHistory();
         console.log('Data simulator initialized');
     } else {
         console.warn('DataSimulator not available - ensure data-simulator.js is loaded');
@@ -185,6 +220,7 @@ const terminalOutputs = new Set();
 function bindTerminal(input, out, options = {}) {
     if (!input || !out) return;
     terminalOutputs.add(out);
+    deliverStartupNotices(out);
     const withSuggestions = options.suggestions === true;
     input.addEventListener('keydown', (e) => {
         // Suggestions first: arrows move the highlight, Enter takes it, Escape closes the list.
@@ -214,7 +250,7 @@ function bindTerminal(input, out, options = {}) {
             const cmd = input.value.trim();
             if (!cmd) return;
             // A Y or N answering a pending question is not a command, so it is not recorded.
-            if (!getMotherEngine().pending()) getMotherHistory().add(cmd);
+            if (!getMotherEngine().pending()) recordHistory(cmd);
             runTerminalCommand(out, cmd);
             input.value = '';
             if (withSuggestions) hideSuggestions();
@@ -247,6 +283,13 @@ window.shipTerminal = {
     run: (cmd, out) => runTerminalCommand(out, cmd)
 };
 
+// Messages about unusable saves are shown once, in the first terminal that opens.
+function deliverStartupNotices(out) {
+    if (!startupNotices.length) return;
+    window.NostromoShipComputer.terminalView.renderBlocks(out, startupNotices);
+    startupNotices = [];
+}
+
 // A scripted event prints once to each terminal output, in warning style. Outputs that have left
 // the page (a re-rendered Dashboard, for example) are dropped.
 function printScriptedEvent(event) {
@@ -274,9 +317,32 @@ let suggestionIndex = -1;
 // The commands entered this session. The MOTHER terminal records and walks them.
 function getMotherHistory() {
     if (!motherHistory) {
-        motherHistory = window.NostromoShipComputer.inputHistory.createInputHistory();
+        motherHistory = openHistory();
     }
     return motherHistory;
+}
+
+// The saved command history, or a new one when there is nothing usable saved.
+function openHistory() {
+    const ns = window.NostromoShipComputer;
+    const saved = PERSISTENCE.history
+        ? ns.persistence.loadSaved(browserStorage().read(HISTORY_KEY), {
+            label: 'SAVED COMMAND HISTORY',
+            outcome: 'HISTORY CLEARED.',
+            build: (entries) => ns.inputHistory.createInputHistory({ entries })
+        })
+        : { value: null, notices: [] };
+    startupNotices = startupNotices.concat(saved.notices);
+    return saved.value || ns.inputHistory.createInputHistory();
+}
+
+// Records a command and, when history is kept, saves it.
+function recordHistory(cmd) {
+    const history = getMotherHistory();
+    history.add(cmd);
+    if (PERSISTENCE.history) {
+        browserStorage().write(HISTORY_KEY, window.NostromoShipComputer.persistence.encodeSave(history.entries()));
+    }
 }
 
 // The terminal session. It starts at commander, and the header reads it from here.

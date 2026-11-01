@@ -42,6 +42,7 @@ const MODULES = [
     'status-commands',
     'dashboard-panels',
     'scripted-events',
+    'persistence',
     'legacy-responses',
     'terminal-view'
 ];

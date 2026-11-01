@@ -182,15 +182,8 @@
         return null;
     }
 
-    /**
-     * @param {{clock?: Clock, scenario?: Object, scripted?: boolean}} [options]  scripted defaults to on
-     */
-    function createShipStore(options) {
-        const opts = options || {};
-        const clock = opts.clock || { now: () => Date.now() };
-        const scenario = opts.scenario || ns.scenario.standardScenario();
-        const startedAt = clock.now();
-
+    /** The subsystems as a new store starts them: the scenario's initial data, with no faults. */
+    function initialPrivates(scenario, startedAt) {
         const privates = {};
         Object.keys(scenario.subsystems).forEach((name) => {
             const def = scenario.subsystems[name];
@@ -202,20 +195,80 @@
                 lastUpdated: startedAt
             };
         });
+        return privates;
+    }
+
+    /**
+     * Refuse a saved state that does not fit this scenario, before anything is built from it.
+     * @param {Object} restore
+     * @param {Object} scenario
+     * @param {number} now  the clock's time; a save cannot start or be sampled later than this
+     */
+    function assertRestorable(restore, scenario, now) {
+        const refuse = (what) => { throw new Error(`saved state does not match this computer: ${what}`); };
+        if (!restore || typeof restore !== 'object') refuse('not a saved state');
+        if (!Number.isFinite(restore.startedAt) || restore.startedAt > now) refuse('start time');
+        if (!Number.isInteger(restore.version) || restore.version < 0) refuse('change count');
+        if (!Number.isFinite(restore.sampledUpTo) || restore.sampledUpTo < restore.startedAt || restore.sampledUpTo > now) {
+            refuse('sample position');
+        }
+        const scriptLength = (scenario.script || []).length;
+        if (!Number.isInteger(restore.scriptNext) || restore.scriptNext < 0 || restore.scriptNext > scriptLength) {
+            refuse('script position');
+        }
+        if (typeof restore.scriptOn !== 'boolean') refuse('script switch');
+        if (!Array.isArray(restore.thresholdAlerts)) refuse('alerts');
+
+        const names = Object.keys(scenario.subsystems).sort();
+        const saved = restore.subsystems && typeof restore.subsystems === 'object'
+            ? Object.keys(restore.subsystems).sort() : null;
+        if (!saved || saved.length !== names.length || saved.some((name, i) => name !== names[i])) {
+            refuse('subsystems');
+        }
+        names.forEach((name) => {
+            const s = restore.subsystems[name];
+            const valid = s && typeof s.status === 'string'
+                && s.fields && typeof s.fields === 'object'
+                && s.measurements && typeof s.measurements === 'object'
+                && Array.isArray(s.faults) && Number.isFinite(s.lastUpdated);
+            if (!valid) refuse(`subsystem ${name}`);
+            const readingsOk = Object.keys(s.measurements).every((key) => {
+                const m = s.measurements[key];
+                return m && m.kind === 'measurement' && Number.isFinite(m.base) && Number.isFinite(m.offset);
+            });
+            if (!readingsOk) refuse(`readings of ${name}`);
+        });
+    }
+
+    /**
+     * @param {{clock?: Clock, scenario?: Object, scripted?: boolean, restore?: Object}} [options]
+     *   scripted defaults to on. restore is a state from exportState(), which carries its own script switch.
+     */
+    function createShipStore(options) {
+        const opts = options || {};
+        const clock = opts.clock || { now: () => Date.now() };
+        const scenario = opts.scenario || ns.scenario.standardScenario();
+        const restore = opts.restore || null;
+        if (restore) assertRestorable(restore, scenario, clock.now());
+        const startedAt = restore ? restore.startedAt : clock.now();
+
+        const privates = restore ? clone(restore.subsystems) : initialPrivates(scenario, startedAt);
 
         const listeners = [];
-        let version = 0;
+        let version = restore ? restore.version : 0;
         // Threshold alerts are sampled on a one-second grid anchored at the start, so the
         // log is the same however often anything asks. sampledUpTo is the last grid point done.
         const SAMPLE_MS = 1000;
-        let sampledUpTo = startedAt;
-        let thresholdAlertsNow = new Map();
+        let sampledUpTo = restore ? restore.sampledUpTo : startedAt;
+        let thresholdAlertsNow = restore
+            ? new Map(restore.thresholdAlerts.map((a) => [a.id, { ...a }]))
+            : new Map();
         let faultAlertsNow = new Map();
 
         // Scripted events fire at their own times, in order. A script that is off skips its entries as they pass.
         const script = (scenario.script || []).slice().sort((a, b) => a.at - b.at);
-        let scriptNext = 0;
-        let scriptOn = opts.scripted !== false;
+        let scriptNext = restore ? restore.scriptNext : 0;
+        let scriptOn = restore ? restore.scriptOn : opts.scripted !== false;
 
         function elapsed() {
             return clock.now() - startedAt;
@@ -496,9 +549,14 @@
             return alertBoard();
         }
 
-        // Anything already active when the store starts is logged at the start time.
-        thresholdAlertsNow = thresholdAlertsAt(startedAt);
-        logTransitions(new Map(), thresholdAlertsNow, startedAt);
+        // Anything already active when a new store starts is logged at the start time. A restored store
+        // already has its log and its alerts, so it takes them as they were saved.
+        if (restore) {
+            faultAlertsNow = new Map(ns.alerts.faultAlerts(faultsByName()).map((a) => [a.id, a]));
+        } else {
+            thresholdAlertsNow = thresholdAlertsAt(startedAt);
+            logTransitions(new Map(), thresholdAlertsNow, startedAt);
+        }
 
         return {
             dataVersion: scenario.dataVersion,
@@ -514,6 +572,25 @@
             events: () => snapshot('eventLog').state.entries,
             alerts: alertBoard,
             tick,
+            /**
+             * Everything a save needs to resume exactly: the subsystems, the event log (inside the
+             * eventLog subsystem), the change count, and the positions the sampling and the script are at.
+             * Plain data; reading it changes nothing.
+             */
+            exportState() {
+                advance(clock.now());
+                const subsystems = {};
+                Object.keys(privates).forEach((name) => { subsystems[name] = clone(privates[name]); });
+                return {
+                    startedAt,
+                    version,
+                    subsystems,
+                    scriptNext,
+                    scriptOn,
+                    sampledUpTo,
+                    thresholdAlerts: Array.from(thresholdAlertsNow.values()).map((a) => ({ ...a }))
+                };
+            },
             /** Whether the scripted events fire. Turning it off skips the entries whose time passes. */
             scripted: () => scriptOn,
             setScripted(on) {

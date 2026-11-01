@@ -18,7 +18,27 @@
     const DEFAULT_LIMIT = 50;
 
     /**
-     * @param {{limit?: number, now?: () => number}} [options]
+     * Entries from a saved history, checked and limited the same way recording limits them.
+     * Throws on a saved history that is not a list of entries.
+     * @param {*} saved
+     * @param {number} limit
+     * @returns {HistoryEntry[]}
+     */
+    function entriesFromSaved(saved, limit) {
+        if (saved === undefined) return [];
+        if (!Array.isArray(saved)) throw new Error('saved history must be a list');
+        const items = saved.map((e) => {
+            if (!e || typeof e.text !== 'string' || typeof e.time !== 'number') {
+                throw new Error('saved history entry is malformed');
+            }
+            return { text: e.text.trim(), time: e.time };
+        }).filter((e) => e.text);
+        return items.length > limit ? items.slice(items.length - limit) : items;
+    }
+
+    /**
+     * @param {{limit?: number, now?: () => number, entries?: HistoryEntry[]}} [options]
+     *   entries: a saved history to start from (see persistence.js)
      */
     function createInputHistory(options) {
         const opts = options || {};
@@ -29,7 +49,7 @@
         const now = opts.now || (() => Date.now());
 
         /** @type {HistoryEntry[]} */
-        let items = [];
+        let items = entriesFromSaved(opts.entries, limit);
         let cursor = null;   // null when not walking the history
         let draft = '';
 

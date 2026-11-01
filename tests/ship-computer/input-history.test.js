@@ -109,3 +109,21 @@ describe('input history: the HISTORY command', () => {
         expect(ns.engine.createEngine({ registry }).execute('HISTORY NOW').blocks[0].text).toContain('USAGE: HISTORY');
     });
 });
+
+describe('input history: restoring a saved history', () => {
+    test('saved entries come back in order with their times', () => {
+        const entries = [{ text: 'STATUS', time: 10 }, { text: 'CREW', time: 20 }];
+        expect(createInputHistory({ entries }).entries()).toEqual(entries);
+    });
+
+    test('the limit still applies to restored entries, dropping the oldest', () => {
+        const entries = [{ text: 'A', time: 1 }, { text: 'B', time: 2 }, { text: 'C', time: 3 }];
+        expect(createInputHistory({ entries, limit: 2 }).entries().map((e) => e.text)).toEqual(['B', 'C']);
+    });
+
+    test('a saved history that is not a list of entries is refused', () => {
+        expect(() => createInputHistory({ entries: 'STATUS' })).toThrow();
+        expect(() => createInputHistory({ entries: [{ text: 'STATUS' }] })).toThrow();
+        expect(() => createInputHistory({ entries: [null] })).toThrow();
+    });
+});
