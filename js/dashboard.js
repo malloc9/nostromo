@@ -220,7 +220,9 @@ class NostromoDashboard {
      * @param {Object} lifeSupportData - Life support system data
      */
     updateLifeSupportQuadrant(lifeSupportData) {
-        this.lifeSupportQuadrant.update(lifeSupportData);
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        const model = store ? window.NostromoShipComputer.lifeSupportModel.build(store.snapshot('lifeSupport')) : null;
+        this.lifeSupportQuadrant.update(lifeSupportData, model);
     }
 
     /**
@@ -336,10 +338,10 @@ class NostromoDashboard {
         const predictedO2 = systemData.lifeSupport.oxygen + (oxygenTrend.change * 10); // 10 minutes ahead
         const predictedCO2 = systemData.lifeSupport.co2 + (co2Trend.change * 10); // 10 minutes ahead
         
-        if (predictedO2 < 85 && systemData.lifeSupport.oxygen >= 85) {
+        if (predictedO2 < 19.5 && systemData.lifeSupport.oxygen >= 19.5) {
             return `PREDICTIVE: OXYGEN LEVEL MAY DROP BELOW SAFE THRESHOLD (~10 MIN: ${predictedO2.toFixed(1)}%)`;
-        } else if (predictedCO2 > 25 && systemData.lifeSupport.co2 <= 25) {
-            return `PREDICTIVE: CO2 LEVEL MAY RISE ABOVE SAFE THRESHOLD (~10 MIN: ${predictedCO2.toFixed(1)} PPM)`;
+        } else if (predictedCO2 > 0.5 && systemData.lifeSupport.co2 <= 0.5) {
+            return `PREDICTIVE: CO2 LEVEL MAY RISE ABOVE SAFE THRESHOLD (~10 MIN: ${predictedCO2.toFixed(2)}%)`;
         }
         
         return null;

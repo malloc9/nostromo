@@ -19,7 +19,7 @@
  * @typedef {Object} AlertInput
  * @property {Object<string, Array<{code: string, message?: string, severity?: string, since: number}>>} faultsBySubsystem
  * @property {{generation: number, consumption: number}} power
- * @property {{oxygen: number, co2: number}} lifeSupport
+ * @property {{oxygen: number, co2: number, pressure: number, temperature: number}} lifeSupport
  * @property {{velocity: number}} navigation
  * @property {number} activeCrew   humans with status active
  */
@@ -68,11 +68,28 @@
             threshold('engineering', 'LOW_POWER_MARGIN', 'WARNING', 'LOW POWER MARGIN: REDUCE CONSUMPTION');
         }
 
+        // Life support: one alert per parameter, critical when it is far out and warning when marginal.
+        // Units are the plan's: oxygen and CO2 in percent, pressure in kPa, temperature in Celsius.
         const ls = input.lifeSupport;
-        if (ls.oxygen < 80 || ls.co2 > 30) {
-            threshold('lifeSupport', 'LIFE_SUPPORT_CRITICAL', 'CRITICAL', 'LIFE SUPPORT CRITICAL: O2 LOW OR CO2 HIGH');
-        } else if (ls.oxygen < 90 || ls.co2 > 20) {
-            threshold('lifeSupport', 'LIFE_SUPPORT_WARNING', 'WARNING', 'LIFE SUPPORT WARNING: O2 MARGINAL OR CO2 ELEVATED');
+        if (ls.oxygen < 18) {
+            threshold('lifeSupport', 'LS_OXYGEN', 'CRITICAL', 'OXYGEN CRITICAL: O2 LEVEL LOW');
+        } else if (ls.oxygen < 19.5) {
+            threshold('lifeSupport', 'LS_OXYGEN', 'WARNING', 'OXYGEN LOW: O2 MARGINAL');
+        }
+        if (ls.co2 > 1.0) {
+            threshold('lifeSupport', 'LS_CO2', 'CRITICAL', 'CO2 CRITICAL: CONCENTRATION HIGH');
+        } else if (ls.co2 > 0.5) {
+            threshold('lifeSupport', 'LS_CO2', 'WARNING', 'CO2 ELEVATED: CHECK SCRUBBERS');
+        }
+        if (ls.pressure < 91 || ls.pressure > 111) {
+            threshold('lifeSupport', 'LS_PRESSURE', 'CRITICAL', 'PRESSURE CRITICAL: HULL BREACH POSSIBLE');
+        } else if (ls.pressure < 96 || ls.pressure > 106) {
+            threshold('lifeSupport', 'LS_PRESSURE', 'WARNING', 'PRESSURE OFF NOMINAL: CHECK SEALS');
+        }
+        if (ls.temperature < 10 || ls.temperature > 30) {
+            threshold('lifeSupport', 'LS_TEMPERATURE', 'CRITICAL', 'TEMPERATURE CRITICAL: LIFE SUPPORT FAILURE');
+        } else if (ls.temperature < 18 || ls.temperature > 24) {
+            threshold('lifeSupport', 'LS_TEMPERATURE', 'WARNING', 'TEMPERATURE OFF NOMINAL: CHECK CLIMATE CONTROL');
         }
 
         if (input.navigation.velocity < 0.1) {

@@ -13,7 +13,7 @@ function readings(overrides = {}) {
     return Object.assign({
         faultsBySubsystem: {},
         power: { generation: 85, consumption: 70 },
-        lifeSupport: { oxygen: 95, co2: 12 },
+        lifeSupport: { oxygen: 20.9, co2: 0.04, pressure: 101.3, temperature: 21.4 },
         navigation: { velocity: 0.15 },
         activeCrew: 6
     }, overrides);
@@ -37,11 +37,20 @@ describe('alerts: thresholds from the dashboard rules', () => {
         expect(alert).toMatchObject({ id: 'LOW_POWER_MARGIN', severity: 'WARNING' });
     });
 
-    test('life support gives one alert: critical takes precedence over warning', () => {
-        const critical = derive(readings({ lifeSupport: { oxygen: 75, co2: 12 } }), NOW);
-        expect(ids(critical)).toEqual(['LIFE_SUPPORT_CRITICAL']);
-        const warning = derive(readings({ lifeSupport: { oxygen: 85, co2: 12 } }), NOW);
-        expect(ids(warning)).toEqual(['LIFE_SUPPORT_WARNING']);
+    test('each life-support parameter raises one alert, critical when far out and warning when marginal', () => {
+        const oxygen = derive(readings({ lifeSupport: { oxygen: 17, co2: 0.04, pressure: 101.3, temperature: 21.4 } }), NOW);
+        expect(oxygen).toEqual([expect.objectContaining({ id: 'LS_OXYGEN', severity: 'CRITICAL' })]);
+        const marginal = derive(readings({ lifeSupport: { oxygen: 19, co2: 0.04, pressure: 101.3, temperature: 21.4 } }), NOW);
+        expect(marginal).toEqual([expect.objectContaining({ id: 'LS_OXYGEN', severity: 'WARNING' })]);
+    });
+
+    test('co2, pressure and temperature each have their own alert and severity', () => {
+        const co2 = derive(readings({ lifeSupport: { oxygen: 20.9, co2: 1.2, pressure: 101.3, temperature: 21.4 } }), NOW);
+        expect(co2.map((a) => a.id)).toEqual(['LS_CO2']);
+        const pressure = derive(readings({ lifeSupport: { oxygen: 20.9, co2: 0.04, pressure: 109, temperature: 21.4 } }), NOW);
+        expect(pressure).toEqual([expect.objectContaining({ id: 'LS_PRESSURE', severity: 'WARNING' })]);
+        const temp = derive(readings({ lifeSupport: { oxygen: 20.9, co2: 0.04, pressure: 101.3, temperature: 35 } }), NOW);
+        expect(temp).toEqual([expect.objectContaining({ id: 'LS_TEMPERATURE', severity: 'CRITICAL' })]);
     });
 
     test('velocity below 0.1 and fewer than five active crew each raise a warning', () => {

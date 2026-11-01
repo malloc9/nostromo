@@ -137,6 +137,13 @@
         }
     };
 
+    // The parts of a subsystem that a fault can name. Each model owns its own list.
+    function componentKeysFor(name) {
+        if (name === 'engineering') return ns.engineeringModel.COMPONENTS.map((c) => c.key);
+        if (name === 'lifeSupport') return ns.lifeSupportModel.COMPONENTS.map((c) => c.key);
+        return null;
+    }
+
     /**
      * @param {{clock?: Clock, scenario?: Object}} [options]
      */
@@ -194,7 +201,12 @@
                 .filter((m) => m.type === 'human' && m.status === 'active').length;
             return {
                 power: { generation: read('engineering', 'powerGeneration'), consumption: read('engineering', 'powerConsumption') },
-                lifeSupport: { oxygen: read('lifeSupport', 'oxygen'), co2: read('lifeSupport', 'co2') },
+                lifeSupport: {
+                    oxygen: read('lifeSupport', 'oxygen'),
+                    co2: read('lifeSupport', 'co2'),
+                    pressure: read('lifeSupport', 'pressure'),
+                    temperature: read('lifeSupport', 'temperature')
+                },
                 navigation: { velocity: read('navigation', 'velocity') },
                 activeCrew: activeHumans
             };
@@ -304,9 +316,9 @@
             if (!op) throw new Error(`unknown operation: ${operation}`);
             // Engineering component names belong to the engineering model; a typo must not
             // record a fault that no panel will ever show.
-            if (name === 'engineering' && args && args.component) {
-                const known = ns.engineeringModel.COMPONENTS.some((c) => c.key === args.component);
-                if (!known) throw new Error(`unknown engineering component: ${args.component}`);
+            const parts = componentKeysFor(name);
+            if (parts && args && args.component && parts.indexOf(args.component) === -1) {
+                throw new Error(`unknown ${name} component: ${args.component}`);
             }
 
             const now = clock.now();

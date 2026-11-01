@@ -140,11 +140,12 @@
                     status: 'NOMINAL',
                     fields: {},
                     measurements: {
-                        oxygen: measure(95, { offset: -0.5, amplitude: 1.5, period: 90, min: 0, max: 100 }),
-                        co2: measure(12, { offset: 1, amplitude: 2, period: 120, min: 0, max: 50 }),
-                        pressure: measure(103.4, { offset: -1, amplitude: 3, period: 150, min: 81.06, max: 121.59, precision: 1 }),
-                        temperature: measure(21.5, { offset: 0.25, amplitude: 1.75, period: 180, min: 18, max: 24 }),
-                        humidity: measure(45, { offset: 0, amplitude: 3, period: 210, min: 30, max: 60, precision: 0 })
+                        // Plan units: oxygen and CO2 are percent of the air; pressure kPa; temperature C.
+                        oxygen: measure(20.9, { amplitude: 0.2, period: 90, min: 0, max: 30 }),
+                        co2: measure(0.04, { amplitude: 0.005, period: 120, min: 0, max: 2, precision: 2 }),
+                        pressure: measure(101.3, { amplitude: 1, period: 150, min: 60, max: 130, precision: 1 }),
+                        temperature: measure(21.4, { amplitude: 0.8, period: 180, min: 0, max: 40, precision: 1 }),
+                        humidity: measure(43, { amplitude: 2, period: 210, min: 20, max: 80, precision: 1 })
                     }
                 },
                 crew: {

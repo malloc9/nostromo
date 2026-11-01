@@ -10,20 +10,15 @@ class LifeSupportQuadrant extends QuadrantComponent {
 
     /**
      * Update the life support quadrant with new life support data
-     * @param {Object} lifeSupportData - Life support system data
+     * @param {Object} lifeSupportData - Life support readings in the plan's units
+     * @param {Object|null} [model] - Life support model; its overall status sets the colour
      */
-    update(lifeSupportData) {
+    update(lifeSupportData, model) {
         this.data = lifeSupportData;
 
-        // Determine life support status
-        let statusClass = 'status-ok';
-        if (lifeSupportData.oxygen < 90 || lifeSupportData.co2 > 20 ||
-            lifeSupportData.pressure < 0.95 || lifeSupportData.pressure > 1.05) {
-            statusClass = 'status-warning';
-        }
-        if (lifeSupportData.oxygen < 80 || lifeSupportData.co2 > 30) {
-            statusClass = 'status-critical';
-        }
+        // The overall status comes from the life support model, the same one the alerts and STATUS use.
+        const level = model ? model.overall : 'NOMINAL';
+        const statusClass = level === 'CRITICAL' ? 'status-critical' : (level === 'WARNING' ? 'status-warning' : 'status-ok');
 
         this.updateStatus(statusClass);
 
@@ -35,11 +30,11 @@ class LifeSupportQuadrant extends QuadrantComponent {
             </div>
             <div class="data-row">
                 <span class="data-label">CO2 LEVEL:</span>
-                <span class="data-value">${lifeSupportData.co2.toFixed(1)} PPM</span>
+                <span class="data-value">${lifeSupportData.co2.toFixed(2)}%</span>
             </div>
             <div class="data-row">
                 <span class="data-label">PRESSURE:</span>
-                <span class="data-value">${lifeSupportData.pressure.toFixed(2)} ATM</span>
+                <span class="data-value">${lifeSupportData.pressure.toFixed(1)} KPA</span>
             </div>
             <div class="data-row">
                 <span class="data-label">TEMPERATURE:</span>

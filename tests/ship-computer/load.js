@@ -26,6 +26,8 @@ const MODULES = [
     'access-request-commands',
     'crew-model',
     'crew-commands',
+    'life-support-model',
+    'life-support-commands',
     'engineering-commands',
     'status-commands',
     'legacy-responses',

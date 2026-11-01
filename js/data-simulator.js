@@ -74,7 +74,7 @@ class DataSimulator {
 
         return {
             oxygen: round1(m.oxygen),
-            co2: round1(m.co2),
+            co2: Math.round(m.co2 * 100) / 100,
             pressure: Math.round((m.pressure / KPA_PER_ATM) * 100) / 100,
             temperature: round1(m.temperature)
         };

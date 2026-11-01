@@ -20,7 +20,8 @@ class NostromoLifeSupport {
 
     seedHistory() {
         if (!this.dataSimulator) return;
-        const baseData = this.dataSimulator.generateSystemStatus().lifeSupport;
+        const baseData = this.currentReadings();
+        if (!baseData) return;
         for (let i = 0; i < this.maxHistoryLength - 1; i++) {
             const jitter = () => (Math.random() - 0.5) * 0.6;
             this.historicalData.push({
@@ -40,28 +41,13 @@ class NostromoLifeSupport {
     /**
      * Initialize critical alert thresholds for life support systems
      */
+    // The same limits the alert manager uses (plan units), so the screen's colours agree with its alerts.
     initializeAlertThresholds() {
         return {
-            oxygen: {
-                critical: 80,
-                warning: 90
-            },
-            co2: {
-                warning: 20,
-                critical: 30
-            },
-            pressure: {
-                warningLow: 0.95,
-                warningHigh: 1.05,
-                criticalLow: 0.90,
-                criticalHigh: 1.10
-            },
-            temperature: {
-                warningLow: 19,
-                warningHigh: 23,
-                criticalLow: 18,
-                criticalHigh: 24
-            }
+            oxygen: { critical: 18, warning: 19.5 },
+            co2: { warning: 0.5, critical: 1.0 },
+            pressure: { warningLow: 96, warningHigh: 106, criticalLow: 91, criticalHigh: 111 },
+            temperature: { warningLow: 18, warningHigh: 24, criticalLow: 10, criticalHigh: 30 }
         };
     }
 
@@ -165,18 +151,18 @@ class NostromoLifeSupport {
                     <div class="ls-metric" id="co2-panel">
                         <div class="ls-metric-tag">PRIMARY &middot; ATMOSPHERE</div>
                         <div class="ls-metric-label">CO2</div>
-                        <div class="ls-metric-value" id="co2-value">--.-<span class="ls-unit">PPM</span></div>
+                        <div class="ls-metric-value" id="co2-value">--.-<span class="ls-unit">%</span></div>
                         <div class="ls-metric-bar" id="co2-bar"></div>
                         <div class="ls-metric-foot">
                             <span class="ls-metric-status" id="co2-status">●</span>
-                            <span class="ls-metric-range">RANGE 0&ndash;50 PPM</span>
+                            <span class="ls-metric-range">RANGE 0&ndash;2%</span>
                         </div>
                     </div>
 
                     <div class="ls-metric" id="pressure-panel">
                         <div class="ls-metric-tag">PRIMARY &middot; HULL</div>
                         <div class="ls-metric-label">PRESSURE</div>
-                        <div class="ls-metric-value" id="pressure-value">-.--<span class="ls-unit">ATM</span></div>
+                        <div class="ls-metric-value" id="pressure-value">-.--<span class="ls-unit">KPA</span></div>
                         <div class="ls-metric-bar" id="pressure-bar"></div>
                         <div class="ls-metric-foot">
                             <span class="ls-metric-status" id="pressure-status">●</span>
@@ -272,8 +258,7 @@ class NostromoLifeSupport {
             return;
         }
 
-        const systemData = this.dataSimulator.generateSystemStatus();
-        const lifeSupportData = systemData.lifeSupport;
+        const lifeSupportData = this.currentReadings();
 
         // Store historical data for trends
         this.storeHistoricalData(lifeSupportData);
@@ -315,10 +300,10 @@ class NostromoLifeSupport {
         this.updateMetricPanel('oxygen', data.oxygen, '%', 0, 100);
 
         // Update CO2
-        this.updateMetricPanel('co2', data.co2, 'PPM', 0, 50);
+        this.updateMetricPanel('co2', data.co2, '%', 0, 2);
 
         // Update pressure
-        this.updateMetricPanel('pressure', data.pressure, 'ATM', 0.8, 1.2);
+        this.updateMetricPanel('pressure', data.pressure, 'KPA', 80, 120);
 
         // Update temperature
         this.updateMetricPanel('temperature', data.temperature, '°C', 18, 24);
@@ -335,7 +320,7 @@ class NostromoLifeSupport {
         if (!valueElement || !statusElement || !barElement) return;
 
         // Update value display
-        const formattedValue = metric === 'pressure' ? value.toFixed(2) : value.toFixed(1);
+        const formattedValue = value.toFixed(metric === 'co2' ? 2 : 1);
         valueElement.textContent = `${formattedValue}${unit}`;
 
         // Determine status
@@ -492,8 +477,8 @@ class NostromoLifeSupport {
 
         const parameters = [
             { key: 'oxygen', label: 'OXYGEN', unit: '%' },
-            { key: 'co2', label: 'CO2', unit: 'PPM' },
-            { key: 'pressure', label: 'PRESSURE', unit: 'ATM' },
+            { key: 'co2', label: 'CO2', unit: '%' },
+            { key: 'pressure', label: 'PRESSURE', unit: 'KPA' },
             { key: 'temperature', label: 'TEMP', unit: '\u00B0C' }
         ];
 
@@ -549,8 +534,8 @@ class NostromoLifeSupport {
 
         let summary = '<div class="trend-grid">';
         summary += `<div class="trend-item"><span class="trend-label">O2:</span> <span class="trend-value ${oxygenTrend.direction}">${this.formatTrend(oxygenTrend, 2, '%')}</span></div>`;
-        summary += `<div class="trend-item"><span class="trend-label">CO2:</span> <span class="trend-value ${co2Trend.direction}">${this.formatTrend(co2Trend, 2, ' PPM')}</span></div>`;
-        summary += `<div class="trend-item"><span class="trend-label">PRES:</span> <span class="trend-value ${pressureTrend.direction}">${this.formatTrend(pressureTrend, 3, ' ATM')}</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">CO2:</span> <span class="trend-value ${co2Trend.direction}">${this.formatTrend(co2Trend, 2, '%')}</span></div>`;
+        summary += `<div class="trend-item"><span class="trend-label">PRES:</span> <span class="trend-value ${pressureTrend.direction}">${this.formatTrend(pressureTrend, 1, ' KPA')}</span></div>`;
         summary += `<div class="trend-item"><span class="trend-label">TEMP:</span> <span class="trend-value ${temperatureTrend.direction}">${this.formatTrend(temperatureTrend, 2, '°C')}</span></div>`;
         summary += '</div>';
 
@@ -617,8 +602,8 @@ class NostromoLifeSupport {
     generateDetailedParameterCharts() {
         const parameters = [
             { key: 'oxygen', label: 'OXYGEN LEVEL', unit: '%', min: 80, max: 100 },
-            { key: 'co2', label: 'CO2 CONCENTRATION', unit: 'PPM', min: 0, max: 20 },
-            { key: 'pressure', label: 'HULL PRESSURE', unit: 'ATM', min: 0.9, max: 1.1 },
+            { key: 'co2', label: 'CO2 CONCENTRATION', unit: '%', min: 0, max: 2 },
+            { key: 'pressure', label: 'HULL PRESSURE', unit: 'KPA', min: 91, max: 111 },
             { key: 'temperature', label: 'AMBIENT TEMP', unit: '°C', min: 18, max: 24 }
         ];
 
@@ -729,9 +714,9 @@ class NostromoLifeSupport {
         analysis += '<div class="prediction-title">TREND PREDICTION (NEXT HOUR)</div>';
         
         const predictions = [
-            { param: 'oxygen', label: 'OXYGEN', unit: '%', critical: 80, warning: 90 },
-            { param: 'co2', label: 'CO2', unit: 'PPM', warning: 20, critical: 30 },
-            { param: 'pressure', label: 'PRESSURE', unit: 'ATM', warningLow: 0.95, warningHigh: 1.05, criticalLow: 0.90, criticalHigh: 1.10 },
+            { param: 'oxygen', label: 'OXYGEN', unit: '%', critical: 18, warning: 19.5 },
+            { param: 'co2', label: 'CO2', unit: '%', warning: 0.5, critical: 1.0 },
+            { param: 'pressure', label: 'PRESSURE', unit: 'KPA', warningLow: 96, warningHigh: 106, criticalLow: 91, criticalHigh: 111 },
             { param: 'temperature', label: 'TEMPERATURE', unit: '°C', warningLow: 19, warningHigh: 23, criticalLow: 18, criticalHigh: 24 }
         ];
 
@@ -866,7 +851,7 @@ class NostromoLifeSupport {
 
         const trend = this.calculateTrend(data);
         const trendSymbol = trend > 0.1 ? '\u2197' : trend < -0.1 ? '\u2198' : '\u2192';
-        const formatted = (param.key === 'pressure')
+        const formatted = (param.key === 'co2')
             ? currentValue.toFixed(2)
             : currentValue.toFixed(1);
         chart += `<div class="chart-current">${formatted}${param.unit} ${trendSymbol}</div>\n`;
@@ -892,7 +877,7 @@ class NostromoLifeSupport {
      * Update alerts based on current data
      */
     updateAlerts(data) {
-        const alerts = this.generateAlerts(data);
+        const alerts = this.boardAlerts();
         const alertPanel = document.getElementById('alert-panel');
         const alertCount = document.getElementById('ls-alert-count');
 
@@ -915,77 +900,28 @@ class NostromoLifeSupport {
     }
 
     /**
-     * Generate alerts based on current environmental data
+     * Life support alerts from the alert manager's board. The screen computes none of its own.
      */
-    generateAlerts(data) {
-        const alerts = [];
-        const currentTime = new Date().toTimeString().substring(0, 8);
+    boardAlerts() {
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        if (!store) return [];
+        const time = new Date(store.now()).toTimeString().substring(0, 8);
+        return store.alerts().list
+            .filter((a) => a.subsystem === 'lifeSupport')
+            .map((a) => ({
+                severity: a.severity === 'CRITICAL' ? 'alert-critical' : 'alert-warning',
+                message: `${a.severity}: ${a.message}`,
+                time
+            }));
+    }
 
-        // Check oxygen levels
-        if (data.oxygen < this.alertThresholds.oxygen.critical) {
-            alerts.push({
-                severity: 'alert-critical',
-                message: `CRITICAL: OXYGEN LEVEL AT ${data.oxygen.toFixed(1)}% - IMMEDIATE ACTION REQUIRED`,
-                time: currentTime
-            });
-        } else if (data.oxygen < this.alertThresholds.oxygen.warning) {
-            alerts.push({
-                severity: 'alert-warning',
-                message: `WARNING: OXYGEN LEVEL AT ${data.oxygen.toFixed(1)}% - MONITOR CLOSELY`,
-                time: currentTime
-            });
-        }
-
-        // Check CO2 levels
-        if (data.co2 > this.alertThresholds.co2.critical) {
-            alerts.push({
-                severity: 'alert-critical',
-                message: `CRITICAL: CO2 LEVEL AT ${data.co2.toFixed(1)} PPM - VENTILATION REQUIRED`,
-                time: currentTime
-            });
-        } else if (data.co2 > this.alertThresholds.co2.warning) {
-            alerts.push({
-                severity: 'alert-warning',
-                message: `WARNING: CO2 LEVEL AT ${data.co2.toFixed(1)} PPM - CHECK SCRUBBERS`,
-                time: currentTime
-            });
-        }
-
-        // Check pressure
-        if (data.pressure < this.alertThresholds.pressure.criticalLow ||
-            data.pressure > this.alertThresholds.pressure.criticalHigh) {
-            alerts.push({
-                severity: 'alert-critical',
-                message: `CRITICAL: PRESSURE AT ${data.pressure.toFixed(2)} ATM - HULL BREACH POSSIBLE`,
-                time: currentTime
-            });
-        } else if (data.pressure < this.alertThresholds.pressure.warningLow ||
-            data.pressure > this.alertThresholds.pressure.warningHigh) {
-            alerts.push({
-                severity: 'alert-warning',
-                message: `WARNING: PRESSURE AT ${data.pressure.toFixed(2)} ATM - CHECK SEALS`,
-                time: currentTime
-            });
-        }
-
-        // Check temperature
-        if (data.temperature < this.alertThresholds.temperature.criticalLow ||
-            data.temperature > this.alertThresholds.temperature.criticalHigh) {
-            alerts.push({
-                severity: 'alert-critical',
-                message: `CRITICAL: TEMPERATURE AT ${data.temperature.toFixed(1)}°C - LIFE SUPPORT FAILURE`,
-                time: currentTime
-            });
-        } else if (data.temperature < this.alertThresholds.temperature.warningLow ||
-            data.temperature > this.alertThresholds.temperature.warningHigh) {
-            alerts.push({
-                severity: 'alert-warning',
-                message: `WARNING: TEMPERATURE AT ${data.temperature.toFixed(1)}°C - CHECK CLIMATE CONTROL`,
-                time: currentTime
-            });
-        }
-
-        return alerts;
+    /**
+     * Current life support readings in the plan's units, from the life support model.
+     */
+    currentReadings() {
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        if (!store) return null;
+        return window.NostromoShipComputer.lifeSupportModel.build(store.snapshot('lifeSupport')).readings;
     }
 }
 
