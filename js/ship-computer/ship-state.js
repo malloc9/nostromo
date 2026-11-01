@@ -113,6 +113,14 @@
             const [cleared] = state.faults.splice(index, 1);
             return { type: 'status', severity: 'INFO', message: `FAULT CLEARED: ${cleared.message}` };
         },
+        // Records one access request outcome: counts it, remembers it, and describes the event.
+        recordAccessRequest(state, args) {
+            if (typeof state.fields.accessRequests !== 'number') throw new Error('only security records access requests');
+            if (['granted', 'refused', 'cancelled'].indexOf(args.outcome) === -1) throw new Error(`unknown outcome: ${args.outcome}`);
+            state.fields.accessRequests += 1;
+            state.fields.lastRequest = String(args.summary);
+            return { type: 'security', severity: args.severity, message: String(args.message) };
+        },
         setStatus(state, args) {
             if (!args.status) throw new Error('status needs a value');
             state.status = String(args.status);

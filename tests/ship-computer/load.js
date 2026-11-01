@@ -23,6 +23,7 @@ const MODULES = [
     'engineering-reports',
     'access-commands',
     'restricted-commands',
+    'access-request-commands',
     'engineering-commands',
     'status-commands',
     'legacy-responses',

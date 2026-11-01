@@ -183,7 +183,7 @@
                 },
                 security: {
                     status: 'NOMINAL',
-                    fields: { level: 'STANDARD', accessRequests: 0 },
+                    fields: { level: 'STANDARD', accessRequests: 0, lastRequest: null },
                     measurements: {}
                 },
                 alerts: {

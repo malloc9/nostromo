@@ -232,6 +232,7 @@ async function validateBuild() {
     'js/ship-computer/privilege.js',
     'js/ship-computer/access-commands.js',
     'js/ship-computer/restricted-commands.js',
+    'js/ship-computer/access-request-commands.js',
     'js/ship-computer/blocks.js',
     'js/ship-computer/parser.js',
     'js/ship-computer/registry.js',

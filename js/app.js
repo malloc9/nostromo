@@ -173,6 +173,8 @@ function initMotherInterface() {
             if (!cmd) return;
             handleMotherCommand(cmd);
             input.value = '';
+        } else if (e.key === 'Escape') {
+            handleMotherEscape();
         } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
             e.preventDefault();
         }
@@ -226,6 +228,7 @@ function getMotherEngine() {
         ns.restrictedCommands.register(registry);
         if (dataSimulator) {
             ns.logCommands.register(registry, dataSimulator.store);
+            ns.accessRequestCommands.register(registry, dataSimulator.store, session);
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }
@@ -236,6 +239,16 @@ function getMotherEngine() {
         });
     }
     return motherEngine;
+}
+
+// Escape cancels a pending question, as if the user had answered N.
+function handleMotherEscape() {
+    const out = document.getElementById('mother-output');
+    const result = getMotherEngine().cancelPending();
+    if (!out || !result) return;
+    window.NostromoShipComputer.terminalView.renderBlocks(out, result.blocks);
+    updateSessionHeader();
+    out.scrollTop = out.scrollHeight;
 }
 
 function handleMotherCommand(cmd) {
@@ -250,6 +263,8 @@ function handleMotherCommand(cmd) {
     const view = window.NostromoShipComputer.terminalView;
     view.echo(out, cmd);
     view.renderBlocks(out, getMotherEngine().execute(cmd).blocks);
+    // A granted request changes the level; the header shows it straight away.
+    updateSessionHeader();
 
     out.scrollTop = out.scrollHeight;
 }

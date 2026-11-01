@@ -6,7 +6,7 @@
  * result, and notify the event hook. It has no DOM dependency: the terminal
  * and tests call it the same way.
  *
- * @typedef {'empty'|'ok'|'error'|'unknown'|'fallback'|'denied'} EngineStatus
+ * @typedef {'empty'|'ok'|'error'|'unknown'|'fallback'|'denied'|'pending'|'cancelled'} EngineStatus
  *
  * @typedef {Object} EngineResult
  * @property {string} input         The raw text as submitted
@@ -40,6 +40,8 @@
         const hooks = Object.assign({ refreshState() {}, recordEvent() {} }, options.hooks);
         /** @type {EngineResult[]} */
         const history = [];
+        // The question waiting for Y or N. It is engine state, so a test can set and answer it without a DOM.
+        let pending = null;
 
         function errorResult(input, normalized, text) {
             return finish({ input, normalized, status: 'error', command: null, blocks: [{ type: 'error', text }] });
@@ -55,8 +57,59 @@
          * @param {string} raw
          * @returns {EngineResult}
          */
+        /**
+         * Answer the pending question. Y confirms and runs its action once; N cancels;
+         * anything else keeps the question open. Nothing changes until a Y.
+         */
+        function answerPending(input) {
+            const answer = String(input == null ? '' : input).trim().toUpperCase();
+            const current = pending;
+            if (answer === 'Y' || answer === 'YES') {
+                pending = null;
+                let blocks;
+                try {
+                    blocks = ns.blocks.normalize(current.confirm());
+                } catch (err) {
+                    console.error(err);
+                    return errorResult(input, answer, GENERIC_FAILURE);
+                }
+                const failed = blocks.some((b) => b.type === 'error');
+                return finish({ input, normalized: answer, status: failed ? 'error' : 'ok', command: current.command, blocks });
+            }
+            if (answer === 'N' || answer === 'NO') {
+                return cancelPendingWith(input, answer);
+            }
+            return finish({
+                input,
+                normalized: answer,
+                status: 'pending',
+                command: current.command,
+                blocks: [{ type: 'error', text: 'ANSWER Y OR N.' }, ...ns.blocks.normalize(current.question)]
+            });
+        }
+
+        function cancelPendingWith(input, normalized) {
+            const current = pending;
+            pending = null;
+            let blocks;
+            try {
+                blocks = ns.blocks.normalize(current.cancel());
+            } catch (err) {
+                console.error(err);
+                return errorResult(input, normalized, GENERIC_FAILURE);
+            }
+            return finish({ input, normalized, status: 'cancelled', command: current.command, blocks });
+        }
+
+        /**
+         * @param {string} raw
+         * @returns {EngineResult}
+         */
         function execute(raw) {
             const input = raw == null ? '' : String(raw);
+            if (pending) {
+                return answerPending(input);
+            }
             const parsed = ns.parser.tokenize(input);
 
             if (!parsed.ok) {
@@ -117,13 +170,22 @@
 
             hooks.refreshState();
 
+            // A handler asks a question by calling ask(); the change happens only when confirmed.
+            const ask = (spec) => {
+                pending = { command: def.name, question: spec.question || [], confirm: spec.confirm, cancel: spec.cancel || (() => []) };
+            };
+
             let blocks;
             try {
-                blocks = ns.blocks.normalize(def.handler({ args, command: def, registry, normalized }));
+                blocks = ns.blocks.normalize(def.handler({ args, command: def, registry, normalized, ask }));
             } catch (err) {
                 // Keep the detail in the browser console; never show it in the terminal.
                 console.error(err);
                 return errorResult(input, normalized, GENERIC_FAILURE);
+            }
+
+            if (pending) {
+                return finish({ input, normalized, status: 'pending', command: def.name, blocks });
             }
 
             // A handler that reports a problem as an error block still failed.
@@ -131,7 +193,17 @@
             return finish({ input, normalized, status: failed ? 'error' : 'ok', command: def.name, blocks });
         }
 
-        return { execute, history };
+        /** The question waiting for an answer, or null. */
+        function pendingQuestion() {
+            return pending ? { command: pending.command } : null;
+        }
+
+        /** Escape: cancel the pending question as if the user had answered N. */
+        function cancelPending() {
+            return pending ? cancelPendingWith('ESCAPE', 'ESCAPE') : null;
+        }
+
+        return { execute, history, pending: pendingQuestion, cancelPending };
     }
 
     ns.engine = { createEngine };
