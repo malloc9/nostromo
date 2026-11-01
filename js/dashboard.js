@@ -124,7 +124,7 @@ class NostromoDashboard {
                     </div>
                 </div>
 
-                <!-- Top Right: 4-Quadrant Status Grid -->
+                <!-- Top Right: 4-Quadrant Status Grid; each panel runs its command on the console -->
                 <div class="status-grid">
                     <!-- Power Systems Quadrant -->
                     <div id="power-quadrant" class="status-quadrant">
@@ -150,6 +150,8 @@ class NostromoDashboard {
                 <!-- Bottom: Console Interface -->
                 <div id="console-interface" class="console-interface">
                     <div class="console-header">MU/TH/UR 6000 INTERFACE</div>
+                    <!-- System-event indicator: alerts and the newest events, read from the shared store -->
+                    <div id="event-indicator" class="event-indicator"></div>
                     <div id="console-output" class="console-output"></div>
                     <div id="console-input-line" class="console-input-line">
                         <span class="prompt">></span>
@@ -172,10 +174,27 @@ class NostromoDashboard {
         // Update data initially
         this.updateData();
 
-        // Re-attach console if it exists
-        if (window.consoleSystem) {
-            window.consoleSystem.init();
-        }
+        // The console and the panels run on the shared terminal, so they match the MOTHER screen
+        this.bindConsole(screenContent);
+    }
+
+    /**
+     * Binds the Dashboard console to the shared terminal, and each panel's click to its command.
+     * The panels never build a report: a click runs the command the MOTHER terminal would run.
+     * @param {HTMLElement} screenContent
+     */
+    bindConsole(screenContent) {
+        if (!window.shipTerminal) return;
+        const output = document.getElementById('console-output');
+        window.shipTerminal.bind(document.getElementById('console-input'), output);
+
+        screenContent.querySelector('.status-grid').addEventListener('click', (event) => {
+            const panel = event.target.closest('.status-grid > .status-quadrant');
+            const command = panel ? window.NostromoShipComputer.dashboardPanels.commandForPanel(panel.id) : null;
+            if (command) {
+                window.shipTerminal.run(command, document.getElementById('console-output'));
+            }
+        });
     }
 
     /**
@@ -195,6 +214,7 @@ class NostromoDashboard {
         this.updateCrewQuadrant(systemData.crew);
         this.updateSystemSummary(systemData);
         this.updateSchematicIndicators(systemData);
+        this.updateEventIndicator();
 
         // Update last update timestamp
         const lastUpdateElement = document.getElementById('last-update');
@@ -202,6 +222,31 @@ class NostromoDashboard {
             const now = new Date();
             lastUpdateElement.textContent = now.toTimeString().substring(0, 8);
         }
+    }
+
+    /**
+     * Update the system-event indicator from the shared alert list and event log
+     */
+    updateEventIndicator() {
+        const element = document.getElementById('event-indicator');
+        if (!element || !this.dataSimulator) return;
+
+        const indicator = window.NostromoShipComputer.dashboardPanels.eventIndicator(this.dataSimulator.store);
+        const state = indicator.overall === 'CRITICAL' ? 'status-critical'
+            : (indicator.overall === 'WARNING' ? 'status-warning' : 'status-ok');
+
+        // One line: the alert count, then the newest events. Long text is cut, not wrapped.
+        element.textContent = '';
+        const title = document.createElement('span');
+        title.className = `event-indicator-title ${state}`;
+        title.textContent = `SYSTEM EVENTS: ${indicator.alertCount} ACTIVE`;
+        element.appendChild(title);
+        indicator.recent.forEach((message) => {
+            const item = document.createElement('span');
+            item.className = 'event-indicator-line';
+            item.textContent = message;
+            element.appendChild(item);
+        });
     }
 
     /**

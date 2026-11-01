@@ -152,74 +152,16 @@ function initializeCrew() {
 }
 
 function initializeConsole() {
-    if (typeof NostromoConsole !== 'undefined' && audioManager) {
-        const consoleSystem = new NostromoConsole(audioManager);
-        window.consoleSystem = consoleSystem; // Make globally accessible
-        consoleSystem.init();
-        initMotherInterface();
-        console.log('Console interface initialized');
-    } else {
-        console.warn('NostromoConsole or AudioManager not available');
-    }
+    initMotherInterface();
+    console.log('Console interface initialized');
 }
 
+// The MOTHER terminal. The Dashboard console binds itself when the Dashboard renders.
 function initMotherInterface() {
     const input = document.getElementById('mother-input');
     if (!input) return;
     updateSessionHeader();
-    input.addEventListener('keydown', (e) => {
-        // Suggestions first: arrows move the highlight, Enter takes it, Escape closes the list.
-        if (suggestionList.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
-            e.preventDefault();
-            moveSuggestion(e.key === 'ArrowDown' ? 1 : -1);
-            return;
-        }
-        if (suggestionList.length && e.key === 'Enter' && suggestionIndex >= 0) {
-            e.preventDefault();
-            chooseSuggestion(suggestionIndex);
-            return;
-        }
-        if (suggestionList.length && e.key === 'Escape') {
-            e.preventDefault();
-            hideSuggestions();
-            return;
-        }
-        // Tab completes only an unambiguous match, and never runs anything. Otherwise focus moves on as usual.
-        if (e.key === 'Tab' && completeInput()) {
-            e.preventDefault();
-            return;
-        }
-        if (e.key === 'Enter') {
-            // A held key repeats keydown; only the first press runs the command.
-            if (e.repeat) return;
-            const cmd = input.value.trim();
-            if (!cmd) return;
-            // A Y or N answering a pending question is not a command, so it is not recorded.
-            if (!getMotherEngine().pending()) getMotherHistory().add(cmd);
-            handleMotherCommand(cmd);
-            input.value = '';
-            hideSuggestions();
-        } else if (e.key === 'Escape') {
-            handleMotherEscape();
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            input.value = getMotherHistory().previous(input.value);
-        } else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            input.value = getMotherHistory().next();
-        } else if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
-            e.preventDefault();
-            clearMotherDisplay();
-        } else if (e.ctrlKey && (e.key === 'c' || e.key === 'C') && getMotherEngine().pending()) {
-            // Ctrl+C cancels a running operation; the only one here is a pending question.
-            e.preventDefault();
-            handleMotherEscape();
-        }
-        if (audioManager && e.key.length === 1) {
-            audioManager.playKeypress();
-        }
-    });
-    input.addEventListener('input', renderSuggestions);
+    bindTerminal(input, document.getElementById('mother-output'), { suggestions: true });
     // Auto-focus the input when on mother screen
     const observer = new MutationObserver(() => {
         const motherScreen = document.getElementById('mother-screen');
@@ -232,6 +174,73 @@ function initMotherInterface() {
         observer.observe(motherScreen, { attributes: true, attributeFilter: ['class'] });
     }
 }
+
+// One binding for every terminal: the MOTHER screen and the Dashboard console share the engine,
+// the history and these key rules. Only the input and output elements differ. Suggestions draw
+// in the MOTHER screen's box, so only the MOTHER terminal turns them on.
+function bindTerminal(input, out, options = {}) {
+    if (!input || !out) return;
+    const withSuggestions = options.suggestions === true;
+    input.addEventListener('keydown', (e) => {
+        // Suggestions first: arrows move the highlight, Enter takes it, Escape closes the list.
+        if (withSuggestions && suggestionList.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            e.preventDefault();
+            moveSuggestion(e.key === 'ArrowDown' ? 1 : -1);
+            return;
+        }
+        if (withSuggestions && suggestionList.length && e.key === 'Enter' && suggestionIndex >= 0) {
+            e.preventDefault();
+            chooseSuggestion(suggestionIndex);
+            return;
+        }
+        if (withSuggestions && suggestionList.length && e.key === 'Escape') {
+            e.preventDefault();
+            hideSuggestions();
+            return;
+        }
+        // Tab completes only an unambiguous match, and never runs anything. Otherwise focus moves on as usual.
+        if (withSuggestions && e.key === 'Tab' && completeInput()) {
+            e.preventDefault();
+            return;
+        }
+        if (e.key === 'Enter') {
+            // A held key repeats keydown; only the first press runs the command.
+            if (e.repeat) return;
+            const cmd = input.value.trim();
+            if (!cmd) return;
+            // A Y or N answering a pending question is not a command, so it is not recorded.
+            if (!getMotherEngine().pending()) getMotherHistory().add(cmd);
+            runTerminalCommand(out, cmd);
+            input.value = '';
+            if (withSuggestions) hideSuggestions();
+        } else if (e.key === 'Escape') {
+            cancelTerminalPending(out);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            input.value = getMotherHistory().previous(input.value);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            input.value = getMotherHistory().next();
+        } else if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+            e.preventDefault();
+            clearTerminal(out);
+        } else if (e.ctrlKey && (e.key === 'c' || e.key === 'C') && getMotherEngine().pending()) {
+            // Ctrl+C cancels a running operation; the only one here is a pending question.
+            e.preventDefault();
+            cancelTerminalPending(out);
+        }
+        if (audioManager && e.key.length === 1) {
+            audioManager.playKeypress();
+        }
+    });
+    if (withSuggestions) input.addEventListener('input', renderSuggestions);
+}
+
+// What the Dashboard needs from the shared terminal: bind a console, and run a command into an output.
+window.shipTerminal = {
+    bind: bindTerminal,
+    run: (cmd, out) => runTerminalCommand(out, cmd)
+};
 
 let motherEngine = null;
 let motherSession = null;
@@ -404,28 +413,24 @@ function keepAtBottom(out, wasAtBottom) {
 }
 
 // Ctrl+L: clear the display. The stored history is not touched.
-function clearMotherDisplay() {
-    const out = document.getElementById('mother-output');
-    if (out) out.innerHTML = '';
+function clearTerminal(out) {
+    out.innerHTML = '';
 }
 
 // Escape cancels a pending question, as if the user had answered N.
-function handleMotherEscape() {
-    const out = document.getElementById('mother-output');
+function cancelTerminalPending(out) {
     const result = getMotherEngine().cancelPending();
-    if (!out || !result) return;
+    if (!result) return;
     const wasAtBottom = isAtBottom(out);
     window.NostromoShipComputer.terminalView.renderBlocks(out, result.blocks);
     updateSessionHeader();
     keepAtBottom(out, wasAtBottom);
 }
 
-function handleMotherCommand(cmd) {
-    const out = document.getElementById('mother-output');
-    if (!out) return;
-
+// Runs one line into an output: the echo, the engine's answer, and the related commands.
+function runTerminalCommand(out, cmd) {
     if (cmd.toUpperCase() === 'CLS' || cmd.toUpperCase() === 'CLEAR') {
-        clearMotherDisplay();
+        clearTerminal(out);
         return;
     }
 

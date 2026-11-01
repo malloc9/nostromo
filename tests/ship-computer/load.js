@@ -40,6 +40,7 @@ const MODULES = [
     'suggest',
     'engineering-commands',
     'status-commands',
+    'dashboard-panels',
     'legacy-responses',
     'terminal-view'
 ];

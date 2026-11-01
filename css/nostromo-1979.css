@@ -1674,3 +1674,45 @@ html, body {
 .mother-interface .mother-suggestion-name {
   flex: 0 0 260px;
 }
+
+/* ===================================================================
+   DASHBOARD CONSOLE AND PANELS (ticket 18)
+   The Dashboard console runs on the shared terminal, so it uses the
+   MOTHER response classes. Those rules are scoped to .mother-interface,
+   so the console repeats the ones it shows. The event strip is one line.
+   =================================================================== */
+.console-interface .mother-response {
+  color: var(--phosphor-bright);
+  margin: 0 0 6px 0;
+  display: block;
+  font-size: 15px;
+  white-space: pre-wrap;
+}
+.console-interface .mother-response.mother-heading { font-weight: 700; }
+.console-interface .mother-response.error { color: var(--alert-red); }
+.console-interface .mother-response.urgent { color: var(--alert-red); font-weight: 700; }
+.console-interface .mother-response.alert { color: var(--alert-amber); }
+.console-interface .mother-input-line-echo { color: var(--phosphor-dim); font-size: 15px; }
+
+.event-indicator {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--phosphor-dim);
+  padding: 2px 6px;
+}
+.event-indicator > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.event-indicator-title { flex-shrink: 0; font-weight: 700; color: var(--phosphor-bright); }
+.event-indicator-title.status-warning { color: var(--alert-amber); }
+.event-indicator-title.status-critical { color: var(--alert-red); }
+
+/* A panel is clickable: it runs its command on the console */
+.status-grid > .status-quadrant { cursor: pointer; }
+.status-grid > .status-quadrant:hover { box-shadow: inset 0 0 0 1px var(--phosphor-dim); }
