@@ -95,7 +95,7 @@
     /**
      * @param {ReturnType<import('./ship-state.js').createShipStore>} store
      */
-    function register(registry, store) {
+    function register(registry, store, session) {
         const sub = (name, description, build, aliases = []) => registry.register({
             name,
             category: 'NAVIGATION',
@@ -112,6 +112,57 @@
             usage: 'NAVIGATION',
             aliases: ['NAV'],
             handler: (ctx) => refuseArgs('NAVIGATION')(ctx) || overview(modelOf(store))
+        });
+        // The one operational command: it asks first, and changes the course only on a Y.
+        registry.register({
+            name: 'NAVIGATION SET COURSE',
+            category: 'NAVIGATION',
+            description: 'SETS A NEW COURSE. COMMANDER LEVEL. ASKS FOR CONFIRMATION FIRST.',
+            usage: 'NAVIGATION SET COURSE [DESTINATION]',
+            privilege: 'COMMANDER',
+            args: [{ name: 'DESTINATION', required: true }],
+            handler: (ctx) => {
+                const requested = ctx.args.join(' ').toUpperCase();
+                const current = store.snapshot('navigation').state.destination;
+                const known = Object.keys(store.snapshot('navigation').state.destinations);
+                if (known.indexOf(requested) === -1) {
+                    return [{ type: 'error', text: `UNKNOWN DESTINATION: ${requested}. KNOWN: ${known.join(', ')}` }];
+                }
+                if (requested === current) {
+                    return [{ type: 'error', text: `ALREADY ON COURSE FOR ${current}.` }];
+                }
+                const question = [
+                        heading('NEW COURSE REQUESTED.'),
+                        text(`DESTINATION: ${requested}`),
+                        text(''),
+                        text(`CURRENT COURSE: ${current}`),
+                        text(`REQUESTED COURSE: ${requested}`),
+                        text(''),
+                        text('CONFIRM COURSE CHANGE? Y/N')
+                ];
+                ctx.ask({
+                    question,
+                    confirm: () => {
+                        // The privilege is decided again: the session may have lost commander level while the question waited.
+                        const denial = ns.privilege.authorize(session, 'COMMANDER');
+                        if (denial) return [{ type: 'authorization', required: denial.required, current: denial.current }];
+                        // Checked again at confirmation: the course may have changed while the question waited.
+                        const now = store.snapshot('navigation').state.destination;
+                        if (requested === now) return [{ type: 'error', text: `ALREADY ON COURSE FOR ${now}.` }];
+                        const elapsedHours = (store.now() - store.startedAt) / ns.navigationModel.HOUR_MS;
+                        store.operate('navigation', 'setCourse', { destination: requested, elapsedHours }, 'navigation');
+                        const eta = ns.navigationModel.build(store.snapshot('navigation'), { etaAt: store.startedAt + store.snapshot('navigation').state.etaOffsetHours * ns.navigationModel.HOUR_MS, now: store.now() }).hoursRemaining;
+                        return [
+                            heading('COURSE CHANGED.'),
+                            text(`DESTINATION: ${requested}`),
+                            text(`PREVIOUS COURSE: ${now}.`),
+                            text(`ETA: ${eta.toFixed(1)} HOURS.`)
+                        ];
+                    },
+                    cancel: () => [text(`COURSE CHANGE CANCELLED. CURRENT COURSE UNCHANGED: ${current}.`)]
+                });
+                return question;
+            }
         });
         sub('NAVIGATION POSITION', 'SHOWS THE CURRENT COORDINATES.', () => position(modelOf(store)), ['NAV POSITION']);
         sub('NAVIGATION DESTINATION', 'SHOWS THE DESTINATION AND ITS ETA.', () => destination(modelOf(store)), ['NAV DESTINATION']);

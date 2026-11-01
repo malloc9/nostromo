@@ -113,6 +113,19 @@
             const [cleared] = state.faults.splice(index, 1);
             return { type: 'status', severity: 'INFO', message: `FAULT CLEARED: ${cleared.message}` };
         },
+        // Changes the course. Only navigation has destinations; the change is logged by the caller's event.
+        setCourse(state, args) {
+            const destinations = state.fields.destinations;
+            if (!destinations) throw new Error('only navigation has a course');
+            const to = String(args.destination || '').toUpperCase();
+            if (!Object.prototype.hasOwnProperty.call(destinations, to)) throw new Error(`unknown destination: ${to}`);
+            if (to === state.fields.destination) throw new Error(`already on course for ${to}`);
+            const from = state.fields.destination;
+            state.fields.destination = to;
+            // The arrival is counted from now: hours already travelled plus the destination's hours.
+            state.fields.etaOffsetHours = Number(args.elapsedHours || 0) + destinations[to];
+            return { type: 'navigation', severity: 'INFO', message: `COURSE CHANGED: ${from} TO ${to}` };
+        },
         // Moves one crew member. Only the crew subsystem has members, and the change is logged.
         moveMember(state, args) {
             if (!Array.isArray(state.fields.members)) throw new Error('only crew has members');

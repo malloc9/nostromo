@@ -123,6 +123,8 @@
                     fields: {
                         destination: 'LV-426',
                         etaOffsetHours: SCENARIO_ETA_HOURS,
+                        // Destinations the ship may be set for, and the hours to reach each.
+                        destinations: { 'LV-426': SCENARIO_ETA_HOURS, 'SOL SYSTEM': 2100, 'THOMAS EDISON': 60 },
                         coordinates: {
                             x: measure(-2847.3, { amplitude: 0.1, period: 240, phase: 0, precision: 1 }),
                             y: measure(1592.7, { amplitude: 0.1, period: 300, phase: 1.1, precision: 1 }),
