@@ -237,6 +237,8 @@ async function validateBuild() {
     'js/ship-computer/crew-commands.js',
     'js/ship-computer/life-support-model.js',
     'js/ship-computer/life-support-commands.js',
+    'js/ship-computer/navigation-model.js',
+    'js/ship-computer/navigation-commands.js',
     'js/ship-computer/blocks.js',
     'js/ship-computer/parser.js',
     'js/ship-computer/registry.js',

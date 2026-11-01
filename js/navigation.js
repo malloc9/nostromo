@@ -539,14 +539,23 @@ class NostromoNavigation {
     /**
      * Update navigation data from simulator
      */
+    /**
+     * Navigation readings from the navigation model (the same shape the screen always read).
+     */
+    navReadings() {
+        const store = this.dataSimulator ? this.dataSimulator.store : null;
+        if (!store) return null;
+        const etaAt = store.startedAt + store.snapshot('navigation').state.etaOffsetHours * window.NostromoShipComputer.navigationModel.HOUR_MS;
+        return window.NostromoShipComputer.navigationModel.build(store.snapshot('navigation'), { etaAt, now: store.now() }).readings;
+    }
+
     updateNavigationData() {
         if (!this.dataSimulator) {
             console.warn('Data simulator not available');
             return;
         }
         
-        const systemData = this.dataSimulator.generateSystemStatus();
-        const navData = systemData.navigation;
+        const navData = this.navReadings();
         
         this.updatePositionDisplay(navData);
         this.updateNavigationInfo(navData);
@@ -557,7 +566,7 @@ class NostromoNavigation {
      * Update position coordinate display
      */
     updatePositionDisplay(navData) {
-        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        if (!navData) navData = this.navReadings();
         
         const posX = document.getElementById('pos-x');
         const posY = document.getElementById('pos-y');
@@ -572,7 +581,7 @@ class NostromoNavigation {
      * Update navigation information display
      */
     updateNavigationInfo(navData) {
-        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        if (!navData) navData = this.navReadings();
         
         const heading = document.getElementById('nav-heading');
         const velocity = document.getElementById('nav-velocity');
@@ -705,7 +714,7 @@ class NostromoNavigation {
     updateTerrainDisplay() {
         if (!this.dataSimulator) return;
         
-        const navData = this.dataSimulator.generateSystemStatus().navigation;
+        const navData = this.navReadings();
         const terrainX = document.getElementById('terrain-x');
         const terrainY = document.getElementById('terrain-y');
         const terrainZ = document.getElementById('terrain-z');
@@ -782,7 +791,7 @@ class NostromoNavigation {
      * Update waypoint display with distances and tracking status
      */
     updateWaypointDisplay() {
-        const navData = this.dataSimulator ? this.dataSimulator.generateSystemStatus().navigation : null;
+        const navData = this.navReadings();
         if (!navData) return;
         
         for (let i = 0; i < this.waypoints.length; i++) {
@@ -831,7 +840,7 @@ class NostromoNavigation {
      * Update status bar information with multiple telemetry streams
      */
     updateStatusBar(navData) {
-        if (!navData) navData = this.dataSimulator.generateSystemStatus().navigation;
+        if (!navData) navData = this.navReadings();
         
         const systemStatus = document.getElementById('nav-system-status');
         const lastPing = document.getElementById('nav-last-ping');
@@ -996,7 +1005,7 @@ class NostromoNavigation {
      */
     getCurrentNavigationData() {
         if (!this.dataSimulator) return null;
-        return this.dataSimulator.generateSystemStatus().navigation;
+        return this.navReadings();
     }
 }
 

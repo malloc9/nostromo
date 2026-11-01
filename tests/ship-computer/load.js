@@ -28,6 +28,8 @@ const MODULES = [
     'crew-commands',
     'life-support-model',
     'life-support-commands',
+    'navigation-model',
+    'navigation-commands',
     'engineering-commands',
     'status-commands',
     'legacy-responses',

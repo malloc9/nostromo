@@ -231,6 +231,7 @@ function getMotherEngine() {
             ns.accessRequestCommands.register(registry, dataSimulator.store, session);
             ns.crewCommands.register(registry, dataSimulator.store, session);
             ns.lifeSupportCommands.register(registry, dataSimulator.store);
+            ns.navigationCommands.register(registry, dataSimulator.store);
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }
