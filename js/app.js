@@ -169,14 +169,29 @@ function initMotherInterface() {
     updateSessionHeader();
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
+            // A held key repeats keydown; only the first press runs the command.
+            if (e.repeat) return;
             const cmd = input.value.trim();
             if (!cmd) return;
+            // A Y or N answering a pending question is not a command, so it is not recorded.
+            if (!getMotherEngine().pending()) getMotherHistory().add(cmd);
             handleMotherCommand(cmd);
             input.value = '';
         } else if (e.key === 'Escape') {
             handleMotherEscape();
-        } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        } else if (e.key === 'ArrowUp') {
             e.preventDefault();
+            input.value = getMotherHistory().previous(input.value);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            input.value = getMotherHistory().next();
+        } else if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+            e.preventDefault();
+            clearMotherDisplay();
+        } else if (e.ctrlKey && (e.key === 'c' || e.key === 'C') && getMotherEngine().pending()) {
+            // Ctrl+C cancels a running operation; the only one here is a pending question.
+            e.preventDefault();
+            handleMotherEscape();
         }
         if (audioManager && e.key.length === 1) {
             audioManager.playKeypress();
@@ -197,6 +212,15 @@ function initMotherInterface() {
 
 let motherEngine = null;
 let motherSession = null;
+let motherHistory = null;
+
+// The commands entered this session. The MOTHER terminal records and walks them.
+function getMotherHistory() {
+    if (!motherHistory) {
+        motherHistory = window.NostromoShipComputer.inputHistory.createInputHistory();
+    }
+    return motherHistory;
+}
 
 // The terminal session. It starts at commander, and the header reads it from here.
 function getMotherSession() {
@@ -242,6 +266,7 @@ function getMotherEngine() {
             ns.missionCommands.register(registry, dataSimulator.store);
             ns.cargoCommands.register(registry, dataSimulator.store);
             ns.reportCommands.register(registry, dataSimulator.store, session);
+            ns.inputCommands.register(registry, getMotherHistory());
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }
@@ -254,14 +279,33 @@ function getMotherEngine() {
     return motherEngine;
 }
 
+// Scrolling: new output follows the bottom only if the user was already there.
+// Pixels of slack that still count as at the bottom, so sub-pixel rounding does not unpin the view.
+const SCROLL_SLACK_PX = 8;
+
+function isAtBottom(out) {
+    return out.scrollHeight - out.scrollTop - out.clientHeight < SCROLL_SLACK_PX;
+}
+
+function keepAtBottom(out, wasAtBottom) {
+    if (wasAtBottom) out.scrollTop = out.scrollHeight;
+}
+
+// Ctrl+L: clear the display. The stored history is not touched.
+function clearMotherDisplay() {
+    const out = document.getElementById('mother-output');
+    if (out) out.innerHTML = '';
+}
+
 // Escape cancels a pending question, as if the user had answered N.
 function handleMotherEscape() {
     const out = document.getElementById('mother-output');
     const result = getMotherEngine().cancelPending();
     if (!out || !result) return;
+    const wasAtBottom = isAtBottom(out);
     window.NostromoShipComputer.terminalView.renderBlocks(out, result.blocks);
     updateSessionHeader();
-    out.scrollTop = out.scrollHeight;
+    keepAtBottom(out, wasAtBottom);
 }
 
 function handleMotherCommand(cmd) {
@@ -269,17 +313,17 @@ function handleMotherCommand(cmd) {
     if (!out) return;
 
     if (cmd.toUpperCase() === 'CLS' || cmd.toUpperCase() === 'CLEAR') {
-        out.innerHTML = '';
+        clearMotherDisplay();
         return;
     }
 
+    const wasAtBottom = isAtBottom(out);
     const view = window.NostromoShipComputer.terminalView;
     view.echo(out, cmd);
     view.renderBlocks(out, getMotherEngine().execute(cmd).blocks);
     // A granted request changes the level; the header shows it straight away.
     updateSessionHeader();
-
-    out.scrollTop = out.scrollHeight;
+    keepAtBottom(out, wasAtBottom);
 }
 
 function updateSystemTime() {

@@ -34,6 +34,8 @@ const MODULES = [
     'mission-commands',
     'cargo-commands',
     'report-commands',
+    'input-history',
+    'input-commands',
     'engineering-commands',
     'status-commands',
     'legacy-responses',
