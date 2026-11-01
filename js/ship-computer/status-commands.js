@@ -16,17 +16,6 @@
         return level === 'NOMINAL' ? 'OPERATIONAL' : level;
     }
 
-    /** Crew counts from the roster: active humans, synthetic ones apart, and resting. */
-    function crewCounts(store) {
-        const humans = store.snapshot('crew').state.members.filter((m) => m.type === 'human');
-        const active = humans.filter((m) => m.status === 'active');
-        return {
-            active: active.filter((m) => !m.synthetic).length,
-            synthetic: active.filter((m) => m.synthetic).length,
-            resting: humans.filter((m) => m.status === 'resting').length
-        };
-    }
-
     /**
      * Which report row each subsystem's status and alerts belong to. Subsystems
      * not listed here are reported on OTHER SYSTEMS, which appears only when one is
@@ -74,7 +63,7 @@
 
         // Built from the rows, so the overall line is never milder than the rows above it.
         const overall = worst(rows.map((r) => r[1]));
-        const crew = crewCounts(store);
+        const crew = ns.crewModel.counts(store.snapshot('crew').state.members);
 
         const blocks = [
             { type: 'text', text: 'SHIP STATUS REPORT', tone: 'heading' },

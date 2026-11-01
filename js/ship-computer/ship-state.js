@@ -113,6 +113,15 @@
             const [cleared] = state.faults.splice(index, 1);
             return { type: 'status', severity: 'INFO', message: `FAULT CLEARED: ${cleared.message}` };
         },
+        // Moves one crew member. Only the crew subsystem has members, and the change is logged.
+        moveMember(state, args) {
+            if (!Array.isArray(state.fields.members)) throw new Error('only crew has members');
+            const member = state.fields.members.find((m) => m.id === args.id);
+            if (!member) throw new Error(`no crew member: ${args.id}`);
+            if (!args.location) throw new Error('move needs a location');
+            member.location = String(args.location);
+            return { type: 'crew', severity: 'INFO', message: `${member.name} MOVED TO ${member.location}` };
+        },
         // Records one access request outcome: counts it, remembers it, and describes the event.
         recordAccessRequest(state, args) {
             if (typeof state.fields.accessRequests !== 'number') throw new Error('only security records access requests');

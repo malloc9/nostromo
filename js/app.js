@@ -229,6 +229,7 @@ function getMotherEngine() {
         if (dataSimulator) {
             ns.logCommands.register(registry, dataSimulator.store);
             ns.accessRequestCommands.register(registry, dataSimulator.store, session);
+            ns.crewCommands.register(registry, dataSimulator.store, session);
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }

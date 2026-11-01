@@ -59,6 +59,7 @@
         const phase = index * 0.9;
         const entry = {
             id: `CREW00${index + 1}`,
+            personnelId: `WU-1809246-${String(index + 1).padStart(3, '0')}`,
             name: data.name,
             type: data.type || 'human',
             position: data.position,
@@ -67,7 +68,7 @@
             department: 'COMMAND',
             cryosleep: false,
             medicalStatus: 'FIT',
-            securityClearance: 'LEVEL 3',
+            securityClearance: 'OFFICER',
             vitals: {
                 heartRate: measure(data.heartRate, { offset: 1.5, amplitude: 6.5, period: 90, phase, min: 50, max: 120, precision: 0 }),
                 temperature: measure(data.temperature, { offset: 0.1, amplitude: 0.4, period: 120, phase, min: data.tempMin || 35, max: data.tempMax || 38.5, precision: 1 }),
@@ -163,7 +164,7 @@
                             member(5, { name: 'PARKER', position: 'CHIEF ENGINEER', location: 'ENGINEERING', status: 'active', heartRate: 77, temperature: 37.0, oxygenSat: 97,
                                 profile: { department: 'ENGINEERING' } }),
                             member(6, { name: 'ASH', position: 'SCIENCE OFFICER', location: 'SCIENCE', status: 'active', heartRate: 65, temperature: 36.5, oxygenSat: 99,
-                                profile: { department: 'SCIENCE', securityClearance: 'LEVEL 4', synthetic: true } }),
+                                profile: { department: 'SCIENCE', securityClearance: 'OFFICER', synthetic: true } }),
                             member(7, { name: 'JONES', type: 'animal', position: 'SHIP CAT', location: 'QUARTERS', status: 'active', heartRate: 110, temperature: 38.4, oxygenSat: 98,
                                 tempMin: 37.5, tempMax: 39.5,
                                 profile: { department: 'PERSONNEL', medicalStatus: 'FIT' } })
