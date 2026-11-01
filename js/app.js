@@ -241,6 +241,7 @@ function getMotherEngine() {
             ns.shipCommands.register(registry, dataSimulator.store, { firmware: headerFirmware() });
             ns.missionCommands.register(registry, dataSimulator.store);
             ns.cargoCommands.register(registry, dataSimulator.store);
+            ns.reportCommands.register(registry, dataSimulator.store, session);
             ns.engineeringCommands.register(registry, dataSimulator.store);
             ns.statusCommands.register(registry, dataSimulator.store);
         }
