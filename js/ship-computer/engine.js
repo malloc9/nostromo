@@ -132,13 +132,18 @@
                 if (legacy && legacy.length) {
                     return finish({ input, normalized, status: 'fallback', command: null, blocks: ns.blocks.normalize(legacy) });
                 }
-                return finish({
-                    input,
-                    normalized,
-                    status: 'unknown',
-                    command: null,
-                    blocks: [{ type: 'error', text: `UNKNOWN COMMAND: ${normalized}. TYPE HELP FOR A LIST OF COMMANDS.` }]
-                });
+                // Did-you-mean offers only commands the session may use, in the plan's structure.
+                const near = ns.suggest.didYouMean(ns.suggest.candidatesFor(registry, null), normalized, authorize);
+                const blocks = [
+                    { type: 'error', text: 'COMMAND NOT RECOGNIZED.' },
+                    { type: 'text', text: `UNKNOWN COMMAND: ${normalized}` }
+                ];
+                if (near.length) {
+                    blocks.push({ type: 'text', text: 'DID YOU MEAN:' });
+                    near.forEach((c) => blocks.push({ type: 'text', text: `  ${c.name}` }));
+                }
+                blocks.push({ type: 'text', text: 'ENTER HELP FOR AVAILABLE COMMANDS.' });
+                return finish({ input, normalized, status: 'unknown', command: null, blocks });
             }
 
             const def = match.command;
@@ -165,7 +170,17 @@
 
             const missing = def.args.find((arg, i) => arg.required && args[i] === undefined);
             if (missing) {
-                return errorResult(input, normalized, `MISSING ARGUMENT: ${missing.name}. USAGE: ${def.usage}`);
+                return finish({
+                    input,
+                    normalized,
+                    status: 'error',
+                    command: def.name,
+                    blocks: [
+                        { type: 'error', text: 'ERROR: MISSING ARGUMENT.' },
+                        { type: 'text', text: 'USAGE:' },
+                        { type: 'text', text: def.usage }
+                    ]
+                });
             }
 
             hooks.refreshState();

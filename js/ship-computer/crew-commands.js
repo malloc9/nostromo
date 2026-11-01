@@ -38,12 +38,14 @@
         if (result.kind === 'ambiguous') {
             return {
                 error: [
-                    text(`MULTIPLE RECORDS MATCH "${upper(query)}". SPECIFY:`),
+                    { type: 'error', text: 'ERROR: MULTIPLE RECORDS FOUND.' },
+                    text('MATCHING PERSONNEL:'),
                     {
                         type: 'table',
                         columns: ['NO', 'NAME', 'POSITION'],
                         rows: numbered(result.matches).map(([no, m]) => [no, m.name, m.position])
-                    }
+                    },
+                    text('SPECIFY FULL RECORD NAME.')
                 ]
             };
         }

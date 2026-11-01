@@ -124,7 +124,8 @@ describe('CREW [NAME]: the personnel record', () => {
     test('an ambiguous name shows a selection list instead of a record', () => {
         const { engine } = setup();
         const result = engine.execute('CREW A');
-        expect(result.blocks[0].text).toContain('MULTIPLE RECORDS MATCH "A". SPECIFY:');
+        expect(result.blocks[0].text).toBe('ERROR: MULTIPLE RECORDS FOUND.');
+        expect(textOf(result)).toContain('MATCHING PERSONNEL:');
     });
 
     test('a record for jones the cat is a personnel record like the others', () => {
@@ -166,7 +167,7 @@ describe('CREW STATUS, LOCATION, BIOMETRICS and RECORD', () => {
 
     test('CREW BIOMETRICS without a name shows usage text', () => {
         const { engine } = setup('OFFICER');
-        expect(engine.execute('CREW BIOMETRICS').blocks[0].text).toContain('USAGE: CREW BIOMETRICS');
+        expect(textOf(engine.execute('CREW BIOMETRICS'))).toContain('CREW BIOMETRICS NAME');
     });
 });
 

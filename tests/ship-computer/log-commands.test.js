@@ -104,7 +104,7 @@ describe('LOG LAST [N]', () => {
         const { engine } = makeEngine();
         const result = engine.execute('LOG LAST');
         expect(result.status).toBe('error');
-        expect(result.blocks[0].text).toContain('USAGE: LOG LAST [N]');
+        expect(result.blocks.map((x) => x.text).join(' ')).toContain('LOG LAST [N]');
     });
 
     test('a count that is not a positive whole number is rejected with usage', () => {

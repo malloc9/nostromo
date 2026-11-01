@@ -36,6 +36,7 @@ const MODULES = [
     'report-commands',
     'input-history',
     'input-commands',
+    'suggest',
     'engineering-commands',
     'status-commands',
     'legacy-responses',

@@ -14,6 +14,7 @@
  * @property {string} [category]      Grouping for HELP; defaults to GENERAL
  * @property {string} [privilege]     Required privilege level; defaults to CREW
  * @property {CommandArg[]} [args]
+ * @property {string[]} [related]    Commands shown under RELATED COMMANDS after this one
  * @property {(ctx: Object) => import('./blocks.js').Block[]|import('./blocks.js').Block|null} handler
  */
 (function (root) {
@@ -57,6 +58,7 @@
                 category: keyOf(def.category || 'GENERAL'),
                 privilege: def.privilege || 'CREW',
                 args: def.args || [],
+                related: def.related || [],
                 handler: def.handler
             });
 

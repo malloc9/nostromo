@@ -168,6 +168,27 @@ function initMotherInterface() {
     if (!input) return;
     updateSessionHeader();
     input.addEventListener('keydown', (e) => {
+        // Suggestions first: arrows move the highlight, Enter takes it, Escape closes the list.
+        if (suggestionList.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            e.preventDefault();
+            moveSuggestion(e.key === 'ArrowDown' ? 1 : -1);
+            return;
+        }
+        if (suggestionList.length && e.key === 'Enter' && suggestionIndex >= 0) {
+            e.preventDefault();
+            chooseSuggestion(suggestionIndex);
+            return;
+        }
+        if (suggestionList.length && e.key === 'Escape') {
+            e.preventDefault();
+            hideSuggestions();
+            return;
+        }
+        // Tab completes only an unambiguous match, and never runs anything. Otherwise focus moves on as usual.
+        if (e.key === 'Tab' && completeInput()) {
+            e.preventDefault();
+            return;
+        }
         if (e.key === 'Enter') {
             // A held key repeats keydown; only the first press runs the command.
             if (e.repeat) return;
@@ -177,6 +198,7 @@ function initMotherInterface() {
             if (!getMotherEngine().pending()) getMotherHistory().add(cmd);
             handleMotherCommand(cmd);
             input.value = '';
+            hideSuggestions();
         } else if (e.key === 'Escape') {
             handleMotherEscape();
         } else if (e.key === 'ArrowUp') {
@@ -197,6 +219,7 @@ function initMotherInterface() {
             audioManager.playKeypress();
         }
     });
+    input.addEventListener('input', renderSuggestions);
     // Auto-focus the input when on mother screen
     const observer = new MutationObserver(() => {
         const motherScreen = document.getElementById('mother-screen');
@@ -213,6 +236,10 @@ function initMotherInterface() {
 let motherEngine = null;
 let motherSession = null;
 let motherHistory = null;
+let motherRegistry = null;
+// The suggestion list under the input: what is offered, and which entry is highlighted (-1 for none).
+let suggestionList = [];
+let suggestionIndex = -1;
 
 // The commands entered this session. The MOTHER terminal records and walks them.
 function getMotherHistory() {
@@ -253,6 +280,7 @@ function getMotherEngine() {
         const ns = window.NostromoShipComputer;
         const session = getMotherSession();
         const registry = ns.registry.createRegistry();
+        motherRegistry = registry;
         ns.systemCommands.register(registry);
         ns.accessCommands.register(registry, session);
         ns.restrictedCommands.register(registry);
@@ -277,6 +305,89 @@ function getMotherEngine() {
         });
     }
     return motherEngine;
+}
+
+// Suggestions: built from command metadata and the store, filtered by the one privilege decision.
+function motherCandidates() {
+    getMotherEngine(); // builds the registry the candidates come from, if it is not built yet
+    const store = dataSimulator ? dataSimulator.store : null;
+    return window.NostromoShipComputer.suggest.candidatesFor(motherRegistry, store);
+}
+
+function motherAuthorize(required) {
+    return window.NostromoShipComputer.privilege.authorize(getMotherSession(), required);
+}
+
+function suggestionBox() {
+    return document.getElementById('mother-suggestions');
+}
+
+function hideSuggestions() {
+    suggestionList = [];
+    suggestionIndex = -1;
+    const box = suggestionBox();
+    if (box) {
+        box.hidden = true;
+        box.textContent = '';
+    }
+}
+
+// Each entry is a text node or an element with text content only, so store names cannot inject markup.
+function renderSuggestions() {
+    const input = document.getElementById('mother-input');
+    if (!input || !input.value.trim()) return hideSuggestions();
+    suggestionList = window.NostromoShipComputer.suggest.suggest(motherCandidates(), input.value, motherAuthorize);
+    suggestionIndex = -1;
+    const box = suggestionBox();
+    if (!box || suggestionList.length === 0) return hideSuggestions();
+    box.textContent = '';
+    suggestionList.forEach((c, i) => {
+        const row = document.createElement('div');
+        row.className = 'mother-suggestion';
+        row.dataset.index = String(i);
+        const name = document.createElement('span');
+        name.className = 'mother-suggestion-name';
+        name.textContent = c.name;
+        const desc = document.createElement('span');
+        desc.className = 'mother-suggestion-desc';
+        desc.textContent = c.description;
+        row.appendChild(name);
+        row.appendChild(desc);
+        row.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            chooseSuggestion(i);
+        });
+        box.appendChild(row);
+    });
+    box.hidden = false;
+}
+
+function moveSuggestion(step) {
+    const box = suggestionBox();
+    const count = suggestionList.length;
+    suggestionIndex = (suggestionIndex + step + count) % count;
+    if (!box) return;
+    Array.from(box.children).forEach((row, i) => row.classList.toggle('active', i === suggestionIndex));
+}
+
+// Puts the chosen suggestion in the input. It does not run; the user presses Enter again to run it.
+function chooseSuggestion(index) {
+    const input = document.getElementById('mother-input');
+    if (!input || !suggestionList[index]) return;
+    input.value = suggestionList[index].name;
+    hideSuggestions();
+    input.focus();
+}
+
+// Returns true only when a unique completion was applied, so Tab is taken only then.
+function completeInput() {
+    const input = document.getElementById('mother-input');
+    if (!input) return false;
+    const done = window.NostromoShipComputer.suggest.complete(motherCandidates(), input.value, motherAuthorize);
+    if (!done.completed) return false;
+    input.value = done.text;
+    renderSuggestions();
+    return true;
 }
 
 // Scrolling: new output follows the bottom only if the user was already there.
@@ -320,7 +431,12 @@ function handleMotherCommand(cmd) {
     const wasAtBottom = isAtBottom(out);
     const view = window.NostromoShipComputer.terminalView;
     view.echo(out, cmd);
-    view.renderBlocks(out, getMotherEngine().execute(cmd).blocks);
+    const result = getMotherEngine().execute(cmd);
+    view.renderBlocks(out, result.blocks);
+    // Informational results point to their related commands, from the command metadata.
+    if (result.status === 'ok' && result.command) {
+        view.renderBlocks(out, window.NostromoShipComputer.suggest.relatedBlocks(motherRegistry, result.command));
+    }
     // A granted request changes the level; the header shows it straight away.
     updateSessionHeader();
     keepAtBottom(out, wasAtBottom);

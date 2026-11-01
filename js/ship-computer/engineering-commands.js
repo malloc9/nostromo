@@ -42,6 +42,7 @@
             category: 'ENGINEERING',
             description: 'SHOWS THE ENGINEERING OVERVIEW. SUB-REPORTS: POWER, REACTOR, ENGINES, COOLING, DAMAGE.',
             usage: 'ENGINEERING [POWER|REACTOR|ENGINES|COOLING|DAMAGE]',
+            related: ['ENGINEERING REACTOR', 'ENGINEERING ENGINES', 'ENGINEERING COOLING', 'ENGINEERING POWER'],
             handler: (ctx) => {
                 if (ctx.args.length > 0) {
                     return [{ type: 'error', text: `UNKNOWN ENGINEERING REPORT: ${ctx.args.join(' ')}. ${SUBCOMMAND_USAGE}` }];

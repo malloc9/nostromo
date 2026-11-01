@@ -1649,3 +1649,28 @@ html, body {
 .mother-interface .mother-status-warning .mother-status-value {
   color: var(--alert-amber);
 }
+
+/* MOTHER suggestions under the input (suggest.js): offered, never run */
+.mother-interface .mother-suggestions {
+  margin: 4px 0 0 0;
+  max-height: 140px;
+  overflow-y: auto;
+  border-left: 1px solid var(--phosphor-dim);
+  padding-left: 8px;
+}
+
+.mother-interface .mother-suggestion {
+  display: flex;
+  gap: 16px;
+  cursor: pointer;
+  color: var(--phosphor-dim);
+}
+
+.mother-interface .mother-suggestion.active,
+.mother-interface .mother-suggestion:hover {
+  color: var(--phosphor-bright);
+}
+
+.mother-interface .mother-suggestion-name {
+  flex: 0 0 260px;
+}

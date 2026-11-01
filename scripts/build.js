@@ -245,6 +245,7 @@ async function validateBuild() {
     'js/ship-computer/report-commands.js',
     'js/ship-computer/input-history.js',
     'js/ship-computer/input-commands.js',
+    'js/ship-computer/suggest.js',
     'js/ship-computer/blocks.js',
     'js/ship-computer/parser.js',
     'js/ship-computer/registry.js',
